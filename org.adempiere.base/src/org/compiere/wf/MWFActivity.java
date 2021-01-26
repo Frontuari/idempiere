@@ -201,7 +201,6 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 		saveEx();
 		//
 		m_audit = new MWFEventAudit(this);
-		m_audit.setAD_Org_ID(getAD_Org_ID());//Add by Hideaki Hagiwara
 		m_audit.saveEx();
 		//
 		m_process = process;
@@ -286,13 +285,7 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 			if (log.isLoggable(Level.FINE)) log.fine(oldState + "->"+ WFState + ", Msg=" + getTextMsg());
 			super.setWFState (WFState);
 			m_state = new StateEngine (getWFState());
-			boolean valid = save();
-			if (! valid) {
-				// the activity could not be updated, probably it was deleted by the rollback to savepoint
-				// so, set the ID to zero and save it again (insert)
-				setAD_WF_Activity_ID(0);
-				saveEx();
-			}
+			saveEx();			//	closed in MWFProcess.checkActivities()
 			updateEventAudit();
 
 			//	Inform Process
@@ -342,13 +335,7 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 		}
 		else
 			m_audit.setEventType(MWFEventAudit.EVENTTYPE_StateChanged);
-		boolean valid = m_audit.save();
-		if (! valid) {
-			// the event audit could not be updated, probably it was deleted by the rollback to savepoint
-			// so, set the ID to zero and save it again (insert)
-			m_audit.setAD_WF_EventAudit_ID(0);
-			m_audit.saveEx();
-		}
+		m_audit.saveEx();
 	}	//	updateEventAudit
 
 	/**
@@ -748,6 +735,15 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 			if (user.getSupervisor_ID() != 0)
 			{
 				user = MUser.get(getCtx(), user.getSupervisor_ID());
+				//	Verify that role approval step it's mandatory and force approved - Jorge Colmenarez - Frontuari, C.A.
+				roles = user.getRoles(AD_Org_ID);
+				for (int i = 0; i < roles.length; i++)
+				{
+					MRole role = roles[i]; 
+					if(role.get_ValueAsBoolean("IsApproveDocStepMandatory"))
+						return user.getAD_User_ID();
+				}
+				
 				if (log.isLoggable(Level.FINE)) log.fine("Supervisor: " + user.getName());
 			}
 			else
@@ -883,15 +879,8 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 		//
 		try
 		{
-			if (!localTrx) {
-				// when cascade workflows, avoid setting a savepoint for each workflow
-				// use the same first savepoint from the transaction
-				savepoint = trx.getLastWFSavepoint();
-				if (savepoint == null) {
-					savepoint = trx.setSavepoint(null);
-					trx.setLastWFSavepoint(savepoint);
-				}
-			}
+			if (!localTrx)
+				savepoint = trx.setSavepoint(null);
 
 			if (!m_state.isValidAction(StateEngine.ACTION_Start))
 			{
@@ -944,7 +933,6 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 				try
 				{
 					trx.rollback(savepoint);
-					trx.setLastWFSavepoint(null);
 				} catch (SQLException e1) {}
 			}
 
@@ -1250,7 +1238,7 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 						MUserRoles[] urs = MUserRoles.getOfRole(getCtx(), resp.getAD_Role_ID());
 						for (int i = 0; i < urs.length; i++)
 						{
-							if(urs[i].getAD_User_ID() == Env.getAD_User_ID(getCtx()) && urs[i].isActive())
+							if(urs[i].getAD_User_ID() == Env.getAD_User_ID(getCtx()))
 							{
 								autoApproval = true;
 								break;

@@ -1,0 +1,15 @@
+#Build log:
+
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201911211857_IDEMPIERE-2836.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912042002_IDEMPIERE-4087.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912101914_IDEMPIERE-4129.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912111530_IDEMPIERE-4078.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/2019121317000_IDEMPIERE-4132.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912182232_IDEMPIERE-4130.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912231744_IDEMPIERE-4137.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912282330_IDEMPIERE-3413.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/202001041702_IDEMPIERE-1486.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/202001211400_IDEMPIERE-4152.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/202001211654_IDEMPIERE-4143.sql status 0
+File /opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/202001291950_IDEMPIERE-4084.sql status 0

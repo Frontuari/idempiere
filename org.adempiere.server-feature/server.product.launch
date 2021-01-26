@@ -338,6 +338,8 @@
         <setEntry value="zweb@default:default"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
+        <setEntry value="com.ingeint.human.talent@default:default"/>
+        <setEntry value="com.ingeint.idempierePayroll@default:default"/>
         <setEntry value="org.adempiere.base.callout@default:default"/>
         <setEntry value="org.adempiere.base.process@default:default"/>
         <setEntry value="org.adempiere.base@default:default"/>
@@ -348,6 +350,7 @@
         <setEntry value="org.adempiere.install@default:default"/>
         <setEntry value="org.adempiere.payment.processor@default:default"/>
         <setEntry value="org.adempiere.pipo.handlers@default:default"/>
+        <setEntry value="org.adempiere.pipo.legacy@default:default"/>
         <setEntry value="org.adempiere.pipo@default:true"/>
         <setEntry value="org.adempiere.plugin.utils@default:default"/>
         <setEntry value="org.adempiere.replication.server@default:default"/>
@@ -368,8 +371,9 @@
         <setEntry value="org.idempiere.hazelcast.service@default:default"/>
         <setEntry value="org.idempiere.webservices@default:default"/>
         <setEntry value="org.idempiere.zk.extra@default:default"/>
+        <setEntry value="transformation@default:default"/>
     </setAttribute>
-    <booleanAttribute key="show_selected_only" value="false"/>
+    <booleanAttribute key="show_selected_only" value="true"/>
     <booleanAttribute key="tracing" value="false"/>
     <booleanAttribute key="useCustomFeatures" value="false"/>
     <booleanAttribute key="useDefaultConfig" value="true"/>

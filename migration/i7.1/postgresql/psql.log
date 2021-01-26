@@ -1,0 +1,129 @@
+
+
+#Run Scripts:
+
+                register_migration_script                
+---------------------------------------------------------
+ 201911211857_IDEMPIERE-2836.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 201912042002_IDEMPIERE-4087.sql successfully registered
+(1 fila)
+
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912101914_IDEMPIERE-4129.sql:4: NOTICE:  executing -> alter table t_selection alter column viewid type varchar(2000)
+ altercolumn 
+-------------
+ 
+(1 fila)
+
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912101914_IDEMPIERE-4129.sql:7: NOTICE:  executing -> alter table t_selection_infowindow alter column viewid type varchar(2000)
+ altercolumn 
+-------------
+ 
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 201912101914_IDEMPIERE-4129.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 201912111530_IDEMPIERE-4078.sql successfully registered
+(1 fila)
+
+                register_migration_script                 
+----------------------------------------------------------
+ 2019121317000_IDEMPIERE-4132.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 201912182232_IDEMPIERE-4130.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 201912231744_IDEMPIERE-4137.sql successfully registered
+(1 fila)
+
+ altercolumn 
+-------------
+ 
+(1 fila)
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql:4: NOTICE:  executing -> alter table ad_infoprocess alter column entitytype set default 'U'
+
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql:7: NOTICE:  executing -> alter table ad_inforelated alter column entitytype set default 'U'
+ altercolumn 
+-------------
+ 
+(1 fila)
+
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql:10: NOTICE:  executing -> alter table ad_searchdefinition alter column entitytype set default 'U'
+ altercolumn 
+-------------
+ 
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql:13: NOTICE:  executing -> alter table ad_style alter column entitytype set default 'U'(1 fila)
+
+ altercolumn 
+-------------
+
+ 
+(1 fila)
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql:16: NOTICE:  executing -> alter table ad_styleline alter column entitytype set default 'U'
+
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql:19: NOTICE:  executing -> alter table ad_toolbarbutton alter column entitytype set default 'U'
+ altercolumn 
+-------------
+ 
+(1 fila)
+
+ altercolumn 
+-------------
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql:22: NOTICE:  executing -> alter table ad_zoomcondition alter column entitytype set default 'U'
+ 
+(1 fila)
+psql:/opt/Development2/Apps/idempiere-release-7.1/migration/i7.1/postgresql/201912271715_IDEMPIERE-3952.sql:25: NOTICE:  executing -> alter table pa_documentstatus alter column entitytype set default 'U'
+
+ altercolumn 
+-------------
+ 
+(1 fila)
+
+ altercolumn 
+-------------
+ 
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 201912271715_IDEMPIERE-3952.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 201912282330_IDEMPIERE-3413.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 202001041702_IDEMPIERE-1486.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 202001211400_IDEMPIERE-4152.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 202001211654_IDEMPIERE-4143.sql successfully registered
+(1 fila)
+
+                register_migration_script                
+---------------------------------------------------------
+ 202001291950_IDEMPIERE-4084.sql successfully registered
+(1 fila)
+

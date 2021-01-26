@@ -55,6 +55,9 @@ import org.compiere.util.Env;
  *	Teo Sarca
  *			<li>FR [ 2819081 ] FactLine.getDocLine should be public
  *				https://sourceforge.net/tracker/?func=detail&atid=879335&aid=2819081&group_id=176962
+ *	Jorge Colmenarez - Frontuari 
+ *			<li>Fix Bug: Difference Accounting with Document when DateDoc < DateAcct and Rate Conversion it's Difference, 
+ *				then change conversion parameter DateAcct by DateTrx.
  *  
  */
 public final class FactLine extends X_Fact_Acct
@@ -726,8 +729,11 @@ public final class FactLine extends X_Fact_Acct
 			if (AD_Org_ID == 0)
 				AD_Org_ID = m_doc.getAD_Org_ID();
 		}
-		
-		Timestamp convDate = getDateAcct();
+		//	Modified by Jorge Colmenarez, 2021-01-26 11:19 
+		//	Calculate Conversion with DateTrx for multicurrency differences on Administrative Documents with Accounting Documents when DateDoc minor to DateAcct and Rate it's difference.
+		//Timestamp convDate = getDateAcct();
+		Timestamp convDate = getDateTrx();
+		//	End Jorge Colmenarez
 
 		if (m_docLine != null && m_doc instanceof Doc_BankStatement)
 			convDate = m_docLine.getDateConv();				

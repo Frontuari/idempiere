@@ -1,0 +1,6 @@
+MAX_RECENT_WORKSPACES=10
+RECENT_WORKSPACES=/opt/Development/Apps/idempiere-release-7.1\n/opt/Development/Apps/idempiere-release-6.2\n/opt/Development/Apps/idempiere-7.1\n/opt/Development/Apps/temporary-workspace\n/opt/Development/Apps/idempiere/idempiere\n/opt/Development/Apps/idempiere
+RECENT_WORKSPACES_PROTOCOL=3
+SHOW_RECENT_WORKSPACES=false
+SHOW_WORKSPACE_SELECTION_DIALOG=false
+eclipse.preferences.version=1
