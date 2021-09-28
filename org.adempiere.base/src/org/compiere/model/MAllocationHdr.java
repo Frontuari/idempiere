@@ -35,6 +35,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.TimeUtil;
 
 /**
  *  Payment Allocation Model.
@@ -49,6 +50,8 @@ import org.compiere.util.Msg;
  *				<li> http://sourceforge.net/tracker2/?func=detail&atid=879335&aid=2520591&group_id=176962 
  *				<li>BF [ 2880182 ] Error you can allocate a payment to invoice that was paid
  *				<li> https://sourceforge.net/tracker/index.php?func=detail&aid=2880182&group_id=176962&atid=879332
+ *	@author Jorge Colmenarez, Frontuari	http://frontuari.net
+ *				<li> Support for DateTime on Invoice and Payment Allocation
 */
 public class MAllocationHdr extends X_C_AllocationHdr implements DocAction
 {
@@ -442,13 +445,21 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction
 
 			// IDEMPIERE-1850 - validate date against related docs
 			if (line.getC_Invoice_ID() > 0) {
-				if (line.getC_Invoice().getDateAcct().after(getDateAcct())) {
+				//	Added By Jorge Colmenarez, 2020-10-30 19:53, Trunc DateAcct because add Date+Hour on DateAcct from Invoice
+				Timestamp DateInv = TimeUtil.trunc(line.getC_Invoice().getDateAcct(), TimeUtil.TRUNC_DAY);
+				//if (line.getC_Invoice().getDateAcct().after(getDateAcct())) {
+				//	End Jorge Colmenarez
+				if (DateInv.after(getDateAcct())) {
 					m_processMsg = "Wrong allocation date";
 					return DocAction.STATUS_Invalid;
 				}
 			}
 			if (line.getC_Payment_ID() > 0) {
-				if (line.getC_Payment().getDateAcct().after(getDateAcct())) {
+				//	Added By Jorge Colmenarez, 2020-10-30 19:53, Trunc DateAcct because add Date+Hour on DateAcct from Payment
+				Timestamp DatePay = TimeUtil.trunc(line.getC_Payment().getDateAcct(), TimeUtil.TRUNC_DAY);
+				//if (line.getC_Payment().getDateAcct().after(getDateAcct())) {
+				//	End Jorge Colmenarez
+				if (DatePay.after(getDateAcct())) {
 					m_processMsg = "Wrong allocation date";
 					return DocAction.STATUS_Invalid;
 				}

@@ -1550,10 +1550,23 @@ public class Login
 		ArrayList<KeyNamePair> rolesList = new ArrayList<KeyNamePair>();
 		KeyNamePair[] retValue = null;
 		StringBuffer sql = new StringBuffer("SELECT u.AD_User_ID, r.AD_Role_ID,r.Name ")
-			.append("FROM AD_User u")
+			//	Added by David Castillo 18-08-2021 implement substitute user feature
+			.append("FROM (")
+			.append("SELECT u.AD_User_ID, r.AD_Role_ID,r.Name ")
+			.append(" FROM AD_User u")
 			.append(" INNER JOIN AD_User_Roles ur ON (u.AD_User_ID=ur.AD_User_ID AND ur.IsActive='Y')")
-			.append(" INNER JOIN AD_Role r ON (ur.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y') ");
-		sql.append("WHERE u.Password IS NOT NULL AND ur.AD_Client_ID=? AND ");		
+			.append(" INNER JOIN AD_Role r ON (ur.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y')")
+			.append(" UNION ")
+			.append(" SELECT DISTINCT USB.Substitute_ID as AD_User_UD, r.AD_Role_ID, r.Name ")
+			.append(" FROM AD_User_Substitute usb ")
+			.append(" JOIN AD_User_Roles ur on (usb.AD_User_ID = ur.AD_User_ID) ")
+			.append(" JOIN AD_Role r on (ur.AD_Role_ID = r.AD_Role_ID) ")
+			.append(" WHERE usb.IsActive='Y' AND ur.IsActive ='Y' AND r.IsActive = 'Y'") 
+			.append(" AND TO_CHAR(NOW(),'YYYY-MM-DD') BETWEEN TO_CHAR(usb.ValidFrom,'YYYY-MM-DD') AND TO_CHAR(usb.ValidTo,'YYYY-MM-DD')) as x ")
+			.append(" INNER JOIN AD_User u on x.AD_User_ID = U.AD_User_ID")
+			.append(" INNER JOIN AD_Role r ON (x.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y') ");
+		sql.append("WHERE u.Password IS NOT NULL AND r.AD_Client_ID=? AND ");
+		//	End David Castillo
 		boolean email_login = MSysConfig.getBooleanValue(MSysConfig.USE_EMAIL_FOR_LOGIN, false);
 		if (email_login)
 			sql.append("u.EMail=?");
