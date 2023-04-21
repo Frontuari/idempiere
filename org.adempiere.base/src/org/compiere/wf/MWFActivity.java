@@ -79,6 +79,8 @@ import org.compiere.util.Util;
  *  @author Silvano Trinchero, www.freepath.it
  *  		<li>IDEMPIERE-3209 added process-aware resultset-based constructor
  *  @version $Id: MWFActivity.java,v 1.4 2006/07/30 00:51:05 jjanke Exp $
+ *  @author Jorge Colmenarez - Frontuari 
+ *			<li>Feature: Mandatory Approval from Role Config
  */
 public class MWFActivity extends X_AD_WF_Activity implements Runnable
 {	
@@ -759,6 +761,16 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable
 			if (user.getSupervisor_ID() != 0)
 			{
 				user = MUser.get(getCtx(), user.getSupervisor_ID());
+				//	Added by Jorge Colmenarez - Frontuari, C.A. - 2023-04-21 10:42
+				//	Verify that role approval step it's mandatory and force approved
+				roles = user.getRoles(AD_Org_ID);
+				for (int i = 0; i < roles.length; i++)
+				{
+					MRole role = roles[i]; 
+					if(role.get_ValueAsBoolean("IsApproveDocStepMandatory"))
+						return user.getAD_User_ID();
+				}
+				//	End Jorge Colmenarez
 				if (log.isLoggable(Level.FINE)) log.fine("Supervisor: " + user.getName());
 			}
 			else

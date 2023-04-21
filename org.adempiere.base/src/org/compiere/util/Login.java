@@ -65,6 +65,8 @@ import org.compiere.model.SystemIDs;
  *  	<li>BF [ 2867246 ] Do not show InTrazit WHs on login
  *  		https://sourceforge.net/p/adempiere/bugs/2136/
  *  @version $Id: Login.java,v 1.6 2006/10/02 05:19:06 jjanke Exp $
+ *	@author Jorge Colmenarez, Frontuari	http://frontuari.net
+ *				<li> Support Enabled Sustitute Users
  */
 public class Login
 {
@@ -1634,9 +1636,26 @@ public class Login
 		ArrayList<KeyNamePair> rolesList = new ArrayList<KeyNamePair>();
 		KeyNamePair[] retValue = null;
 		StringBuilder sql = new StringBuilder("SELECT u.AD_User_ID, r.AD_Role_ID,r.Name ")
-			.append("FROM AD_User u")
+		//	Modified by Jorge Colmenarez 18-08-2021 
+		//	Implement substitute user feature
+		//	.append("FROM AD_User u")
+		//	.append(" INNER JOIN AD_User_Roles ur ON (u.AD_User_ID=ur.AD_User_ID AND ur.IsActive='Y')")
+		//	.append(" INNER JOIN AD_Role r ON (ur.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y') ");
+			.append("FROM (")
+			.append("SELECT u.AD_User_ID, r.AD_Role_ID,r.Name ")
+			.append(" FROM AD_User u")
 			.append(" INNER JOIN AD_User_Roles ur ON (u.AD_User_ID=ur.AD_User_ID AND ur.IsActive='Y')")
-			.append(" INNER JOIN AD_Role r ON (ur.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y') ");
+			.append(" INNER JOIN AD_Role r ON (ur.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y')")
+			.append(" UNION ")
+			.append(" SELECT DISTINCT usb.Substitute_ID as AD_User_UD, r.AD_Role_ID, r.Name ")
+			.append(" FROM AD_User_Substitute usb ")
+			.append(" JOIN AD_User_Roles ur on (usb.AD_User_ID = ur.AD_User_ID) ")
+			.append(" JOIN AD_Role r on (ur.AD_Role_ID = r.AD_Role_ID) ")
+			.append(" WHERE usb.IsActive='Y' AND ur.IsActive ='Y' AND r.IsActive = 'Y'") 
+			.append(" AND TO_CHAR(NOW(),'YYYY-MM-DD') BETWEEN TO_CHAR(usb.ValidFrom,'YYYY-MM-DD') AND TO_CHAR(usb.ValidTo,'YYYY-MM-DD')) as x ")
+			.append(" INNER JOIN AD_User u on x.AD_User_ID = U.AD_User_ID")
+			.append(" INNER JOIN AD_Role r ON (x.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y') ");
+		//	End Jorge Colmenarez
 		sql.append("WHERE u.Password IS NOT NULL AND ur.AD_Client_ID=? AND ");		
 		boolean email_login = MSysConfig.getBooleanValue(MSysConfig.USE_EMAIL_FOR_LOGIN, false);
 		if (email_login)
