@@ -1642,12 +1642,12 @@ public class Login
 		//	.append(" INNER JOIN AD_User_Roles ur ON (u.AD_User_ID=ur.AD_User_ID AND ur.IsActive='Y')")
 		//	.append(" INNER JOIN AD_Role r ON (ur.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y') ");
 			.append("FROM (")
-			.append("SELECT u.AD_User_ID, r.AD_Role_ID,r.Name ")
+			.append("SELECT u.AD_User_ID, r.AD_Role_ID,r.Name,ur.AD_Client_ID ")
 			.append(" FROM AD_User u")
 			.append(" INNER JOIN AD_User_Roles ur ON (u.AD_User_ID=ur.AD_User_ID AND ur.IsActive='Y')")
 			.append(" INNER JOIN AD_Role r ON (ur.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y')")
 			.append(" UNION ")
-			.append(" SELECT DISTINCT usb.Substitute_ID as AD_User_UD, r.AD_Role_ID, r.Name ")
+			.append(" SELECT DISTINCT usb.Substitute_ID as AD_User_UD, r.AD_Role_ID, r.Name, ur.AD_Client_ID ")
 			.append(" FROM AD_User_Substitute usb ")
 			.append(" JOIN AD_User_Roles ur on (usb.AD_User_ID = ur.AD_User_ID) ")
 			.append(" JOIN AD_Role r on (ur.AD_Role_ID = r.AD_Role_ID) ")
@@ -1655,8 +1655,8 @@ public class Login
 			.append(" AND TO_CHAR(NOW(),'YYYY-MM-DD') BETWEEN TO_CHAR(usb.ValidFrom,'YYYY-MM-DD') AND TO_CHAR(usb.ValidTo,'YYYY-MM-DD')) as x ")
 			.append(" INNER JOIN AD_User u on x.AD_User_ID = U.AD_User_ID")
 			.append(" INNER JOIN AD_Role r ON (x.AD_Role_ID=r.AD_Role_ID AND r.IsActive='Y') ");
+		sql.append("WHERE u.Password IS NOT NULL AND x.AD_Client_ID=? AND ");		
 		//	End Jorge Colmenarez
-		sql.append("WHERE u.Password IS NOT NULL AND ur.AD_Client_ID=? AND ");		
 		boolean email_login = MSysConfig.getBooleanValue(MSysConfig.USE_EMAIL_FOR_LOGIN, false);
 		if (email_login)
 			sql.append("u.EMail=?");
