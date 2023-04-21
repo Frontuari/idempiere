@@ -47,6 +47,8 @@ import org.compiere.util.Util;
  * @author Silvano Trinchero
  *      <li>BF [ 2891218] Wrong behavior in entity type settings for customization entity types
  *        https://sourceforge.net/p/adempiere/bugs/2197/ 
+ * @author Jorge Colmenarez, 2023-04-21 10:57, Frontuari, C.A.
+ * 		<li>Fixed Bug: CreateFields when passing only Entity Type parameter SQL Syntax Error
  */
 @org.adempiere.base.annotation.Process
 public class TabCreateFields extends SvrProcess
@@ -100,7 +102,10 @@ public class TabCreateFields extends SvrProcess
 			+ " AND IsActive='Y' ";
 
 		if(!Util.isEmpty(p_EntityType))
-			sql += " AND c.entitytype = ?";
+			//	Modified by Jorge Colmenarez, 2023-04-21 10:59
+			//	Add Space at the end for fix SQL Syntax Error 
+			sql += " AND c.entitytype = ? ";
+			//	End Jorge Colmenarez
 		if(p_CreatedSince != null)
 			sql += " AND c.created >= ? ";
 
