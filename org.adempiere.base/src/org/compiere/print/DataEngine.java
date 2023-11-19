@@ -314,7 +314,7 @@ public class DataEngine
 				+ "','" 
 				+ MPrintFormatItem.PRINTFORMATTYPE_Script 
 				+ "') ")
-			.append("ORDER BY pfi.IsPrinted DESC, pfi.SeqNo");			//	Functions are put in first column
+			.append(" ORDER BY pfi.IsPrinted DESC, pfi.SeqNo");			//	Functions are put in first column
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -1170,6 +1170,8 @@ public class DataEngine
 				for(PrintDataColumn c : scriptColumns) {
 					pd.setRowIndex(i);
 					PrintDataElement e = (PrintDataElement) pd.getNodeByPrintFormatItemId(c.getAD_PrintFormatItem_ID());
+					if(e == null)	// primarily on grouping rows, if no functions are assigned to the script column
+						continue;
 					Object value = parseVariable(e.getValueAsString().replace("@SCRIPT", ""), c, pd);
 					Interpreter bsh = new Interpreter();
 					try {

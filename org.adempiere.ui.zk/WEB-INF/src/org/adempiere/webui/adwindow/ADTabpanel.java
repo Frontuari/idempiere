@@ -86,6 +86,7 @@ import org.compiere.model.MTree;
 import org.compiere.model.MTreeNode;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.model.SystemProperties;
 import org.compiere.model.X_AD_FieldGroup;
 import org.compiere.model.X_AD_ToolBarButton;
 import org.compiere.util.CCache;
@@ -447,8 +448,9 @@ DataStatusListener, IADTabpanel, IdSpace, IFieldEditorContainer
         this.dataBinder = new GridTabDataBinder(gridTab);
 
         this.getChildren().clear();
-        
-        setId(AdempiereIdGenerator.escapeId(gridTab.getName()));
+
+		if (SystemProperties.isZkUnitTest())
+			setId(AdempiereIdGenerator.escapeId(gridTab.getName()));
 
         int AD_Tree_ID = 0;
 		if (gridTab.isTreeTab())
@@ -649,7 +651,8 @@ DataStatusListener, IADTabpanel, IdSpace, IFieldEditorContainer
         	
         	// field group
         	String fieldGroup = field.getFieldGroup();
-        	if (!Util.isEmpty(fieldGroup) && !fieldGroup.equals(currentFieldGroup)) // group changed
+        	if (!Util.isEmpty(fieldGroup) && !fieldGroup.equals(currentFieldGroup)
+        		&& !X_AD_FieldGroup.FIELDGROUPTYPE_DoNothing.equals(field.getFieldGroupType())) // group changed
         	{
         		currentFieldGroup = fieldGroup;
         		
@@ -1574,7 +1577,7 @@ DataStatusListener, IADTabpanel, IdSpace, IFieldEditorContainer
     			if (preference == null || preference.getAD_Preference_ID() <= 0) {
     				preference = new MPreference(Env.getCtx(), 0, null);
     				preference.setAD_Window_ID(windowId);
-    				preference.setAD_User_ID(userId); // allow System
+    				preference.setAD_User_ID(userId);
     				preference.setAttribute(adTabId+"|DetailPane.IsOpen");
     			}
 				preference.setValue(value ? "Y" : "N");

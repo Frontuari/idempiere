@@ -113,7 +113,7 @@ public abstract class PO
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 3153695115162945843L;
+	private static final long serialVersionUID = 1160981281447452309L;
 
 	public static final String LOCAL_TRX_PREFIX = "POSave";
 
@@ -2463,6 +2463,21 @@ public abstract class PO
 	}
 
 	/**
+	 * Update Value or create new record, used when writing a cross tenant record
+	 * @param trxName transaction
+	 * @throws AdempiereException
+	 * @see #saveEx(String)
+	 */
+	public void saveCrossTenantSafeEx() {
+		try {
+			PO.setCrossTenantSafe();
+			saveEx();
+		} finally {
+			PO.clearCrossTenantSafe();
+		}
+	}
+
+	/**
 	 * 	Finish Save Process
 	 *	@param newRecord new
 	 *	@param success success
@@ -2517,7 +2532,7 @@ public abstract class PO
 		{
 			//post osgi event
 			String topic = newRecord ? IEventTopics.PO_POST_CREATE : IEventTopics.PO_POST_UPADTE;
-			Event event = EventManager.newEvent(topic, this);
+			Event event = EventManager.newEvent(topic, this, true);
 			EventManager.getInstance().postEvent(event);
 
 			if (s_docWFMgr == null)
@@ -2577,6 +2592,21 @@ public abstract class PO
 		checkImmutable();
 		setReplication(isFromReplication);
 		saveEx();
+	}
+
+	/**
+	 * Update Value or create new record, used when writing a cross tenant record
+	 * @param trxName transaction
+	 * @throws AdempiereException
+	 * @see #saveEx(String)
+	 */
+	public void saveCrossTenantSafeEx(String trxName) {
+		try {
+			PO.setCrossTenantSafe();
+			saveEx(trxName);
+		} finally {
+			PO.clearCrossTenantSafe();
+		}
 	}
 
 	/**
@@ -3965,7 +3995,7 @@ public abstract class PO
 				}
 
 				//osgi event handler
-				Event event = EventManager.newEvent(IEventTopics.PO_POST_DELETE, this);
+				Event event = EventManager.newEvent(IEventTopics.PO_POST_DELETE, this, true);
 				EventManager.getInstance().postEvent(event);
 	
 				m_idOld = 0;
@@ -5537,6 +5567,8 @@ public abstract class PO
 		if (tableId <= 0)
 			return;
 		MTable ft = MTable.get(getCtx(), tableId);
+		if (ft.getKeyColumns().length > 1)
+			return; // multi-key-table
 		boolean systemAccess = false;
 		String accessLevel = ft.getAccessLevel();
 		if (   MTable.ACCESSLEVEL_All.equals(accessLevel)

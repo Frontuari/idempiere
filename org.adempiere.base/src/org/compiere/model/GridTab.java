@@ -1877,7 +1877,7 @@ public class GridTab implements DataStatusListener, Evaluatee, Serializable
 					+ " INNER JOIN C_InvoiceLine l ON (o.C_Invoice_ID=l.C_Invoice_ID) "
 					+ "WHERE o.C_Invoice_ID=? ");
 			}
-			sql.append("GROUP BY o.C_Currency_ID, c.ISO_Code, o.TotalLines, o.GrandTotal, o.DateAcct, o.AD_Client_ID, o.AD_Org_ID");
+			sql.append(" GROUP BY o.C_Currency_ID, c.ISO_Code, o.TotalLines, o.GrandTotal, o.DateAcct, o.AD_Client_ID, o.AD_Org_ID");
 
 			if (log.isLoggable(Level.FINE)) log.fine(m_vo.TableName + " - " + Record_ID);
 			MessageFormat mf = null;
@@ -2796,8 +2796,15 @@ public class GridTab implements DataStatusListener, Evaluatee, Serializable
 
 		if (log.isLoggable(Level.FINE)) log.fine(field.getColumnName() + "=" + value + " - Row=" + m_currentRow);
 
-		if (DisplayType.isID(field.getDisplayType()) && value instanceof Integer && ((Integer)value).intValue() < 0)
-			value = null;
+		if (value instanceof Integer) {
+			if (((Integer)value).intValue() < 0 && DisplayType.isID(field.getDisplayType())) {
+				value = null;
+			} else if (((Integer)value).intValue() == 0 && field.isLookup()) {
+				MColumn column = MColumn.get(field.getAD_Column_ID());
+				if (! MTable.isZeroIDTable(column.getReferenceTableName()))
+					value = null;
+			}
+		}
 
 		int col = m_mTable.findColumn(field.getColumnName());
 		m_mTable.setValueAt(value, m_currentRow, col, false);

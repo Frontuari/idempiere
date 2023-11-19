@@ -51,6 +51,7 @@ import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.ListModelTable;
+import org.adempiere.webui.component.Mask;
 import org.adempiere.webui.component.ProcessInfoDialog;
 import org.adempiere.webui.component.WListItemRenderer;
 import org.adempiere.webui.component.WListbox;
@@ -226,6 +227,8 @@ public abstract class InfoPanel extends Window implements EventListener<Event>, 
 
 	private Button btnSelectAll;
 	private Button btnDeSelectAll;
+
+	private boolean registerWindowNo = false;
 	
 	/**************************************************
      *  Detail Constructor
@@ -289,6 +292,7 @@ public abstract class InfoPanel extends Window implements EventListener<Event>, 
 	{				
 		if (WindowNo <= 0) {
 			p_WindowNo = SessionManager.getAppDesktop().registerWindow(this);
+			registerWindowNo  = true;
 		} else {
 			p_WindowNo = WindowNo;
 		}
@@ -972,6 +976,10 @@ public abstract class InfoPanel extends Window implements EventListener<Event>, 
         
         if (paging != null && paging.getParent() == null)
         	insertPagingComponent();
+
+        Mask mask = getMaskObj();
+        if (mask == null || mask.getParent() == null)
+        	this.invalidate();
     }
 
     /**
@@ -2408,7 +2416,7 @@ public abstract class InfoPanel extends Window implements EventListener<Event>, 
 		m_pi.setAD_PInstance_ID(pInstanceID);		
 		m_pi.setAD_InfoWindow_ID(infoWindow.getAD_InfoWindow_ID());
 		
-		//HengSin - to let process end with message and requery
+		//let process end with message and re-query
 		WProcessCtl.process(p_WindowNo, m_pi, (Trx)null, new EventListener<Event>() {
 
 			@Override
@@ -2423,6 +2431,8 @@ public abstract class InfoPanel extends Window implements EventListener<Event>, 
 					createT_Selection_InfoWindow(pInstanceID);
 					recordSelectedData.clear();
 				}else if (ProcessModalDialog.ON_WINDOW_CLOSE.equals(event.getName())){ 
+					if (getDesktop() == null) 
+						return;
 					if (processModalDialog.isCancel()){
 						//clear back 
 						m_results.clear();
@@ -2450,8 +2460,6 @@ public abstract class InfoPanel extends Window implements EventListener<Event>, 
 					}
 					recordSelectedData.clear();
 				}
-				
-		//HengSin -- end --
 			}
 		});   		
     }
@@ -2584,6 +2592,13 @@ public abstract class InfoPanel extends Window implements EventListener<Event>, 
 						parameters.add(null);
 						parameters.add(knpData.getKey());
 						parameters.add(null);						
+					}
+					else if(data instanceof ValueNamePair)
+					{
+						ValueNamePair vnp = (ValueNamePair)data;
+						parameters.add(vnp.getValue());
+						parameters.add(null);
+						parameters.add(null);
 					}
 					else
 					{
@@ -3038,6 +3053,8 @@ public abstract class InfoPanel extends Window implements EventListener<Event>, 
 				SessionManager.getSessionApplication().getKeylistener().removeEventListener(Events.ON_CTRL_KEY, this);
 			if (getFirstChild() != null)
 				saveWlistBoxColumnWidth(getFirstChild());
+			if (registerWindowNo && SessionManager.getAppDesktop() != null)
+				SessionManager.getAppDesktop().unregisterWindow(p_WindowNo);
 		} catch (Exception e){
 			log.log(Level.WARNING, e.getMessage(), e);
 		}

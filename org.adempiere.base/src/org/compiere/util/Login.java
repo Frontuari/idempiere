@@ -566,7 +566,7 @@ public class Login
 				+" WHERE ra.AD_Role_ID=r.AD_Role_ID AND ra.IsActive='Y')) "
 				+" OR (r.IsUseUserOrgAccess='Y' AND o.AD_Org_ID IN (SELECT AD_Org_ID FROM AD_User_OrgAccess ua" 
 				+" WHERE ua.AD_User_ID=?"
-				+" AND ua.IsActive='Y')))" 
+				+" AND ua.IsActive='Y'))) " 
 				+ "ORDER BY o.Name";
 		//
 		PreparedStatement pstmt = null;
@@ -874,6 +874,7 @@ public class Login
 
 		//	Other Settings
 		Env.setContext(m_ctx, "#YYYY", "Y");
+		Env.setContext(m_ctx, Env.DEVELOPER_MODE, Util.isDeveloperMode() ? "Y" : "N");
 		Env.setContext(m_ctx, Env.STANDARD_PRECISION, 2);
 
 		//	AccountSchema Info (first)
