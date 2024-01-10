@@ -133,11 +133,13 @@ public class RolePanel extends Window implements EventListener<Event>, Deferrabl
     	m_isClientDefined = isClientDefined;
         m_clientKNPairs = clientsKNPairs;
         
+    	m_userpreference = SessionManager.getSessionApplication().getUserPreference();
         if( m_clientKNPairs.length == 1  &&  !m_showRolePanel ){
         	Env.setContext(m_ctx, Env.AD_CLIENT_ID, (String) m_clientKNPairs[0].getID());
         	MUser user = MUser.get (m_ctx, Login.getAppUser(m_userName));
-        	m_userpreference=new UserPreference();
         	m_userpreference.loadPreference(user.get_ID());        	
+        } else {
+        	m_userpreference.loadPreference(-1);
         }
     	
 
@@ -410,11 +412,15 @@ public class RolePanel extends Window implements EventListener<Event>, Deferrabl
     {
 		lstRole.getItems().clear();
 		lstRole.setText("");
+        setUserID();
+    	UserPreference userPreference = SessionManager.getSessionApplication().getUserPreference();
         Comboitem lstItemClient = lstClient.getSelectedItem();
         if (lstItemClient != null)
         {
+        	if (lstClient.getChildren().size() > 1) // load the preference was postponed until client selected
+        		userPreference.loadPreference(Env.getContextAsInt(m_ctx, Env.AD_USER_ID));
+
         	//  initial role
-        	UserPreference userPreference = SessionManager.getSessionApplication().getUserPreference();
 			String initDefault = userPreference.getProperty(UserPreference.P_ROLE);
 			if( initDefault.length() == 0 &&  !m_showRolePanel  &&  m_userpreference != null )
 			{
@@ -453,8 +459,23 @@ public class RolePanel extends Window implements EventListener<Event>, Deferrabl
     			lstRole.setEnabled(true);
     		}
         }
-        setUserID();
         updateOrganisationList();
+    	if (lstClient.getChildren().size() > 1) {
+    		userPreference.loadPreference(Env.getContextAsInt(m_ctx, Env.AD_USER_ID));
+    		// saving the preferences was postponed until the user selects the client
+        	Comboitem lstItemRole = lstRole.getSelectedItem();
+        	Comboitem lstItemOrg = lstOrganisation.getSelectedItem();
+        	Comboitem lstItemWarehouse = lstWarehouse.getSelectedItem();
+       		userPreference.setProperty(UserPreference.P_LANGUAGE, Env.getContext(m_ctx, UserPreference.LANGUAGE_NAME));
+        	if (lstItemRole != null && lstItemRole.getValue() != null)
+        		userPreference.setProperty(UserPreference.P_ROLE, (String) lstItemRole.getValue());
+        	userPreference.setProperty(UserPreference.P_CLIENT, (String) lstItemClient.getValue());
+        	if (lstItemOrg != null && lstItemOrg.getValue() != null)
+        		userPreference.setProperty(UserPreference.P_ORG, (String) lstItemOrg.getValue());
+        	if (lstItemWarehouse != null && lstItemWarehouse.getValue() != null)
+        		userPreference.setProperty(UserPreference.P_WAREHOUSE, (String) lstItemWarehouse.getValue());
+        	userPreference.savePreference();
+    	}
     }
 
     private void updateOrganisationList()
@@ -534,7 +555,6 @@ public class RolePanel extends Window implements EventListener<Event>, Deferrabl
                     	lstWarehouse.setSelectedItem(ci);
                 }
                 if (lstWarehouse.getSelectedIndex() == -1 && lstWarehouse.getItemCount() > 0) {
-                	m_showRolePanel = true; // didn't find default warehouse
                 	lstWarehouse.setSelectedIndex(0);
                 }
             }
