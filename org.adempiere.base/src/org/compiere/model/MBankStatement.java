@@ -29,6 +29,8 @@ import org.compiere.process.DocumentEngine;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.TimeUtil;
+import org.compiere.util.Util;
  
 /**
 *	Bank Statement Model
@@ -36,23 +38,35 @@ import org.compiere.util.Msg;
 *  @author Eldir Tomassen/Jorg Janke
 *  @author victor.perez@e-evolution.com, e-Evolution http://www.e-evolution.com
 *   <li> BF [ 1933645 ] Wrong balance Bank Statement
-*   @see http://sourceforge.net/tracker/?func=detail&atid=879332&aid=1933645&group_id=176962
+*   @see https://sourceforge.net/p/adempiere/bugs/1145/
 * 	<li> FR [ 2520591 ] Support multiples calendar for Org 
-*	@see http://sourceforge.net/tracker2/?func=detail&atid=879335&aid=2520591&group_id=176962
+*	@see https://sourceforge.net/p/adempiere/feature-requests/631/
 * 	<li> BF [ 2824951 ] The payments is not release when Bank Statement is void 
-*	@see http://sourceforge.net/tracker/?func=detail&aid=2824951&group_id=176962&atid=879332
+*	@see https://sourceforge.net/p/adempiere/bugs/1990/
 *  @author Teo Sarca, http://www.arhipac.ro
 * 	<li>FR [ 2616330 ] Use MPeriod.testPeriodOpen instead of isOpen
-* 		https://sourceforge.net/tracker/?func=detail&atid=879335&aid=2616330&group_id=176962
+* 		https://sourceforge.net/p/adempiere/feature-requests/666/
 *  
 *   @version $Id: MBankStatement.java,v 1.3 2006/07/30 00:51:03 jjanke Exp $
 */
 public class MBankStatement extends X_C_BankStatement implements DocAction
 {
-	/**
-	 * 
+    /**
+	 * generated serial id 
 	 */
-	private static final long serialVersionUID = 4286511528899179483L;
+	private static final long serialVersionUID = 7420574960104461342L;
+
+	/**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_BankStatement_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MBankStatement(Properties ctx, String C_BankStatement_UU, String trxName) {
+        super(ctx, C_BankStatement_UU, trxName);
+		if (Util.isEmpty(C_BankStatement_UU))
+			setInitialDefaults();
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -64,20 +78,24 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	{
 		super (ctx, C_BankStatement_ID, trxName);
 		if (C_BankStatement_ID == 0)
-		{ 
-		//	setC_BankAccount_ID (0);	//	parent
-			setStatementDate (new Timestamp(System.currentTimeMillis()));	// @Date@
-			setDocAction (DOCACTION_Complete);	// CO
-			setDocStatus (DOCSTATUS_Drafted);	// DR
-			setBeginningBalance(Env.ZERO);
-			setStatementDifference(Env.ZERO);
-			setEndingBalance (Env.ZERO);
-			setIsApproved (false);	// N
-			setIsManual (true);	// Y
-			setPosted (false);	// N
-			super.setProcessed (false);
-		}
+			setInitialDefaults();
 	}	//	MBankStatement
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setStatementDate (new Timestamp(System.currentTimeMillis()));	// @Date@
+		setDocAction (DOCACTION_Complete);	// CO
+		setDocStatus (DOCSTATUS_Drafted);	// DR
+		setBeginningBalance(Env.ZERO);
+		setStatementDifference(Env.ZERO);
+		setEndingBalance (Env.ZERO);
+		setIsApproved (false);	// N
+		setIsManual (true);	// Y
+		setPosted (false);	// N
+		super.setProcessed (false);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -121,8 +139,8 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	
  	/**
  	 * 	Get Bank Statement Lines
- 	 * 	@param requery requery
- 	 *	@return line array
+ 	 * 	@param requery true to always re-query from DB
+ 	 *	@return statement line array
  	 */
  	public MBankStatementLine[] getLines (boolean requery)
  	{
@@ -134,7 +152,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 		final String whereClause = I_C_BankStatementLine.COLUMNNAME_C_BankStatement_ID+"=?";
 		List<MBankStatementLine> list = new Query(getCtx(),I_C_BankStatementLine.Table_Name,whereClause,get_TrxName())
 		.setParameters(getC_BankStatement_ID())
-		.setOrderBy("Line")
+		.setOrderBy("Line,C_BankStatementLine_ID")
 		.list();
 		MBankStatementLine[] retValue = new MBankStatementLine[list.size()];
 		list.toArray(retValue);
@@ -145,7 +163,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Add to Description
 	 *	@param description text
 	 */
-	public void addDescription (String description)
+ 	public void addDescription (String description)
 	{
 		String desc = getDescription();
 		if (desc == null)
@@ -158,9 +176,10 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 
 	/**
 	 * 	Set Processed.
-	 * 	Propergate to Lines/Taxes
+	 * 	Propagate to Lines.
 	 *	@param processed processed
 	 */
+	@Override
 	public void setProcessed (boolean processed)
 	{
 		super.setProcessed (processed);
@@ -187,6 +206,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Get Document No 
 	 *	@return name
 	 */
+	@Override
 	public String getDocumentNo()
 	{
 		return getName();
@@ -196,6 +216,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Get Document Info
 	 *	@return document info (untranslated)
 	 */
+	@Override
 	public String getDocumentInfo()
 	{
 		StringBuilder msgreturn = new StringBuilder().append(getBankAccount().getName()).append(" ").append(getDocumentNo());
@@ -204,8 +225,9 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 
 	/**
 	 * 	Create PDF
-	 *	@return File or null
+	 *	@return PDF File or null
 	 */
+	@Override
 	public File createPDF ()
 	{
 		try
@@ -224,24 +246,24 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	/**
 	 * 	Create PDF file
 	 *	@param file output file
-	 *	@return file if success
+	 *	@return not implemented, always return null
 	 */
 	public File createPDF (File file)
 	{
-	//	ReportEngine re = ReportEngine.get (getCtx(), ReportEngine.INVOICE, getC_Invoice_ID());
-	//	if (re == null)
-			return null;
-	//	return re.getPDF(file);
+		return null;
 	}	//	createPDF
-
 	
 	/**
 	 * 	Before Save
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
+		if (getC_DocType_ID() <= 0) {
+			setC_DocType_ID(MDocType.getDocType(MDocType.DOCBASETYPE_BankStatement));
+		}
 		if (! isProcessed() && getBeginningBalance().compareTo(Env.ZERO) == 0)
 		{
 			MBankAccount ba = getBankAccount();
@@ -252,11 +274,12 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 		return true;
 	}	//	beforeSave
 	
-	/**************************************************************************
+	/**
 	 * 	Process document
 	 *	@param processAction document action
-	 *	@return true if performed
+	 *	@return true if success
 	 */
+	@Override
 	public boolean processIt (String processAction)
 	{
 		m_processMsg = null;
@@ -273,6 +296,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Unlock Document.
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean unlockIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("unlockIt - " + toString());
@@ -284,6 +308,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Invalidate Document
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean invalidateIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("invalidateIt - " + toString());
@@ -295,6 +320,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 *	Prepare Document
 	 * 	@return new status (In Progress or Invalid) 
 	 */
+	@Override
 	public String prepareIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info(toString());
@@ -303,7 +329,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 			return DocAction.STATUS_Invalid;
 
 		//	Std Period open?
-		MPeriod.testPeriodOpen(getCtx(), getStatementDate(), MDocType.DOCBASETYPE_BankStatement, getAD_Org_ID());
+		MPeriod.testPeriodOpen(getCtx(), getStatementDate(), getC_DocType_ID(), getAD_Org_ID());
 		MBankStatementLine[] lines = getLines(true);
 		if (lines.length == 0)
 		{
@@ -312,25 +338,21 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 		}
 		//	Lines
 		BigDecimal total = Env.ZERO;
-		// IDEMPIERE-480 changed the way accounting is posted, now lines post just with the accounting date of the statement header
-		// so, it is unnecessary to validate the period of lines
-		// Timestamp minDate = getStatementDate();
-		// Timestamp maxDate = minDate;
 		for (int i = 0; i < lines.length; i++)
 		{
 			MBankStatementLine line = lines[i];
 			if (!line.isActive())
 				continue;
+
+			if (!line.isDateConsistentIfUsedForPosting()) {
+				m_processMsg = Msg.getMsg(getCtx(), "BankStatementLinePeriodNotSameAsHeader", new Object[] {line.getLine()});
+				return DocAction.STATUS_Invalid;
+			}
+
 			total = total.add(line.getStmtAmt());
-			// if (line.getDateAcct().before(minDate))
-				// minDate = line.getDateAcct(); 
-			// if (line.getDateAcct().after(maxDate))
-				// maxDate = line.getDateAcct(); 
 		}
 		setStatementDifference(total);
 		setEndingBalance(getBeginningBalance().add(total));
-		// MPeriod.testPeriodOpen(getCtx(), minDate, MDocType.DOCBASETYPE_BankStatement, getAD_Org_ID());
-		// MPeriod.testPeriodOpen(getCtx(), maxDate, MDocType.DOCBASETYPE_BankStatement, getAD_Org_ID());
 
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_AFTER_PREPARE);
 		if (m_processMsg != null)
@@ -347,6 +369,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Approve Document
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean  approveIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("approveIt - " + toString());
@@ -358,6 +381,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Reject Approval
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean rejectIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("rejectIt - " + toString());
@@ -369,6 +393,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Complete Document
 	 * 	@return new status (Complete, In Progress, Invalid, Waiting ..)
 	 */
+	@Override
 	public String completeIt()
 	{
 		//	Re-Check
@@ -379,6 +404,9 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 			if (!DocAction.STATUS_InProgress.equals(status))
 				return status;
 		}
+
+		// Set the definite document number after completed (if needed)
+		setDefiniteDocumentNo();
 
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_BEFORE_COMPLETE);
 		if (m_processMsg != null)
@@ -422,9 +450,30 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	}	//	completeIt
 	
 	/**
-	 * 	Void Document.
-	 * 	@return false 
+	 * 	Set the definite document number after completed
 	 */
+	protected void setDefiniteDocumentNo() {
+		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
+		if (dt.isOverwriteDateOnComplete()) {
+			if (this.getProcessedOn().signum() == 0) {
+				setStatementDate(TimeUtil.getDay(0));
+				MPeriod.testPeriodOpen(getCtx(), getStatementDate(), getC_DocType_ID(), getAD_Org_ID());
+			}
+		}
+		if (dt.isOverwriteSeqOnComplete()) {
+			if (this.getProcessedOn().signum() == 0) {
+				String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);
+				if (value != null)
+					setDocumentNo(value);
+			}
+		}
+	}
+
+	/**
+	 * 	Void Document.
+	 * 	@return true if successfully voided 
+	 */
+	@Override
 	public boolean voidIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info(toString());
@@ -452,7 +501,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 		//	Std Period open?
 		else
 		{
-			MPeriod.testPeriodOpen(getCtx(), getStatementDate(), MDocType.DOCBASETYPE_BankStatement, getAD_Org_ID());
+			MPeriod.testPeriodOpen(getCtx(), getStatementDate(), getC_DocType_ID(), getAD_Org_ID());
 			MFactAcct.deleteEx(Table_ID, getC_BankStatement_ID(), get_TrxName());
 		}
 
@@ -515,6 +564,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Close Document.
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean closeIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("closeIt - " + toString());
@@ -534,8 +584,9 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	
 	/**
 	 * 	Reverse Correction
-	 * 	@return false 
+	 * 	@return true if success 
 	 */
+	@Override
 	public boolean reverseCorrectIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("reverseCorrectIt - " + toString());
@@ -556,6 +607,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Reverse Accrual
 	 * 	@return false 
 	 */
+	@Override
 	public boolean reverseAccrualIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("reverseAccrualIt - " + toString());
@@ -574,7 +626,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	
 	/** 
 	 * 	Re-activate
-	 * 	@return false 
+	 *  @return true if success 
 	 */
 	public boolean reActivateIt()
 	{
@@ -583,19 +635,44 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this,ModelValidator.TIMING_BEFORE_REACTIVATE);
 		if (m_processMsg != null)
 			return false;		
-		
+
+		MPeriod.testPeriodOpen(getCtx(), getDateAcct(), MDocType.DOCBASETYPE_BankStatement, getAD_Org_ID());
+
+		MFactAcct.deleteEx(Table_ID, getC_BankStatement_ID(), get_TrxName());
+		setPosted(false);
+
+		MBankStatementLine[] lines = getLines(true);
+		for (int i = 0; i < lines.length; i++) {
+			MBankStatementLine line = lines[i];
+			line.setProcessed(false);
+
+			if (line.getC_Payment_ID() != 0) {
+				MPayment payment = new MPayment (getCtx(), line.getC_Payment_ID(), get_TrxName());
+				payment.setIsReconciled(false);
+				payment.saveEx();
+			}
+		}
+
+		MBankAccount ba = getBankAccount();
+		ba.load(get_TrxName());
+		ba.setCurrentBalance(ba.getCurrentBalance().subtract(getStatementDifference()));
+		ba.saveEx();
+
+		setDocAction(X_C_BankStatement.DOCACTION_Complete);
+		setProcessed(false);
+
 		// After reActivate
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this,ModelValidator.TIMING_AFTER_REACTIVATE);
 		if (m_processMsg != null)
 			return false;		
-		return false;
+		return true;
 	}	//	reActivateIt
-	
-	
-	/*************************************************************************
+		
+	/**
 	 * 	Get Summary
 	 *	@return Summary of Document
 	 */
+	@Override
 	public String getSummary()
 	{
 		StringBuilder sb = new StringBuilder();
@@ -614,6 +691,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Get Process Message
 	 *	@return clear text error message
 	 */
+	@Override
 	public String getProcessMsg()
 	{
 		return m_processMsg;
@@ -623,6 +701,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Get Document Owner (Responsible)
 	 *	@return AD_User_ID
 	 */
+	@Override
 	public int getDoc_User_ID()
 	{
 		return getUpdatedBy();
@@ -630,9 +709,9 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 
 	/**
 	 * 	Get Document Approval Amount.
-	 * 	Statement Difference
-	 *	@return amount
+	 *	@return Statement Difference
 	 */
+	@Override
 	public BigDecimal getApprovalAmt()
 	{
 		return getStatementDifference();
@@ -642,15 +721,14 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 	 * 	Get Document Currency
 	 *	@return C_Currency_ID
 	 */
+	@Override
 	public int getC_Currency_ID()
 	{
-	//	MPriceList pl = MPriceList.get(getCtx(), getM_PriceList_ID());
-	//	return pl.getC_Currency_ID();
 		return 0;
 	}	//	getC_Currency_ID
 
 	/**
-	 * 	Document Status is Complete or Closed
+	 * 	Document Status is Complete, Closed or Reversed
 	 *	@return true if CO, CL or RE
 	 */
 	public boolean isComplete()
@@ -660,5 +738,13 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 			|| DOCSTATUS_Closed.equals(ds)
 			|| DOCSTATUS_Reversed.equals(ds);
 	}	//	isComplete
+
+	/**
+	 * @param clientID
+	 * @return true if bank statement posting should use accounting date from bank statement lines.
+	 */
+	public static boolean isPostWithDateFromLine(int clientID) {
+		return MSysConfig.getBooleanValue(MSysConfig.BANK_STATEMENT_POST_WITH_DATE_FROM_LINE, false, Env.getAD_Client_ID(Env.getCtx()));
+	}
 	
 }	//	MBankStatement

@@ -24,7 +24,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -62,10 +69,12 @@ import org.apache.ecs.xhtml.tr;
 import org.compiere.Adempiere;
 import org.compiere.model.AdempiereProcessorLog;
 import org.compiere.model.MClient;
+import org.compiere.model.MClientInfo;
 import org.compiere.model.MSession;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MSystem;
 import org.compiere.model.Query;
+import org.compiere.model.SystemIDs;
 import org.compiere.server.AdempiereServerGroup;
 import org.compiere.server.AdempiereServerMgr;
 import org.compiere.server.IServerManager;
@@ -684,7 +693,7 @@ public class AdempiereMonitor extends HttpServlet
 		table.addElement(line);
 		line = new tr();
 		line.addElement(new th().addElement("Start - Elapsed"));
-		line.addElement(new td().addElement(WebEnv.getCellContent(getServerManager().getStartTime())
+		line.addElement(new td().addElement(WebEnv.getCellContent(formatTimestampWithTimeZone(0, getServerManager().getStartTime()))
 			+ " - " + TimeUtil.formatElapsed(getServerManager().getStartTime())));
 		table.addElement(line);
 		line = new tr();
@@ -693,7 +702,7 @@ public class AdempiereMonitor extends HttpServlet
 		table.addElement(line);
 		line = new tr();
 		line.addElement(new th().addElement("Last Updated"));
-		line.addElement(new td().addElement(new Timestamp(System.currentTimeMillis()).toString()));
+		line.addElement(new td().addElement(formatTimestampWithTimeZone(0, new Timestamp(System.currentTimeMillis()))));
 		table.addElement(line);
 		bb.addElement(table);
 		
@@ -759,6 +768,14 @@ public class AdempiereMonitor extends HttpServlet
 		bb.addElement(new hr());
 		para = new p();
 		ServerInstance[] servers = getServerManager().getServerInstances();		
+		Arrays.sort(servers, new Comparator<ServerInstance>() {
+		    public int compare(ServerInstance o1, ServerInstance o2) {
+		    	if (o1 == null || o1.getModel() == null || o1.getModel().getName() == null
+		    			|| o2 == null || o2.getModel() == null || o2.getModel().getName() == null)
+		    		return 0;
+		        return o1.getModel().getName().compareTo(o2.getModel().getName());
+		    }
+		});
 		for (int i = 0; i < servers.length; i++)
 		{
 			if (i > 0)
@@ -768,9 +785,16 @@ public class AdempiereMonitor extends HttpServlet
 			para.addElement(link);
 			font status = null;
 			if (server.isStarted())
-				status = new font().setColor(HtmlColor.GREEN).addElement(" (Running)");
+			{
+				if (server.isSleeping())
+					status = new font().setColor(HtmlColor.GREEN).addElement(" (Started)");
+				else
+					status = new font().setColor(HtmlColor.GREEN).addElement(" (Running)");
+			}
 			else
+			{
 				status = new font().setColor(HtmlColor.RED).addElement(" (Stopped)");
+			}
 			para.addElement(status);
 		}
 		bb.addElement(para);
@@ -816,7 +840,7 @@ public class AdempiereMonitor extends HttpServlet
 				table.addElement(line);
 				line = new tr();
 				line.addElement(new th().addElement("Start - Elapsed"));
-				line.addElement(new td().addElement(WebEnv.getCellContent(server.getStartTime()) 
+				line.addElement(new td().addElement(WebEnv.getCellContent(formatTimestampWithTimeZone(server.getModel().getAD_Client_ID(), server.getStartTime())) 
 					+ " - " + TimeUtil.formatElapsed(server.getStartTime())));
 			}
 			else
@@ -835,7 +859,7 @@ public class AdempiereMonitor extends HttpServlet
 			//
 			line = new tr();
 			line.addElement(new th().addElement("Last Run"));
-			line.addElement(new td().addElement(WebEnv.getCellContent(server.getModel().getDateLastRun())));
+			line.addElement(new td().addElement(WebEnv.getCellContent(formatTimestampWithTimeZone(server.getModel().getAD_Client_ID(), server.getModel().getDateLastRun()))));
 			table.addElement(line);
 			line = new tr();
 			line.addElement(new th().addElement("Info"));
@@ -845,7 +869,7 @@ public class AdempiereMonitor extends HttpServlet
 			line = new tr();
 			line.addElement(new th().addElement("Next Run"));
 			td td = new td();
-			td.addElement(WebEnv.getCellContent(server.getModel().getDateNextRun(false)));
+			td.addElement(WebEnv.getCellContent(formatTimestampWithTimeZone(server.getModel().getAD_Client_ID(), server.getModel().getDateNextRun(false))));
 			td.addElement(" - ");
 			link = new a ("idempiereMonitor?RunNow=" + server.getServerId(), "(Run Now)");
 			td.addElement(link);
@@ -894,12 +918,34 @@ public class AdempiereMonitor extends HttpServlet
 		WebUtil.createResponse (request, response, this, null, doc, false);
 	}	//	createSummaryPage
 
+	private String formatTimestampWithTimeZone(int AD_Client_ID, Timestamp ts) {
+		return formatTimestampWithTimeZone(AD_Client_ID, (Date)ts);
+	}
+	
+	private String formatTimestampWithTimeZone(int AD_Client_ID, Date date) {
+		if (date == null)
+			return "";
+		DateTimeFormatter formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME;
+		MClientInfo clientInfo = MClientInfo.get(AD_Client_ID);
+		if (!Util.isEmpty(clientInfo.getTimeZone())) {
+			try {
+				formatter = formatter.withZone(ZoneId.of(clientInfo.getTimeZone()));
+			} catch (Exception e) {
+				//fallback to default
+				formatter = formatter.withZone(ZoneId.systemDefault());
+			}
+		} else {
+			formatter = formatter.withZone(ZoneId.systemDefault());
+		}
+		return formatter.format(date.toInstant().truncatedTo(ChronoUnit.SECONDS));
+	}
+
 	private String createServerCountMessage(ServerCount serverCount) {
 		StringBuilder builder = new StringBuilder();
 		
 		if (serverCount != null) {
 			builder.append(serverCount.getStarted()+serverCount.getStopped())
-				.append(" - Running=")
+				.append(" - Started=")
 				.append(serverCount.getStarted())
 				.append(" - Stopped=")
 				.append(serverCount.getStopped());
@@ -953,7 +999,7 @@ public class AdempiereMonitor extends HttpServlet
 		writer.print(getServerManager().getDescription());
 		writer.println("</description>");
 		writer.print("\t\t<start-time>");
-		writer.print(getServerManager().getStartTime());
+		writer.print(formatTimestampWithTimeZone(0, getServerManager().getStartTime()));
 		writer.println("</start-time>");
 		writer.print("\t\t<server-count>");
 		writer.print(getServerManager().getServerCount());
@@ -990,13 +1036,13 @@ public class AdempiereMonitor extends HttpServlet
 				writer.print("Stopped");
 			writer.println("</status>");
 			writer.print("\t\t\t<start-time>");
-			writer.print(server.getStartTime());
+			writer.print(formatTimestampWithTimeZone(server.getModel().getAD_Client_ID(), server.getStartTime()));
 			writer.println("</start-time>");
 			writer.print("\t\t\t<last-run>");
-			writer.print(server.getModel().getDateLastRun());
+			writer.print(formatTimestampWithTimeZone(server.getModel().getAD_Client_ID(), server.getModel().getDateLastRun()));
 			writer.println("</last-run>");
 			writer.print("\t\t\t<next-run>");
-			writer.print(server.getModel().getDateNextRun(false));
+			writer.print(formatTimestampWithTimeZone(server.getModel().getAD_Client_ID(), server.getModel().getDateNextRun(false)));
 			writer.println("</next-run>");
 			writer.print("\t\t\t<statistics>");
 			writer.print(server.getStatistics());
@@ -1093,13 +1139,21 @@ public class AdempiereMonitor extends HttpServlet
 		for (TrxInfo trx : trxs)
 		{
 			line = new tr();
-			line.addElement(new th().addElement("Active Transaction "));
+			line.addElement(new th().addElement((trx.isActive() ? "Active" : "Inactive") + " Transaction "));
 			td td = new td();
-			td.setOnClick("var newwindow=window.open('','Popup', 'width=800,height=600');newwindow.document.write('<title>"  + escapeEcmaScript(trx.getDisplayName()) +"</title>"
-					+ "<pre>" + escapeEcmaScript(trx.getStackTrace()) + "</pre>')");
-			td.addElement("Name="+trx.getDisplayName() + ", StartTime=" + trx.getStartTime());
-			td.setTitle("Click to see stack trace");
-			td.setStyle("text-decoration: underline; color: blue");
+			if (Util.isEmpty(trx.getStackTrace())) {
+				td.addElement("Name=" + trx.getDisplayName() + ", StartTime=" + formatTimestampWithTimeZone(0,trx.getStartTime()));
+				td.setTitle(trx.getTrxName());
+			} else {
+				td.setOnClick("var newwindow=window.open('','Popup', 'width=800,height=600');newwindow.document.write('<title>"  + escapeEcmaScript(trx.getDisplayName()) +"</title>"
+						+ "<p><b>Transaction = " + trx.getDisplayName() + "</b></p>"
+						+ "<p><b>TrxName = " + trx.getTrxName() + "</b></p>"
+						+ "<pre>" + escapeEcmaScript(trx.getStackTrace()) + "</pre>')");
+				label lbl = new label().addElement(trx.getDisplayName());
+				lbl.setStyle("text-decoration: underline; color: blue");
+				td.addElement("Name=").addElement(lbl).addElement(", StartTime=" + formatTimestampWithTimeZone(0,trx.getStartTime()));
+				td.setTitle("Click to see stack trace for " + trx.getTrxName());
+			}
 			line.addElement(td);
 			table.addElement(line);
 		}
@@ -1135,7 +1189,7 @@ public class AdempiereMonitor extends HttpServlet
 		//
 		line = new tr();
 		line.addElement(new th().addElement("Trace File"));
-		line.addElement(new td().addElement(new a ("idempiereMonitor?Trace=" + systemInfo.getCurrentLogFile(), "Current")));
+		line.addElement(new td().addElement(new a ("idempiereMonitor?Trace=" + systemInfo.getCurrentLogFile(), "Current", "Current", "Current")));
 		table.addElement(line);
 		//
 		line = new tr();
@@ -1152,6 +1206,7 @@ public class AdempiereMonitor extends HttpServlet
 		//	List Log Files
 		p p = new p();
 		p.addElement(new b("All Log Files: "));
+		p.addElement(new br());
 		//	All in dir
 		LogFileInfo logFiles[] = systemInfo.getLogFileInfos();
 		for (LogFileInfo logFile : logFiles) 
@@ -1159,7 +1214,11 @@ public class AdempiereMonitor extends HttpServlet
 			if (logFile != logFiles[0])
 				p.addElement(" - ");
 			String fileName = logFile.getFileName();
-			a link = new a ("idempiereMonitor?Trace=" + fileName, fileName);
+			String displayName = fileName;
+			int index = fileName.lastIndexOf(File.separator);
+			if (index > 1)
+				displayName = fileName.substring(index+1);
+			a link = new a ("idempiereMonitor?Trace=" + fileName, displayName, displayName, displayName);
 			p.addElement(link);
 			int size = (int)(logFile.getFileSize()/1024);
 			if (size < 1024)
@@ -1177,7 +1236,7 @@ public class AdempiereMonitor extends HttpServlet
 		//	
 		line = new tr();
 		MClient[] clients = MClient.getAll(Env.getCtx(), "AD_Client_ID");
-		line.addElement(new th().addElement("Client #" + clients.length + " - EMail Test:"));
+		line.addElement(new th().addElement("Tenant #" + clients.length + " - EMail Test:"));
 		p = new p();
 		for (int i = 0; i < clients.length; i++)
 		{
@@ -1247,7 +1306,7 @@ public class AdempiereMonitor extends HttpServlet
 
 		p = new p();
 		if (isSystemInMaintenance)
-			p.addElement("All clients are in maintenance mode");
+			p.addElement("All tenants are in maintenance mode");
 		else if (inMaintenanceClients.size() > 0) {
 			boolean first = true;
 			for (int clientID : inMaintenanceClients) {
@@ -1261,7 +1320,7 @@ public class AdempiereMonitor extends HttpServlet
 			}
 		}
 		else
-			p.addElement("All clients are in normal operation mode");
+			p.addElement("All tenants are in normal operation mode");
 		if (clients.length == 0)
 			p.addElement("&nbsp;");
 		line.addElement(new td().addElement(p));
@@ -1286,7 +1345,7 @@ public class AdempiereMonitor extends HttpServlet
 			try {
 				Properties ctx = new Properties();
 				Env.setContext(ctx, Env.AD_CLIENT_ID, 0);
-				Env.setContext(ctx, Env.AD_USER_ID, 0);
+				Env.setContext(ctx, Env.AD_USER_ID, SystemIDs.USER_SYSTEM);
 				ServerContext.setCurrentInstance(ctx);
 				
 				int maxSecondsToWait = MSysConfig.getIntValue(MSysConfig.MONITOR_MAX_WAIT_FOR_CLUSTER_IN_SECONDS, 180);			
@@ -1509,20 +1568,45 @@ public class AdempiereMonitor extends HttpServlet
 		{		
 			if (ccache.getName().endsWith("|CCacheListener"))
 				continue;
-			line = new tr();
-			line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getName())));
-			line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getTableName())));
-			line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getSize())));
-			line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getExpireMinutes())));
-			line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getMaxSize())));
-			line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getHit())));
-			line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getMiss())));
-			line.addElement(new td().addElement(WebEnv.getCellContent(ccache.isDistributed())));
-			if (ccache.getNodeId() != null)
+			if (ccache.getSize() > 0)
 			{
-				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getNodeId())));
+				line = new tr();
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getName())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getTableName())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getSize())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getExpireMinutes())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getMaxSize())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getHit())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getMiss())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.isDistributed())));
+				if (ccache.getNodeId() != null)
+				{
+					line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getNodeId())));
+				}
+				table.addElement(line);
 			}
-			table.addElement(line);
+		}
+		for (CacheInfo ccache : instances)
+		{		
+			if (ccache.getName().endsWith("|CCacheListener"))
+				continue;
+			if (ccache.getSize() == 0)
+			{
+				line = new tr();
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getName())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getTableName())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getSize())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getExpireMinutes())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getMaxSize())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getHit())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getMiss())));
+				line.addElement(new td().addElement(WebEnv.getCellContent(ccache.isDistributed())));
+				if (ccache.getNodeId() != null)
+				{
+					line.addElement(new td().addElement(WebEnv.getCellContent(ccache.getNodeId())));
+				}
+				table.addElement(line);
+			}
 		}
 		//
 		b.addElement(table);
@@ -1640,13 +1724,21 @@ public class AdempiereMonitor extends HttpServlet
 		for (TrxInfo trx : trxs)
 		{
 			line = new tr();
-			line.addElement(new th().addElement("Active Transaction "));
+			line.addElement(new th().addElement((trx.isActive() ? "Active" : "Inactive") + " Transaction "));
 			td td = new td();
-			td.setOnClick("var newwindow=window.open('','Popup', 'width=800,height=600');newwindow.document.write('<title>"  + escapeEcmaScript(trx.getDisplayName()) +"</title>"
-					+ "<pre>" + escapeEcmaScript(trx.getStackTrace()) + "</pre>')");
-			td.addElement("Name="+trx.getDisplayName() + ", StartTime=" + trx.getStartTime());
-			td.setTitle("Click to see stack trace");
-			td.setStyle("text-decoration: underline; color: blue");
+			if (Util.isEmpty(trx.getStackTrace())) {
+				td.addElement("Name=" + trx.getDisplayName() + ", StartTime=" + formatTimestampWithTimeZone(0,trx.getStartTime()));
+				td.setTitle(trx.getTrxName());
+			} else {
+				td.setOnClick("var newwindow=window.open('','Popup', 'width=800,height=600');newwindow.document.write('<title>"  + escapeEcmaScript(trx.getDisplayName()) +"</title>"
+						+ "<p><b>Transaction = " + trx.getDisplayName() + "</b></p>"
+						+ "<p><b>TrxName = " + trx.getTrxName() + "</b></p>"
+						+ "<pre>" + escapeEcmaScript(trx.getStackTrace()) + "</pre>')");
+				label lbl = new label().addElement(trx.getDisplayName());
+				lbl.setStyle("text-decoration: underline; color: blue");
+				td.addElement("Name=").addElement(lbl).addElement(", StartTime=" + formatTimestampWithTimeZone(0,trx.getStartTime()));
+				td.setTitle("Click to see stack trace for " + trx.getTrxName());
+			}
 			line.addElement(td);
 			table.addElement(line);
 		}

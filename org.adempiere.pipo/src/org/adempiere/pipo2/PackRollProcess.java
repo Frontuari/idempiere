@@ -20,6 +20,7 @@ package org.adempiere.pipo2;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.PreparedStatement;
@@ -136,7 +137,7 @@ public class PackRollProcess extends SvrProcess {
 									DB.close(rs, pstmt);
 								}
 								// Get Table value
-								tableName = MTable.getTableName(getCtx(), backup.getAD_Table_ID());
+								tableName = MTable.get(getCtx(), backup.getAD_Table_ID(), get_TrxName()).getTableName();
 
 								// Get Column Name
 								// Adjust for Column reference table
@@ -197,7 +198,7 @@ public class PackRollProcess extends SvrProcess {
 									if (v_AD_Reference_ID == DisplayType.String
 											|| v_AD_Reference_ID == DisplayType.Text
 											|| v_AD_Reference_ID == DisplayType.Memo
-											|| v_AD_Reference_ID == DisplayType.List
+											|| DisplayType.isList(v_AD_Reference_ID)
 											// Carlos Ruiz globalqss, special
 											// treatment for EntityType
 											// it's a Table reference but must
@@ -348,10 +349,8 @@ public class PackRollProcess extends SvrProcess {
 
 	/**
 	 * Open input file for processing
-	 *
-	 * @param String
-	 *            file with path
-	 *
+	 * @param filePath file with path
+	 * @return
 	 */
 	public FileInputStream OpenInputfile(String filePath) {
 
@@ -369,10 +368,8 @@ public class PackRollProcess extends SvrProcess {
 
 	/**
 	 * Open output file for processing
-	 *
-	 * @param String
-	 *            file with path
-	 *
+	 * @param filePath file with path
+	 * @return
 	 */
 	public OutputStream OpenOutputfile(String filePath) {
 
@@ -390,10 +387,9 @@ public class PackRollProcess extends SvrProcess {
 
 	/**
 	 * Copyfile
-	 *
-	 * @param String
-	 *            file with path
-	 *
+	 * @param sourceFile
+	 * @param targetFile
+	 * @return
 	 */
 	public int copyFile(String sourceFile, String targetFile) {
 
@@ -410,8 +406,6 @@ public class PackRollProcess extends SvrProcess {
 				target.write(data);
 				byteCount++;
 			}
-			source.close();
-			target.close();
 
 			System.out.println("Successfully copied " + byteCount + " bytes.");
 		} catch (Exception e) {
@@ -420,6 +414,21 @@ public class PackRollProcess extends SvrProcess {
 			System.out.println(e.toString());
 
 			success = -1;
+		} finally {
+			if (source != null) {
+				try {
+					source.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (target != null) {
+				try {
+					target.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 		return success;
 	}

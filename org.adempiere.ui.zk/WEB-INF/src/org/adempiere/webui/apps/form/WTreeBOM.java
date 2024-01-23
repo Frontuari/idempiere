@@ -46,14 +46,14 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MProduct;
-import org.compiere.model.MProductBOM;
 import org.compiere.model.MUOM;
-import org.compiere.model.Query;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Language;
 import org.compiere.util.Msg;
+import org.eevolution.model.MPPProductBOM;
+import org.eevolution.model.MPPProductBOMLine;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -70,34 +70,57 @@ import org.zkoss.zul.Treecols;
 import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.West;
 
+/**
+ * Form to view BOM tree.
+ */
+@org.idempiere.ui.zk.annotation.Form(name = "org.compiere.apps.form.VTreeBOM")
 public class WTreeBOM extends TreeBOM implements IFormController, EventListener<Event> {
 	
 	private int         	m_WindowNo = 0;
+	/** Custom form/window UI instance */
 	private CustomForm		m_frame = new CustomForm();
+	/** BOM Tree. Child of {@link #treePane}. */
 	private Tree			m_tree = new Tree();
+	/** Main layout of {@link #m_frame} */
 	private Borderlayout 	mainLayout = new Borderlayout();
+	/** North of {@link #mainLayout}. Parameter panel. */
 	private Panel			northPanel = new Panel();
 	private Panel			southPanel = new Panel();
 	private Label			labelProduct = new Label();
+	/** Product parameter */
 	private WSearchEditor   fieldProduct;
-	private West 			west = new West();	
+	/** West of {@link #mainLayout} */
+	private West 			west = new West();
+	/** BOM Implosion Y/N parameter */
 	private Checkbox		implosion	= new Checkbox ();
+	/** Show M_Product.Value of {@link #fieldProduct} */
 	private Label			treeInfo	= new Label ();
 	
+	/** Center of {@link #mainLayout} */
 	private Panel dataPane = new Panel();
+	/** Tree panel. Child of {@link #west} */
 	private Panel treePane = new Panel();
 
 	private mySimpleTreeNode   m_selectedNode;	//	the selected model node
+	/** M_Product_ID of selected tree node */
 	private int   m_selected_id = 0;
+	/** Action buttons panel. Child of {@link #southLayout} */
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true);
+	/** List of BOM components. Child of {@link #dataPane} */
 	private WListbox tableBOM = ListboxFactory.newDataTable();
 	private Vector<Vector<Object>> dataBOM = new Vector<Vector<Object>>();
+	/** Layout of {@link #northPanel} */
 	private Hlayout northLayout = new Hlayout();
+	/** Layout of {@link #southPanel} */
 	private Hlayout southLayout = new Hlayout();
 	private mySimpleTreeNode  	m_root = null;
 	private boolean reload = false;
+	/** Expand or collapse all tree nodes. Child of {@link #southLayout}. */
 	private Checkbox treeExpand = new Checkbox();
 	
+	/**
+	 * Default constructor
+	 */
 	public WTreeBOM(){
 		try{
 			m_WindowNo = m_frame.getWindowNo();
@@ -110,11 +133,12 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		}
 	}
 	
+	/**
+	 * Load data into {@link #tableBOM}.
+	 */
 	private void loadTableBOM()
 	{
-
-	//  Header Info
-		
+		// Header Info		
 		Vector<String> columnNames = new Vector<String>();
 		
 		columnNames.add(Msg.translate(Env.getCtx(), "IsActive"));        // 0
@@ -137,6 +161,10 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		
 	}   //  dynInit
 	
+	/**
+	 * Initialize fields and listeners
+	 * @throws Exception
+	 */
 	private void preInit() throws Exception
 	{
 		Properties ctx = Env.getCtx();
@@ -156,13 +184,14 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		};
 		
 		implosion.addActionListener(this);
-		treeExpand.addActionListener(this);
-		
+		treeExpand.addActionListener(this);		
 	}
 	
+	/**
+	 * Layout {@link #m_frame}
+	 */
 	private void jbInit()
-	{
-	
+	{	
 		ZKUpdateUtil.setWidth(m_frame, "99%");
 		ZKUpdateUtil.setHeight(m_frame, "100%");
 		m_frame.setStyle("position: absolute; padding: 0; margin: 0");
@@ -172,8 +201,7 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		northPanel.appendChild(northLayout);
 		southPanel.appendChild(southLayout);
 		ZKUpdateUtil.setVflex(southPanel, "min");
-		
-		
+				
 		labelProduct.setText (Msg.getElement(Env.getCtx(), "M_Product_ID"));
 		implosion.setText (Msg.getElement(Env.getCtx(), "Implosion"));
 		treeInfo.setText (Msg.getElement(Env.getCtx(), "Sel_Product_ID")+": ");
@@ -241,6 +269,9 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		center.setAutoscroll(true);
 	}
 	
+	/**
+	 * Close form.
+	 */
 	public void dispose()
 	{
 		SessionManager.getAppDesktop().closeActiveWindow();
@@ -251,7 +282,8 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		
 		if (event.getTarget().getId().equals(ConfirmPanel.A_OK))
 		{
-			if(m_selected_id > 0 || getM_Product_ID() > 0) action_loadBOM();
+			if(getM_Product_ID() > 0)
+				action_loadBOM();
 		}
 		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL)) 
 		{
@@ -277,6 +309,9 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 
 	}
 
+	/**
+	 * Expand of collapse all nodes of {@link #m_tree}.
+	 */
 	private void expandOrCollapse() {
 		if (treeExpand.isChecked())
 		{
@@ -291,8 +326,8 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 	}
 	
 	/**
-	 *  Set the selected node & initiate all listeners
-	 *  @param nd node
+	 * Set selected node & load BOM.
+	 * @param nd node
 	 * @throws Exception 
 	 */
 	private void setSelectedNode (mySimpleTreeNode nd) throws Exception
@@ -306,10 +341,13 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
         m_selected_id =  ((KeyNamePair)nodeInfo.elementAt(2)).getKey() ;
 
         if(m_selected_id > 0)
-        	action_reloadBOM();
-        
+        	action_reloadBOM();        
 	}   //  setSelectedNode
 	
+	/**
+	 * Load BOM of selected product from {@link #fieldProduct}.
+	 * @throws Exception
+	 */
 	private void action_loadBOM() throws Exception
 	{
 		reload = false;
@@ -319,6 +357,7 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 			return;
 		MProduct product = MProduct.get(Env.getCtx(), M_Product_ID);
 		treeInfo.setText (Msg.getElement(Env.getCtx(), "Sel_Product_ID")+": "+product.getValue());
+		m_selected_id = M_Product_ID;
 
 		Vector<Object> line = new Vector<Object>(10);
 		line.add( Boolean.valueOf(product.isActive()));   //  0 IsActive
@@ -340,6 +379,7 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 
 		if (isImplosion())
 		{
+			//let selected product as BOM component and show BOM parent products as tree node.
 			try{
 				m_tree.setModel(null);
 			}catch(Exception e)
@@ -351,11 +391,11 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 				m_tree.getTreefoot().detach();
 			if (m_tree.getTreechildren() != null)
 				m_tree.getTreechildren().detach();
-			
-			for (MProductBOM bomline : getParentBOMs(M_Product_ID))
+		
+			for (MPPProductBOMLine bomline : MPPProductBOMLine.getByProduct(product))
 			{
 				addParent(bomline, m_root);
-			}     
+			} 
 			
 			Treecols treeCols = new Treecols();
 			m_tree.appendChild(treeCols);
@@ -369,6 +409,7 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		}
 		else
 		{
+			//let selected product as BOM parent and show BOM components as tree node.
 			try{
 				m_tree.setModel(null);
 			}catch(Exception e)
@@ -380,10 +421,11 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 				m_tree.getTreefoot().detach();
 			if (m_tree.getTreechildren() != null)
 				m_tree.getTreechildren().detach();
-			for (MProductBOM bom : getChildBOMs(M_Product_ID, true))
+			
+			for (MPPProductBOMLine bom : MPPProductBOMLine.getBOMLines(product))
 			{
-				addChild(bom, m_root);                    
-			}      
+				addChild(bom, m_root);
+			}
 			
 			Treecols treeCols = new Treecols();
 			m_tree.appendChild(treeCols);
@@ -402,6 +444,10 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		treeExpand.setChecked(false);
 	}
 
+	/**
+	 * Load BOM of selected tree node.
+	 * @throws Exception
+	 */
 	private void action_reloadBOM() throws Exception
 	{
 		reload = true;
@@ -417,7 +463,7 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		if (isImplosion())
 		{
 			
-			for (MProductBOM bomline : getParentBOMs(M_Product_ID))
+			for (MPPProductBOMLine bomline : MPPProductBOMLine.getByProduct(MProduct.get(M_Product_ID)))
 			{
 				addParent(bomline, m_selectedNode);
 			}     
@@ -426,7 +472,7 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		else
 		{
 
-			for (MProductBOM bom : getChildBOMs(M_Product_ID, true))
+			for (MPPProductBOMLine bom : MPPProductBOMLine.getBOMLines(product))
 			{
 				addChild(bom, m_selectedNode);                    
 			}      
@@ -436,11 +482,16 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		loadTableBOM();
 	}
 
-	
-	public void addChild(MProductBOM bomline, mySimpleTreeNode parent) throws Exception 
+	/**
+	 * Add bomline to tree and children of bomline (if any) recursively.<br/>
+	 * If bomline is component of current selected product ({@link #m_selected_id} or {@link #fieldProduct}), add to {@link #dataBOM}.
+	 * @param bomline
+	 * @param parent
+	 * @throws Exception
+	 */
+	public void addChild(MPPProductBOMLine bomline, mySimpleTreeNode parent) throws Exception
 	{
-
-		MProduct M_Product = MProduct.get(getCtx(), bomline.getM_ProductBOM_ID());
+		MProduct M_Product = MProduct.get(getCtx(), bomline.getM_Product_ID());
 
 		Vector<Object> line = new Vector<Object>(10);
 		line.add( Boolean.valueOf(bomline.isActive()));   //  0 IsActive
@@ -450,38 +501,46 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		MUOM u = new MUOM(M_Product.getCtx(), M_Product.getC_UOM_ID(), M_Product.get_TrxName());
 		KeyNamePair uom = new KeyNamePair(u.get_ID(),u.getUOMSymbol());
 		line.add(uom); //  3 C_UOM_ID
-		line.add((BigDecimal) ((bomline.getBOMQty()!=null) ? bomline.getBOMQty() : Env.ZERO).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros());  //  4 QtyBOM
+		line.add((BigDecimal) ((bomline.getQtyBOM()!=null) ? bomline.getQtyBOM() : Env.ZERO).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros());  //  4 QtyBOM
 
 		mySimpleTreeNode child = new mySimpleTreeNode(line,new ArrayList<TreeNode<Object>>());
 		if (!reload)
 			parent.getChildren().add(child);
-		
-		if (m_selected_id == bomline.getM_Product_ID() || getM_Product_ID() == bomline.getM_Product_ID())		
+	
+		if (m_selected_id == bomline.getParent().getM_Product_ID() || getM_Product_ID() == bomline.getParent().getM_Product_ID())
 			dataBOM.add(line);
-		
+	
 		if (reload) return;
 
-		for (MProductBOM bom : getChildBOMs(bomline.getM_ProductBOM_ID(), false))
+		for (MPPProductBOMLine bom : MPPProductBOMLine.getBOMLines(M_Product))
 		{
 			addChild(bom, child);
 		}
 	}
 
-	public void addParent(MProductBOM bom, mySimpleTreeNode parent) throws Exception 
+	/**
+	 * Add parent product of bomline to tree and parent of parent product (if any) recursively.<br/>
+	 * If bomline is component of current selected product ({@link #m_selected_id} or {@link #fieldProduct}), add to {@link #dataBOM}.
+	 * @param bomline
+	 * @param parent
+	 * @throws Exception
+	 */
+	public void addParent(MPPProductBOMLine bomline, mySimpleTreeNode parent) throws Exception 
 	{
+		MPPProductBOM bom = new MPPProductBOM(getCtx(), bomline.getPP_Product_BOM_ID(), null);
 		MProduct M_Product = MProduct.get(getCtx(), bom.getM_Product_ID());
 
 		Vector<Object> line = new Vector<Object>(10);
 		line.add( Boolean.valueOf(M_Product.isActive()));   //  0 IsActive
-		line.add( Integer.valueOf(bom.getLine()).toString()); // 1 Line
+		line.add( Integer.valueOf(bomline.getLine()).toString()); // 1 Line
 		KeyNamePair pp = new KeyNamePair(M_Product.getM_Product_ID(),M_Product.getValue().concat("_").concat(M_Product.getName()));
 		line.add(pp); //  2 M_Product_ID
 		MUOM u = new MUOM(M_Product.getCtx(), M_Product.getC_UOM_ID(), M_Product.get_TrxName());
 		KeyNamePair uom = new KeyNamePair(u.get_ID(),u.getUOMSymbol());
 		line.add(uom); //  3 C_UOM_ID
-		line.add((BigDecimal) ((bom.getBOMQty()!=null) ? bom.getBOMQty() : Env.ZERO).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros());  //  4 QtyBOM
+		line.add((BigDecimal) ((bomline.getQtyBOM()!=null) ? bomline.getQtyBOM() : Env.ZERO).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros());  //  4 QtyBOM
 
-		if(m_selected_id == bom.getM_ProductBOM_ID() || getM_Product_ID() == bom.getM_ProductBOM_ID())		
+		if(m_selected_id == bomline.getM_Product_ID() || getM_Product_ID() == bomline.getM_Product_ID())
 			dataBOM.add(line);
 
 		mySimpleTreeNode child = new mySimpleTreeNode(line,new ArrayList<TreeNode<Object>>());
@@ -490,13 +549,15 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 
 		if (reload) return;
 		
-		for (MProductBOM bomline : getParentBOMs(bom.getM_Product_ID()))
+		for (MPPProductBOMLine bl : MPPProductBOMLine.getByProduct(M_Product))
 		{
-			addParent(bomline, child);
+			addParent(bl, child);
 		}
-
 	}
 	
+	/**
+	 * @return M_Product_ID from {@link #fieldProduct}
+	 */
 	private int getM_Product_ID() {
 		Integer Product = (Integer)fieldProduct.getValue();
 		if (Product == null)
@@ -504,26 +565,9 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 		return Product.intValue(); 
 	}
 	
-	private List<MProductBOM> getChildBOMs(int M_Product_ID, boolean onlyActiveRecords)
-	{
-		String filter = MProductBOM.COLUMNNAME_M_Product_ID+"=?"
-						+(onlyActiveRecords ? " AND IsActive='Y'" : "");
-		return new Query(getCtx(), MProductBOM.Table_Name, filter, null)
-					.setParameters(new Object[]{M_Product_ID})
-					.setOrderBy(MProductBOM.COLUMNNAME_Line)
-					.list();
-	}
-	
-	private List<MProductBOM> getParentBOMs(int M_Product_ID) 
-	{
-		String filter = MProductBOM.COLUMNNAME_M_ProductBOM_ID+"=?";
-		return new Query(getCtx(), MProductBOM.Table_Name, filter, null)
-						.setParameters(new Object[]{M_Product_ID})
-						.setOrderBy(MProductBOM.COLUMNNAME_M_Product_ID+","+MProductBOM.COLUMNNAME_Line)
-						.list()
-						;
-	}
-
+	/**
+	 * @return true for implosion, false for explosion.
+	 */
 	private boolean isImplosion() {
 		return implosion.isSelected();
 	}
@@ -535,28 +579,29 @@ public class WTreeBOM extends TreeBOM implements IFormController, EventListener<
 
 }
 
-/**************************************************************************
- * 	mySimpleTreeNode
- *  - Override toString method for display
+/**
+ * mySimpleTreeNode
+ * - Override toString method for display.
  *  
  */
 class mySimpleTreeNode extends DefaultTreeNode<Object>
 {
-
 	/**
-	 * 
+	 * generated serial id 
 	 */
 	private static final long serialVersionUID = -7430786399068849936L;
 
+	/**
+	 * @param data
+	 * @param children
+	 */
 	public mySimpleTreeNode(Object data, List<TreeNode<Object>> children) {
 		
-		super(data, children);
-		
+		super(data, children);		
 	}
 	
 	@Override 
-	public String toString(){
-		
+	public String toString(){		
 		Vector <?> userObject = (Vector <?>)getData();
 		// Product
 		StringBuilder sb = new StringBuilder(((KeyNamePair)userObject.elementAt(2)).getName());
@@ -568,5 +613,4 @@ class mySimpleTreeNode extends DefaultTreeNode<Object>
 		
 		return sb.toString();
 	}
-
 }

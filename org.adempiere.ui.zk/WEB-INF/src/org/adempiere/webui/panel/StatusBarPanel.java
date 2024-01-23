@@ -37,15 +37,14 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zul.Cell;
+import org.zkoss.zul.Center;
 import org.zkoss.zul.Div;
+import org.zkoss.zul.East;
 import org.zkoss.zul.Hbox;
-import org.zkoss.zul.Vbox;
+import org.zkoss.zul.West;
+import org.zkoss.zul.Borderlayout;
 
 /**
- * This class is based on org.compiere.apps.StatusBar written by Jorg Janke.
- * @author Jorg Janke
- *
  * @author  <a href="mailto:agramdass@gmail.com">Ashley G Ramdass</a>
  * @date    Mar 12, 2007
  * @version $Revision: 0.10 $
@@ -53,9 +52,9 @@ import org.zkoss.zul.Vbox;
 public class StatusBarPanel extends Panel implements EventListener<Event>, IStatusBar
 {
 	/**
-	 *
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = -3262889055635240201L;
+	private static final long serialVersionUID = 1217160210065925924L;
 
 	private static final String POPUP_INFO_BACKGROUND_STYLE = "background-color: #262626; -moz-border-radius: 3px; -webkit-border-radius: 3px; border: 1px solid #262626; border-radius: 3px; ";
 	private static final String POPUP_ERROR_BACKGROUND_STYLE = "background-color: #8B0000; -moz-border-radius: 3px; -webkit-border-radius: 3px; border: 1px solid #8B0000; border-radius: 3px; ";
@@ -73,72 +72,65 @@ public class StatusBarPanel extends Panel implements EventListener<Event>, IStat
 
 	private String m_text;
 
-	private Div east;
-
-	private Div west;
+	private East east;
 
 	private Div popup;
 
 	private Div popupContent;
 	private String popupStyle;
 
+	/**
+	 * Default constructor
+	 */
 	public StatusBarPanel()
 	{
         super();
         init();
     }
 
+	/**
+	 * Layout panel
+	 */
     private void init()
     {
     	setWidgetAttribute(AdempiereWebUI.WIDGET_INSTANCE_NAME, "statusBar");
         statusDB = new Label("  ");
         statusLine = new Label();
-
-        Hbox hbox = new Hbox();
-        ZKUpdateUtil.setWidth(hbox, "100%");
-        ZKUpdateUtil.setHeight(hbox, "100%");
-        ZKUpdateUtil.setHflex(hbox, "1");
-        Cell leftCell = new Cell();
-        hbox.appendChild(leftCell);
-        Cell rightCell = new Cell();
-        hbox.appendChild(rightCell);
-        
-        ZKUpdateUtil.setWidth(leftCell, "50%");
-        ZKUpdateUtil.setWidth(rightCell, "50%");
-        
-        west = new Div();
-        west.setStyle("text-align: left; ");
         selectedLine = new Label();
-        west.appendChild(selectedLine);
         selectedLine.setVisible(false);
-        LayoutUtils.addSclass("status-selected", selectedLine);
-        
-        west.appendChild(statusLine);
-        Vbox vbox = new Vbox();
-        vbox.setPack("center");
-        LayoutUtils.addSclass("status", vbox);
-        vbox.appendChild(west);
-        leftCell.appendChild(vbox);
-
-        east = new Div();
-        ZKUpdateUtil.setWidth(east, "100%");
-        east.setStyle("text-align: right; ");
-        
         infoLine = new Label();
-    	east.appendChild(infoLine);
-    	infoLine.setVisible(false);
-        east.appendChild(statusDB);
+        infoLine.setVisible(false);
+
+        Borderlayout statusBar = new Borderlayout();
+        statusBar.setClass("statusBar");
+        ZKUpdateUtil.setWidth(statusBar, "100%");
+        ZKUpdateUtil.setHeight(statusBar, "24px");
+
+        West west = new West();
+        statusBar.appendChild(west);
+
+        Center center = new Center();
+        statusBar.appendChild(center);
+
+        east = new East();
+        statusBar.appendChild(east);
+
+        LayoutUtils.addSclass("status-selected", selectedLine);
+        west.appendChild(selectedLine);
+
+        center.appendChild(statusLine);
+
+        Hbox statusDbHbox = new Hbox();
+        statusDbHbox.appendChild(infoLine);
+        LayoutUtils.addSclass("status-info", infoLine);
+        statusDbHbox.appendChild(statusDB);
 
         LayoutUtils.addSclass("status-db", statusDB);
-        LayoutUtils.addSclass("status-info", infoLine);
-        vbox = new Vbox();
-        vbox.setAlign("stretch");
-        vbox.setPack("center");
-        LayoutUtils.addSclass("status", vbox);
-        vbox.appendChild(east);
-        rightCell.appendChild(vbox);
+        east.appendChild(statusDbHbox);
+        east.setStyle("text-align: left; ");
+        ZKUpdateUtil.setHflex(east, "min");
 
-        this.appendChild(hbox);
+        this.appendChild(statusBar);
 
         statusDB.addEventListener(Events.ON_CLICK, this);
 
@@ -174,6 +166,7 @@ public class StatusBarPanel extends Panel implements EventListener<Event>, IStat
 
         m_text = text;
         m_dse = dse;
+        invalidate();
     }
 
     /**
@@ -238,6 +231,7 @@ public class StatusBarPanel extends Panel implements EventListener<Event>, IStat
 	    	AuScript aus = new AuScript(popup, script);
 	    	Clients.response("statusPopupFade", aus);
     	}
+        invalidate();
     }
 
     /**
@@ -248,6 +242,9 @@ public class StatusBarPanel extends Panel implements EventListener<Event>, IStat
    		return statusLine.getValue();
    	}
 
+    /**
+     * Create popup for status line
+     */
 	private void createPopup() {
 		popupContent = new Div();
 
@@ -259,22 +256,26 @@ public class StatusBarPanel extends Panel implements EventListener<Event>, IStat
         popup.setStyle("position: absolute; display: none");
 	}
 
+	/**
+	 * Show status line popup
+	 */
 	private void showPopup() {
 		popup.setVisible(true);
 		popup.setStyle(popupStyle);
 		if (getRoot() == null || !getRoot().isVisible() ) return;
 
-		String script = "var d = zk.Widget.$('" + popup.getUuid() + "').$n();";
+		//client side script to position popup
+		String script = "(function(){let d = zk.Widget.$('" + popup.getUuid() + "').$n();";
 		script += "d.style.display='block';d.style.visibility='hidden';";
-		script += "var dhs = document.defaultView.getComputedStyle(d, null).getPropertyValue('height');";
-		script += "var dh = parseInt(dhs, 10);";
-		script += "var r = zk.Widget.$('" + getRoot().getUuid() + "').$n();";
-		script += "var rhs = document.defaultView.getComputedStyle(r, null).getPropertyValue('height');";
-		script += "var rh = parseInt(rhs, 10);";
-		script += "var p = jq('#"+getRoot().getUuid()+"').zk.cmOffset();";
+		script += "let dhs = document.defaultView.getComputedStyle(d, null).getPropertyValue('height');";
+		script += "let dh = parseInt(dhs, 10);";
+		script += "let r = zk.Widget.$('" + getRoot().getUuid() + "').$n();";
+		script += "let rhs = document.defaultView.getComputedStyle(r, null).getPropertyValue('height');";
+		script += "let rh = parseInt(rhs, 10);";
+		script += "let p = jq('#"+getRoot().getUuid()+"').zk.cmOffset();";
 		script += "d.style.top=(rh-dh-5)+'px';";
 		script += "d.style.left=(p[0]+1)+'px';";
-		script += "d.style.visibility='visible';";
+		script += "d.style.visibility='visible';})()";
 
 		AuScript aus = new AuScript(popup, script);
 		Clients.response(aus);
@@ -303,15 +304,21 @@ public class StatusBarPanel extends Panel implements EventListener<Event>, IStat
 			infoLine.setVisible(false);
 		else
 			infoLine.setVisible(true);
+        invalidate();
 	}	//	setInfo
 
+	/**
+	 * @param rowNum
+	 */
 	public void setSelectedRowNumber (String rowNum){
 		selectedLine.setVisible(rowNum != null);
 		if (rowNum != null){
 			selectedLine.setValue(rowNum);
 		}
+        invalidate();
 	}
 	
+	@Override
 	public void onEvent(Event event) throws Exception {
 		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget() == statusDB)
 		{

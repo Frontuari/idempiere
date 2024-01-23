@@ -291,7 +291,7 @@ public class AlertProcessor extends AdempiereServer
 					note.saveEx();
 					if (attachments.size() > 0) {
 						// Attachment
-						MAttachment attachment = new MAttachment (getCtx(), MNote.Table_ID, note.getAD_Note_ID(), trx.getTrxName());
+						MAttachment attachment = new MAttachment (getCtx(), MNote.Table_ID, note.getAD_Note_ID(), note.getAD_Note_UU(), trx.getTrxName());
 						attachment.setClientOrg(alert.getAD_Client_ID(), alert.getAD_Org_ID());
 						for (File f : attachments) {
 							attachment.addEntry(f);
@@ -377,7 +377,7 @@ public class AlertProcessor extends AdempiereServer
 	 * @param sql sql select
 	 * @param trxName transaction
 	 * @param attachments (ignored)
-	 * @return list of rows & values
+	 * @return list of rows and values
 	 * @throws Exception
 	 */
 	protected String getPlainTextReport(MAlertRule rule, String sql, String trxName, Collection<File> attachments)

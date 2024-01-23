@@ -35,6 +35,7 @@ import org.adempiere.server.rpl.IImportProcessor;
 import org.compiere.model.AdempiereProcessor;
 import org.compiere.model.MClient;
 import org.compiere.model.MOrgInfo;
+import org.compiere.model.SystemIDs;
 import org.compiere.model.X_IMP_Processor_Type;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
@@ -98,14 +99,14 @@ public class ReplicationProcessor extends AdempiereServer {
 		    // process is not started!
 			
 			// Prepare a ctx
-			Env.setContext(mImportProcessor.getCtx(), "#AD_Client_ID", mImportProcessor.getAD_Client_ID());
-			Env.setContext(mImportProcessor.getCtx(), "#AD_Org_ID", mImportProcessor.getAD_Org_ID());
+			Env.setContext(mImportProcessor.getCtx(), Env.AD_CLIENT_ID, mImportProcessor.getAD_Client_ID());
+			Env.setContext(mImportProcessor.getCtx(), Env.AD_ORG_ID, mImportProcessor.getAD_Org_ID());
 			if (mImportProcessor.getAD_Org_ID() != 0) {
 				MOrgInfo schedorg = MOrgInfo.get(getCtx(), mImportProcessor.getAD_Org_ID(), null);
 				if (schedorg.getM_Warehouse_ID() > 0)
-					Env.setContext(mImportProcessor.getCtx(), "#M_Warehouse_ID", schedorg.getM_Warehouse_ID());
+					Env.setContext(mImportProcessor.getCtx(), Env.M_WAREHOUSE_ID, schedorg.getM_Warehouse_ID());
 				}
-			Env.setContext(mImportProcessor.getCtx(), "#AD_User_ID", getAD_User_ID());
+			Env.setContext(mImportProcessor.getCtx(), Env.AD_USER_ID, getAD_User_ID());
 		    
 		    m_summary = new StringBuffer();
 		    String trxName = mImportProcessor.get_TrxName();
@@ -166,7 +167,7 @@ public class ReplicationProcessor extends AdempiereServer {
 		else if (mImportProcessor.getUpdatedBy() > 0)
 			AD_User_ID = mImportProcessor.getUpdatedBy();
 		else
-			AD_User_ID = 100; //fall back to SuperUser
+			AD_User_ID = SystemIDs.USER_SUPERUSER; //fall back to SuperUser
 			
 		return AD_User_ID;
 	}

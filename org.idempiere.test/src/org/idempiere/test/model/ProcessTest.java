@@ -25,12 +25,15 @@
 package org.idempiere.test.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
 
+import org.adempiere.base.Core;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutConfirm;
@@ -39,7 +42,10 @@ import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MProcess;
 import org.compiere.model.MProduct;
+import org.compiere.model.Query;
+import org.compiere.model.SystemIDs;
 import org.compiere.process.DocAction;
+import org.compiere.process.ProcessCall;
 import org.compiere.process.ProcessInfo;
 import org.compiere.process.ServerProcessCtl;
 import org.compiere.util.Env;
@@ -50,6 +56,7 @@ import org.compiere.wf.MWFNodeNext;
 import org.compiere.wf.MWFNodePara;
 import org.compiere.wf.MWorkflow;
 import org.idempiere.test.AbstractTestCase;
+import org.idempiere.test.DictionaryIDs;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -69,7 +76,7 @@ public class ProcessTest extends AbstractTestCase {
 		//first test, using MProcess.processIt
 		MOrder order = new MOrder(Env.getCtx(), 0, getTrxName());
 		//Joe Block
-		order.setBPartner(MBPartner.get(Env.getCtx(), 118));
+		order.setBPartner(MBPartner.get(Env.getCtx(), DictionaryIDs.C_BPartner.JOE_BLOCK.id));
 		order.setC_DocTypeTarget_ID(MOrder.DocSubTypeSO_Standard);
 		order.setDeliveryRule(MOrder.DELIVERYRULE_CompleteOrder);
 		order.setDocStatus(DocAction.STATUS_Drafted);
@@ -82,12 +89,12 @@ public class ProcessTest extends AbstractTestCase {
 		MOrderLine line1 = new MOrderLine(order);
 		line1.setLine(10);
 		//Azalea Bush
-		line1.setProduct(MProduct.get(Env.getCtx(), 128));
+		line1.setProduct(MProduct.get(Env.getCtx(), DictionaryIDs.M_Product.AZALEA_BUSH.id));
 		line1.setQty(new BigDecimal("1"));
 		line1.setDatePromised(today);
 		line1.saveEx();
 		
-		int Process_Order=104;
+		int Process_Order=SystemIDs.PROCESS_C_ORDER_PROCESS;
 		MProcess process = MProcess.get(Env.getCtx(), Process_Order);
 		ProcessInfo pi = new ProcessInfo(process.getName(), process.get_ID());
 		pi.setAD_Client_ID(getAD_Client_ID());
@@ -117,8 +124,8 @@ public class ProcessTest extends AbstractTestCase {
 	
 	@Test
 	public void testJavaProcess() {
-		int Verify_BOM=136;
-		int Patio_Chair=133;
+		int Verify_BOM=SystemIDs.PROCESS_PP_PRODUCT_BOM;
+		int Patio_Chair=DictionaryIDs.M_Product.P_CHAIR.id;
 		
 		//first, test MProcess.processIt
 		MProcess process = MProcess.get(Env.getCtx(), Verify_BOM);
@@ -140,6 +147,8 @@ public class ProcessTest extends AbstractTestCase {
 		pi.setAD_User_ID(getAD_User_ID());
 		pi.setRecord_ID(Patio_Chair);
 		pi.setTransactionName(getTrxName());
+		if(process.getAD_PrintFormat_ID() > 0)
+			pi.setTransientObject(process.getAD_PrintFormat());
 		ServerProcessCtl.process(pi, getTrx());
 		if (pi.isError()) {
 			fail("Error running Verify BOM process" + (Util.isEmpty(pi.getSummary()) ? "" : " : "+pi.getSummary()));
@@ -177,6 +186,34 @@ public class ProcessTest extends AbstractTestCase {
 		order.load(getTrxName());
 		assertEquals(DocAction.STATUS_Completed, order.getDocStatus(), "Expected Completed Status for Order");
 		
+		//dummy order for dummy shipment below
+		MOrder order1 = new MOrder(Env.getCtx(), 0, getTrxName());
+		//Joe Block
+		order1.setBPartner(MBPartner.get(Env.getCtx(), 118));
+		order1.setC_DocTypeTarget_ID(MOrder.DocSubTypeSO_Standard);
+		order1.setDeliveryRule(MOrder.DELIVERYRULE_CompleteOrder);
+		order1.setDocStatus(DocAction.STATUS_Drafted);
+		order1.setDocAction(DocAction.ACTION_Complete);
+		order1.setDateOrdered(today);
+		order1.setDatePromised(today);
+		order1.saveEx();
+		
+		MOrderLine line2 = new MOrderLine(order1);
+		line2.setLine(10);
+		//Azalea Bush
+		line2.setProduct(MProduct.get(Env.getCtx(), 128));
+		line2.setQty(new BigDecimal("1"));
+		line2.setDatePromised(today);
+		line2.saveEx();
+		
+		pi = MWorkflow.runDocumentActionWorkflow(order1, DocAction.ACTION_Complete);
+		if (pi.isError()) {
+			fail("Failed to complete order" + (Util.isEmpty(pi.getSummary()) ? "" : " : "+pi.getSummary()));
+			return;
+		}
+		order1.load(getTrxName());
+		assertEquals(DocAction.STATUS_Completed, order1.getDocStatus(), "Expected Completed Status for Order");
+		
 		int Process_InOutConfirmation = 124;
 		MWorkflow wf = new MWorkflow(Env.getCtx(), Process_InOutConfirmation, null);
 		MWFNode processNode = new MWFNode(wf, "Process_InOut", "Process_InOut");
@@ -199,6 +236,13 @@ public class ProcessTest extends AbstractTestCase {
 		docCompleteNodeNext.saveEx();
 		
 		try {
+			//dummy shipment to make sure next m_inout_id != m_inoutconfirm_id
+			int MM_Shipment=120;
+			MInOut inout1 = new MInOut(order1, MM_Shipment, order1.getDateOrdered());
+			inout1.setDocStatus(DocAction.STATUS_Drafted);
+			inout1.setDocAction(DocAction.STATUS_Completed);
+			inout1.saveEx();
+			
 			int MM_Shipment_With_Pick=148;
 			MInOut inout = new MInOut(order, MM_Shipment_With_Pick, order.getDateOrdered());
 			inout.setDocStatus(DocAction.STATUS_Drafted);
@@ -219,6 +263,8 @@ public class ProcessTest extends AbstractTestCase {
 			MInOutConfirm[] confirmations = inout.getConfirmations(true);
 			assertEquals(1, confirmations.length, "Expected 1 Shipment Confirmation Document");
 			
+			assertTrue(confirmations[0].getM_InOutConfirm_ID() != inout.getM_InOut_ID(), "Test should run with M_InOut_ID != M_InOutConfirm_ID");
+			
 			pi = MWorkflow.runDocumentActionWorkflow(confirmations[0], DocAction.ACTION_Complete);
 			if (pi.isError()) {
 				fail("Failed to complete shipment confirmation" + (Util.isEmpty(pi.getSummary()) ? "" : " : "+pi.getSummary()));
@@ -229,10 +275,22 @@ public class ProcessTest extends AbstractTestCase {
 			
 			inout.load(getTrxName());
 			assertEquals(DocAction.STATUS_Completed, inout.getDocStatus(), "Expected Completed Status for Shipment");
-		} finally {			
+		} finally {		
+			rollback();
 			docCompleteNodeNext.deleteEx(true);
 			processNodePara.deleteEx(true);
 			processNode.deleteEx(true);
 		}
 	}
+
+	@Test
+	public void testCoreJavaProcessMapping() {
+		Query query = new Query(Env.getCtx(), MProcess.Table_Name, "AD_Process_ID < 1000000 AND ClassName IS NOT NULL "
+				+ " AND EXISTS (select 1 from ad_menu where isactive='Y' and ad_process_id=ad_process.ad_process_id)", getTrxName());
+		List<MProcess> processes = query.setOnlyActiveRecords(true).list();
+		for (MProcess process : processes) {
+			ProcessCall pc = Core.getProcess(process.getClassname());
+			assertNotNull(pc, "Failed to load ProcessCall instance for " + process.toString() + ", " + process.getClassname());
+		}
+	}	
 }

@@ -19,6 +19,7 @@ package org.compiere.process;
 
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.util.DB;
 
 /**
@@ -27,6 +28,7 @@ import org.compiere.util.DB;
  *  @author Carlos Ruiz (globalqss)
  *  @version $Id: AD_PrintPaper_Default.java,v 1.0 2005/09/14 22:29:00 globalqss Exp $
  */
+@org.adempiere.base.annotation.Process
 public class AD_PrintPaper_Default extends SvrProcess
 {
 
@@ -49,7 +51,7 @@ public class AD_PrintPaper_Default extends SvrProcess
 			else if (name.equals("AD_Client_ID"))
 				p_AD_Client_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_Record_ID = getRecord_ID();
 	}	//	prepare

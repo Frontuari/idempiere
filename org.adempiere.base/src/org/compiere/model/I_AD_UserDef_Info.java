@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for AD_UserDef_Info
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_AD_UserDef_Info 
 {
@@ -44,8 +44,8 @@ public interface I_AD_UserDef_Info
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -81,12 +81,12 @@ public interface I_AD_UserDef_Info
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -138,6 +138,21 @@ public interface I_AD_UserDef_Info
 
 	public org.compiere.model.I_AD_User getAD_User() throws RuntimeException;
 
+    /** Column name AD_Window_ID */
+    public static final String COLUMNNAME_AD_Window_ID = "AD_Window_ID";
+
+	/** Set Window.
+	  * Data entry or display window
+	  */
+	public void setAD_Window_ID (int AD_Window_ID);
+
+	/** Get Window.
+	  * Data entry or display window
+	  */
+	public int getAD_Window_ID();
+
+	public org.compiere.model.I_AD_Window getAD_Window() throws RuntimeException;
+
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";
 
@@ -180,6 +195,19 @@ public interface I_AD_UserDef_Info
 	  */
 	public String getHelp();
 
+    /** Column name ImageURL */
+    public static final String COLUMNNAME_ImageURL = "ImageURL";
+
+	/** Set Image URL.
+	  * URL of  image
+	  */
+	public void setImageURL (String ImageURL);
+
+	/** Get Image URL.
+	  * URL of  image
+	  */
+	public String getImageURL();
+
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
 
@@ -193,6 +221,19 @@ public interface I_AD_UserDef_Info
 	  */
 	public boolean isActive();
 
+    /** Column name IsShowInDashboard */
+    public static final String COLUMNNAME_IsShowInDashboard = "IsShowInDashboard";
+
+	/** Set Show in Dashboard.
+	  * Show the dashlet in the dashboard
+	  */
+	public void setIsShowInDashboard (String IsShowInDashboard);
+
+	/** Get Show in Dashboard.
+	  * Show the dashlet in the dashboard
+	  */
+	public String getIsShowInDashboard();
+
     /** Column name Name */
     public static final String COLUMNNAME_Name = "Name";
 
@@ -205,6 +246,36 @@ public interface I_AD_UserDef_Info
 	  * Alphanumeric identifier of the entity
 	  */
 	public String getName();
+
+    /** Column name PO_Window_ID */
+    public static final String COLUMNNAME_PO_Window_ID = "PO_Window_ID";
+
+	/** Set PO Window.
+	  * Purchase Order Window
+	  */
+	public void setPO_Window_ID (int PO_Window_ID);
+
+	/** Get PO Window.
+	  * Purchase Order Window
+	  */
+	public int getPO_Window_ID();
+
+	public org.compiere.model.I_AD_Window getPO_Window() throws RuntimeException;
+
+    /** Column name SeqNo */
+    public static final String COLUMNNAME_SeqNo = "SeqNo";
+
+	/** Set Sequence.
+	  * Method of ordering records;
+ lowest number comes first
+	  */
+	public void setSeqNo (int SeqNo);
+
+	/** Get Sequence.
+	  * Method of ordering records;
+ lowest number comes first
+	  */
+	public int getSeqNo();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";

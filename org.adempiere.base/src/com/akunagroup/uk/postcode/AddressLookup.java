@@ -51,7 +51,9 @@ import org.w3c.dom.NodeList;
  * 
  * @author Michael Judd
  * @version $Id$
+ * @deprecated
  */
+@Deprecated(forRemoval = true, since = "11")
 public class AddressLookup implements AddressLookupInterface {
 	/** The logger. */
 	private static final CLogger log = CLogger.getCLogger(AddressLookup.class);
@@ -151,8 +153,6 @@ public class AddressLookup implements AddressLookupInterface {
 		
 		// Get the root element.
 		Element doc = xmlDoc.getDocumentElement();
-		
-		//System.out.println("Root Node: " + doc.getNodeName());
 		
 		// Get the children.
 		NodeList DataElements = doc.getElementsByTagName("DataElement"); 
@@ -318,10 +318,6 @@ public class AddressLookup implements AddressLookupInterface {
 		} else
 			log.log(Level.WARNING, "Postcode lookup error: " + postcode.getPostcode());
 		
-		//if (postcode.getPostcode().length()==0)
-		//	System.out.println("Postcode NOT found! ");
-		//else
-		
 		return returnValue;
 	}
 
@@ -414,8 +410,7 @@ public class AddressLookup implements AddressLookupInterface {
 	
 	
 	/**
-	 * @param accessCode
-	 *            the accessCode to set
+	 * @param password the password to set
 	 */
 	public void setPassword(String password) {
 		this.accessCode = password.trim();

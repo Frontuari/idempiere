@@ -18,8 +18,7 @@
  *****************************************************************************/
 package org.eevolution.process;
 
-import java.util.logging.Level;
-
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
@@ -32,31 +31,31 @@ import org.eevolution.model.MPPProductBOM;
 import org.eevolution.model.MPPProductBOMLine;
 
 /**
- * Title: Check BOM Structure (free of cycles) Description: Tree cannot contain
- * BOMs which are already referenced
+ * Process to Check BOM Structure (free of cycles).<br/>
+ * Tree cannot contain BOMs which are already referenced.
  *
  * @author Tony Snook (tspc)
  * @author Teo Sarca, SC ARHIPAC SERVICE SRL
  */
+@org.adempiere.base.annotation.Process
 public class PP_Product_BOM_Check extends SvrProcess
 {
-
 	/** The Record */
 	private int p_Record_ID = 0;
 
 	/**
 	 * Prepare - e.g., get Parameters.
 	 */
+	@Override
 	protected void prepare()
 	{
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
-			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_Record_ID = getRecord_ID();
 	} // prepare
@@ -67,6 +66,7 @@ public class PP_Product_BOM_Check extends SvrProcess
 	 * @return message
 	 * @throws Exception
 	 */
+	@Override
 	protected String doIt() throws Exception
 	{
 		log.info("Check BOM Structure");
@@ -109,6 +109,12 @@ public class PP_Product_BOM_Check extends SvrProcess
 		return "OK";
 	} // doIt
 
+	/**
+	 * Raise exception
+	 * @param string error message
+	 * @param hint additional info
+	 * @throws Exception
+	 */
 	private void raiseError(String string, String hint) throws Exception
 	{
 		DB.rollback(false, get_TrxName());
@@ -123,4 +129,4 @@ public class PP_Product_BOM_Check extends SvrProcess
 		throw new AdempiereUserError(msg);
 	}
 
-} //	M_Product_BOM_Check
+} //	PP_Product_BOM_Check

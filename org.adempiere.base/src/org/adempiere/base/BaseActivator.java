@@ -36,8 +36,8 @@ import org.osgi.framework.Filter;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
+ * Activator for org.adempiere.base bundle.
  * @author hengsin
- *
  */
 public class BaseActivator implements BundleActivator {
 
@@ -97,7 +97,6 @@ public class BaseActivator implements BundleActivator {
 			        key = (String) enumeration.nextElement();
 			        value = props.getProperty(key);
 			        System.setProperty(key,value) ;
-			        //System.out.println("Loaded Key: "+ key + "- Value :"+value);                        
 	            }			
 			}
 		}

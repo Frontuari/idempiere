@@ -11,13 +11,16 @@ import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.model.MField;
 import org.compiere.model.MFieldSuggestion;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.Label;
@@ -25,8 +28,8 @@ import org.zkoss.zul.South;
 import org.zkoss.zul.Textbox;
 
 /**
+ * Dialog to submit field suggestion (AD_FieldSuggestion)
  * @author hengsin
- *
  */
 public class WFieldSuggestion extends Window implements EventListener<Event> {
 
@@ -44,15 +47,21 @@ public class WFieldSuggestion extends Window implements EventListener<Event> {
 	private Textbox descriptionTextbox;
 
 	private Textbox helpTextbox;
+	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
+	private boolean isUseEscForTabClosing = MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
 
 	/**
 	 * default constructor
+	 * @param AD_Field_ID
 	 */
 	public WFieldSuggestion(int AD_Field_ID) {
 		field = new MField(Env.getCtx(), AD_Field_ID, null);
 		layout();
 	}
 
+	/**
+	 * Layout dialog
+	 */
 	private void layout() {
 		Borderlayout borderlayout = new Borderlayout();
 		appendChild(borderlayout);
@@ -124,6 +133,7 @@ public class WFieldSuggestion extends Window implements EventListener<Event> {
 		this.setAttribute(Window.MODE_KEY, Window.MODE_HIGHLIGHTED);
 		this.setSizable(true);
 		this.setMaximizable(true);
+		addEventListener(Events.ON_CANCEL, e -> onCancel());
 	}
 
 	@Override
@@ -131,10 +141,24 @@ public class WFieldSuggestion extends Window implements EventListener<Event> {
 		if (event.getTarget() == confirmPanel.getButton(ConfirmPanel.A_OK)) {
 			onSave();
 		} else if (event.getTarget() == confirmPanel.getButton(ConfirmPanel.A_CANCEL)) {
-			this.detach();
+			onCancel();
 		}		
 	}
 
+	/**
+	 * Handle onCancel event
+	 */
+	private void onCancel() {
+		// do not allow to close tab for Events.ON_CTRL_KEY event
+		if(isUseEscForTabClosing)
+			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
+
+		this.detach();
+	}
+
+	/**
+	 * Save changes to AD_FieldSuggestion
+	 */
 	private void onSave() {
 		MFieldSuggestion suggestion = new MFieldSuggestion(Env.getCtx(), 0, null);
 		suggestion.setClientOrg(0, 0);
@@ -149,9 +173,8 @@ public class WFieldSuggestion extends Window implements EventListener<Event> {
 		suggestion.setIsApproved(false);
 		suggestion.setIsUpdateBaseLanguage(false);
 		suggestion.setProcessed(false);
-		
-		suggestion.saveEx();
-		FDialog.info(0, this, Msg.getMsg(Env.getCtx(),"Your suggestions have been submitted for review"));
+		suggestion.saveCrossTenantSafeEx();
+		Dialog.info(0, Msg.getMsg(Env.getCtx(),"Your suggestions have been submitted for review"));
 		this.detach();
 	}
 }

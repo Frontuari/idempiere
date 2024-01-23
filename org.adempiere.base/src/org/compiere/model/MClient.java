@@ -31,7 +31,7 @@ import java.util.logging.Level;
 
 import javax.mail.internet.InternetAddress;
 
-import org.compiere.db.CConnection;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.EMail;
@@ -53,11 +53,11 @@ import org.idempiere.cache.ImmutablePOSupport;
  * 			<li>BF [ 1886480 ] Print Format Item Trl not updated even if not multilingual
  */
 public class MClient extends X_AD_Client implements ImmutablePOSupport
-{	
+{
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = 1820358079361924020L;
+	private static final long serialVersionUID = 2479547777642328967L;
 
 	/**
 	 * 	Get client from cache (immutable)
@@ -99,14 +99,20 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	/**
 	 * 	Get all clients
 	 *	@param ctx context
-	 *	@param order by clause
+	 *	@param orderBy by clause
 	 *	@return clients
 	 */
 	public static MClient[] getAll (Properties ctx, String orderBy)
 	{
-		List<MClient> list = new Query(ctx,I_AD_Client.Table_Name,(String)null,(String)null)
-		.setOrderBy(orderBy)
-		.list();
+		List<MClient> list = null;
+		try {
+			PO.setCrossTenantSafe();
+			list = new Query(ctx,I_AD_Client.Table_Name,(String)null,(String)null)
+					.setOrderBy(orderBy)
+					.list();
+		} finally {
+			PO.clearCrossTenantSafe();
+		}
 		for(MClient client:list ){
 			s_cache.put (Integer.valueOf(client.getAD_Client_ID()), client, e -> new MClient(Env.getCtx(), e));
 		}
@@ -114,6 +120,30 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		list.toArray (retValue);
 		return retValue;
 	}	//	getAll
+
+	/**
+	 * Get a MClient object based on LoginPrefix
+	 * @param loginPrefix
+	 * @return MClient
+	 */
+	public static MClient getByLoginPrefix(String loginPrefix) {
+		MClient client = null;
+		try {
+			PO.setCrossTenantSafe();
+			client = new Query(Env.getCtx(), Table_Name, "LoginPrefix=?", (String)null)
+					.setOnlyActiveRecords(true)
+					.setParameters(loginPrefix)
+					.first();
+		} finally {
+			PO.clearCrossTenantSafe();
+		}
+		if (client != null ) {
+			Integer key = Integer.valueOf(client.getAD_Client_ID());
+			if (! s_cache.containsKey(key))
+				s_cache.put (Integer.valueOf(client.getAD_Client_ID()), client, e -> new MClient(Env.getCtx(), e));
+		}
+		return client;
+	}
 
 	/**
 	 * 	Get optionally cached client
@@ -129,10 +159,9 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	@SuppressWarnings("unused")
 	private static CLogger	s_log	= CLogger.getCLogger (MClient.class);
 	/**	Cache						*/
-	private static ImmutableIntPOCache<Integer,MClient>	s_cache = new ImmutableIntPOCache<Integer,MClient>(Table_Name, 3, 120, true);
+	private static ImmutableIntPOCache<Integer,MClient>	s_cache = new ImmutableIntPOCache<Integer,MClient>(Table_Name, 3, 120);
 
-
-	/**************************************************************************
+	/**
 	 * 	Standard Constructor
 	 * 	@param ctx context
 	 * 	@param AD_Client_ID id
@@ -147,13 +176,10 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		{
 			if (m_createNew)
 			{
-			//	setValue (null);
-			//	setName (null);
 				setAD_Org_ID(0);
 				setIsMultiLingualDocument (false);
 				setIsSmtpAuthorization (false);
 				setIsUseBetaFunctions (true);
-				setIsServerEMail(false);
 				setAD_Language(Language.getBaseAD_Language());
 				setAutoArchive(AUTOARCHIVE_None);
 				setMMPolicy (MMPOLICY_FiFo);	// F
@@ -163,6 +189,16 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 				load(get_TrxName());
 		}
 	}	//	MClient
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_Client_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MClient(Properties ctx, String AD_Client_UU, String trxName) {
+        super(ctx, AD_Client_UU, trxName);
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -187,7 +223,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	}	//	MClient
 
 	/**
-	 * 	Simplified Constructor
+	 * 	Constructor using AD_Client_ID from context (ctx)
 	 * 	@param ctx context
 	 *	@param trxName transaction
 	 */
@@ -197,7 +233,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	}	//	MClient
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MClient(MClient copy) 
@@ -206,7 +242,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -216,7 +252,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -259,6 +295,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder ("MClient[")
@@ -268,7 +305,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	}	//	toString
 
 	/**
-	 *	Get Default Accounting Currency
+	 *	Get Default Accounting Currency (from AD_ClientInfo)
 	 *	@return currency or 0
 	 */
 	public int getC_Currency_ID()
@@ -299,6 +336,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 * 	Set AD_Language
 	 *	@param AD_Language new language
 	 */
+	@Override
 	public void setAD_Language (String AD_Language)
 	{
 		m_language = null;
@@ -309,6 +347,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 * 	Get AD_Language
 	 *	@return Language
 	 */
+	@Override
 	public String getAD_Language ()
 	{
 		String s = super.getAD_Language ();
@@ -319,7 +358,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 
 	/**
 	 * 	Get Locale
-	 *	@return locale
+	 *	@return client locale
 	 */
 	public Locale getLocale()
 	{
@@ -329,8 +368,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		return Locale.getDefault();
 	}	//	getLocale
 
-
-	/**************************************************************************
+	/**
 	 * 	Create Trees and Setup Client Info
 	 * 	@param language language
 	 * 	@return true if created
@@ -452,6 +490,13 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 			AD_Tree_Org_ID, AD_Tree_BPartner_ID, AD_Tree_Project_ID,
 			AD_Tree_SalesRegion_ID, AD_Tree_Product_ID,
 			AD_Tree_Campaign_ID, AD_Tree_Activity_ID, get_TrxName());
+		int defaultStorageProvider = MStorageProvider.getDefaultStorageProviderID();
+		if (defaultStorageProvider > 0)
+		{
+			clientInfo.setAD_StorageProvider_ID(defaultStorageProvider);
+			clientInfo.setStorageImage_ID(defaultStorageProvider);
+			clientInfo.setStorageArchive_ID(defaultStorageProvider);
+		}
 		success = clientInfo.save();
 		return success;
 	}	//	createTrees
@@ -476,7 +521,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	}	//	isAutoArchive
 
 	/**
-	 *	Get Primary Accounting Schema
+	 *	Get Primary Accounting Schema (from AD_ClientInfo)
 	 *	@return Acct Schema or null
 	 */
 	public MAcctSchema getAcctSchema()
@@ -496,6 +541,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 * 	Save
 	 *	@return true if saved
 	 */
+	@Override
 	public boolean save ()
 	{
 		if (get_ID() == 0 && !m_createNew)
@@ -503,8 +549,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		return super.save ();
 	}	//	save
 
-
-	/**************************************************************************
+	/**
 	 * 	Test EMail
 	 *	@return OK or error
 	 */
@@ -534,15 +579,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		}	
 		try
 		{
-			String msg = null;
-			if (isServerEMail())
-			{
-				msg = CConnection.get().getServer().sendEMail(Env.getRemoteCallCtx(Env.getCtx()), email);
-			}
-			else
-			{
-				msg = email.send();
-			}
+			String msg = email.send();			
 			if (EMail.SENT_OK.equals (msg))
 			{
 				if (log.isLoggable(Level.INFO)) log.info("Sent Test EMail to " + getRequestEMail());
@@ -559,8 +596,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		}
 		catch (Exception ex)
 		{
-			log.severe(getName() + " - " + ex.getLocalizedMessage());
-			return ex.getLocalizedMessage();
+			throw new AdempiereException(ex);
 		}
 	}	//	testEMail
 
@@ -586,7 +622,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 *	@param AD_User_ID recipient
 	 *	@param subject subject
 	 *	@param message message
-	 *	@param attachment optional collection of attachments
+	 *	@param attachments optional collection of attachments
 	 *	@return true if sent
 	 */
 	public boolean sendEMailAttachments (int AD_User_ID,
@@ -600,7 +636,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 *	@param AD_User_ID recipient
 	 *	@param subject subject
 	 *	@param message message
-	 *	@param attachment optional collection of attachments
+	 *	@param attachments optional collection of attachments
 	 *  @param html
 	 *	@return true if sent
 	 */
@@ -635,7 +671,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 *	@param to recipient
 	 *	@param subject subject
 	 *	@param message message
-	 *	@param attachment optional attachment
+	 *	@param attachments optional attachment
 	 *	@return true if sent
 	 */
 	public boolean sendEMailAttachments (MUser from, MUser to,
@@ -650,7 +686,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 *	@param to recipient
 	 *	@param subject subject
 	 *	@param message message
-	 *	@param attachment optional attachment
+	 *	@param attachments optional attachment
 	 *  @param isHtml
 	 *	@return true if sent
 	 */
@@ -712,15 +748,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 			email.addAttachment(attachment);
 		try
 		{
-			String msg = null;
-			if (isServerEMail())
-			{
-				msg = CConnection.get().getServer().sendEMail(Env.getRemoteCallCtx(Env.getCtx()), email);
-			}
-			else
-			{
-				msg = email.send();
-			}
+			String msg = email.send();
 			if (EMail.SENT_OK.equals (msg))
 			{
 				if (log.isLoggable(Level.INFO)) log.info("Sent EMail " + subject + " to " + to);
@@ -798,15 +826,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 */
 	public boolean sendEmailNow(MUser from, MUser to, EMail email)
 	{
-		String msg = null;
-		if (isServerEMail())
-		{
-			msg = CConnection.get().getServer().sendEMail(Env.getRemoteCallCtx(Env.getCtx()), email);
-		}
-		else
-		{
-			msg = email.send();
-		}
+		String msg = email.send();
 		//
 		X_AD_UserMail um = new X_AD_UserMail(getCtx(), 0, to.get_TrxName());
 		um.setClientOrg(this);
@@ -855,7 +875,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		}
 	}	//	sendEmailNow
 
-	/************
+	/**
 	 * 	Create EMail from Request User
 	 *	@param to recipient
 	 *	@param subject subject
@@ -868,7 +888,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		return createEMail(to, subject, message, false);
 	}
 
-	/************
+	/**
 	 * 	Create EMail from Request User
 	 *	@param to recipient
 	 *	@param subject subject
@@ -893,7 +913,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		return email;
 	}	//	createEMail
 
-	/************
+	/**
 	 * 	Create EMail with a specific from address
 	 *	@param from recipient
 	 *	@param to recipient
@@ -919,7 +939,12 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		EMail email = new EMail (this,
 				   from, to,
 				   subject, message, html);
-		if (isSmtpAuthorization())
+
+		MSMTP smtp = MSMTP.get(getCtx(), getAD_Client_ID(), from, get_TrxName());
+
+		if (smtp != null && smtp.isSmtpAuthorization())
+			email.createAuthenticator (smtp.getRequestUser(), smtp.getRequestUserPW());
+		else if (isSmtpAuthorization())
 			email.createAuthenticator (getRequestUser(), getRequestUserPW());
 		return email;
 	}	//	createEMailFrom
@@ -1028,10 +1053,12 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	 *
 	 *	@return boolean representing if client accounting is enabled and it's on a client
 	 */
-	//private static final String CLIENT_ACCOUNTING_DISABLED = "D";
 	private static final String CLIENT_ACCOUNTING_QUEUE = "Q";
 	private static final String CLIENT_ACCOUNTING_IMMEDIATE = "I";
 
+	/**
+	 * @return true if posting is using {@link #CLIENT_ACCOUNTING_IMMEDIATE} or {@link #CLIENT_ACCOUNTING_QUEUE}
+	 */
 	public static boolean isClientAccounting() {
 		String ca = MSysConfig.getValue(MSysConfig.CLIENT_ACCOUNTING,
 				CLIENT_ACCOUNTING_QUEUE, // default
@@ -1039,6 +1066,9 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		return (ca.equalsIgnoreCase(CLIENT_ACCOUNTING_IMMEDIATE) || ca.equalsIgnoreCase(CLIENT_ACCOUNTING_QUEUE));
 	}
 
+	/**
+	 * @return true if posting is using {@link #CLIENT_ACCOUNTING_QUEUE}
+	 */
 	public static boolean isClientAccountingQueue() {
 		String ca = MSysConfig.getValue(MSysConfig.CLIENT_ACCOUNTING,
 				CLIENT_ACCOUNTING_QUEUE, // default
@@ -1046,6 +1076,9 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		return ca.equalsIgnoreCase(CLIENT_ACCOUNTING_QUEUE);
 	}
 
+	/**
+	 * @return true if posting is using {@link #CLIENT_ACCOUNTING_IMMEDIATE}
+	 */
 	public static boolean isClientAccountingImmediate() {
 		String ca = MSysConfig.getValue(MSysConfig.CLIENT_ACCOUNTING,
 				CLIENT_ACCOUNTING_QUEUE, // default
@@ -1058,7 +1091,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	private ArrayList<Integer>	m_fieldAccess = null;
 	/**
 	 * 	Define is a field is displayed based on ASP rules
-	 * 	@param ad_field_id
+	 * 	@param aDFieldID
 	 *	@return boolean indicating if it's displayed or not
 	 */
 	public boolean isDisplayField(int aDFieldID) {
@@ -1175,7 +1208,7 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 
 	/**
 	 *	Get SMTP Host
-	 *	@return SMTP or loaclhost
+	 *	@return SMTP or localhost
 	 */
 	@Override
 	public String getSMTPHost() {
@@ -1207,6 +1240,9 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 	private static final String MAIL_SEND_CREDENTIALS_CLIENT = "C";
 	private static final String MAIL_SEND_CREDENTIALS_SYSTEM = "S";
 
+	/**
+	 * @return true if mail send credential is using {@link #MAIL_SEND_CREDENTIALS_CLIENT}
+	 */
 	public static boolean isSendCredentialsClient() {
 		String msc = MSysConfig.getValue(MSysConfig.MAIL_SEND_CREDENTIALS,
 				MAIL_SEND_CREDENTIALS_USER, // default
@@ -1214,6 +1250,9 @@ public class MClient extends X_AD_Client implements ImmutablePOSupport
 		return (MAIL_SEND_CREDENTIALS_CLIENT.equalsIgnoreCase(msc));
 	}
 
+	/**
+	 * @return true if mail send credential is using {@link #MAIL_SEND_CREDENTIALS_SYSTEM} 
+	 */
 	public static boolean isSendCredentialsSystem() {
 		String msc = MSysConfig.getValue(MSysConfig.MAIL_SEND_CREDENTIALS,
 				MAIL_SEND_CREDENTIALS_USER, // default

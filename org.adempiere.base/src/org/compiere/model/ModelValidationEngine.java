@@ -17,6 +17,7 @@
 package org.compiere.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -51,25 +52,24 @@ import org.osgi.service.event.Event;
  *  @author Jorg Janke
  *  @version $Id: ModelValidationEngine.java,v 1.2 2006/07/30 00:58:38 jjanke Exp $
  *
- * @author Teo Sarca, SC ARHIPAC SERVICE SRL
+ *  @author Teo Sarca, SC ARHIPAC SERVICE SRL
  * 				<li>FR [ 1670025 ] ModelValidator.afterLoadPreferences will be useful
  * 				<li>BF [ 1679692 ] fireDocValidate doesn't treat exceptions as errors
  * 				<li>FR [ 1724662 ] Support Email should contain model validators info
  * 				<li>FR [ 2788276 ] Data Import Validator
- * 					https://sourceforge.net/tracker/?func=detail&aid=2788276&group_id=176962&atid=879335
+ * 					https://sourceforge.net/p/adempiere/feature-requests/712/
  * 				<li>BF [ 2804135 ] Global FactsValidator are not invoked
- * 					https://sourceforge.net/tracker/?func=detail&aid=2804135&group_id=176962&atid=879332
+ * 					https://sourceforge.net/p/adempiere/bugs/1936/
  * 				<li>BF [ 2819617 ] NPE if script validator rule returns null
- * 					https://sourceforge.net/tracker/?func=detail&aid=2819617&group_id=176962&atid=879332
- * @author victor.perez@e-evolution.com, www.e-evolution.com
+ * 					https://sourceforge.net/p/adempiere/bugs/1976/
+ *  @author victor.perez@e-evolution.com, www.e-evolution.com
  * 				<li>BF [ 2947607 ] Model Validator Engine duplicate listeners
  */
 public class ModelValidationEngine
 {
-
 	/**
-	 * 	Get Singleton
-	 *	@return engine
+	 * 	Get Singleton instance
+	 *	@return singleton engine instance
 	 */
 	public synchronized static ModelValidationEngine get()
 	{
@@ -80,13 +80,12 @@ public class ModelValidationEngine
 
 	/** Engine Singleton				*/
 	private static ModelValidationEngine s_engine = null;
-	/* flag to indicate a missing model validation class */
+	/** flag to indicate a missing model validation class */
 	private static String missingModelValidationMessage = "";
 
-
-	/**************************************************************************
-	 * 	Constructor.
-	 * 	Creates Model Validators
+	/**
+	 * 	Private Constructor.
+	 * 	Use {@link #get()} to get the singleton instance.
 	 */
 	private ModelValidationEngine ()
 	{
@@ -121,11 +120,13 @@ public class ModelValidationEngine
 				continue;
 			loadValidatorClasses(clients[i], classNames);
 		}
-		//logging to db will try to init ModelValidationEngine again!
-		//log.config(toString());
-		// System.out.println(toString());
 	}	//	ModelValidatorEngine
 
+	/**
+	 * Load validation instances
+	 * @param client
+	 * @param classNames Java class name list separated by semicolon
+	 */
 	private void loadValidatorClasses(MClient client, String classNames)
 	{
 		StringTokenizer st = new StringTokenizer(classNames, ";");
@@ -147,11 +148,16 @@ public class ModelValidationEngine
 			{
 				//logging to db will try to init ModelValidationEngine again!
 				e.printStackTrace();
-				missingModelValidationMessage = missingModelValidationMessage + e.toString() + " on client " + client.getName() + '\n';
+				missingModelValidationMessage = missingModelValidationMessage + e.toString() + " on tenant " + client.getName() + '\n';
 			}
 		}
 	}
 
+	/**
+	 * Load validator instance
+	 * @param client
+	 * @param className
+	 */
 	private void loadValidatorClass(MClient client, String className) {
 		try
 		{
@@ -162,7 +168,7 @@ public class ModelValidationEngine
 			if (validator == null)
 			{
 				missingModelValidationMessage = missingModelValidationMessage + " Missing class " + className +
-						 (client != null ? (" on client " + client.getName()) : " global") + '\n';
+						 (client != null ? (" on tenant " + client.getName()) : " global") + '\n';
 			}
 			else
 			{
@@ -174,14 +180,12 @@ public class ModelValidationEngine
 			//logging to db will try to init ModelValidationEngine again!
 			e.printStackTrace();
 			missingModelValidationMessage = missingModelValidationMessage + e.toString() +
-					 (client != null ? (" on client " + client.getName()) : " global") + '\n';
+					 (client != null ? (" on tenant " + client.getName()) : " global") + '\n';
 		}
 	}
 
 	/**	Logger					*/
 	private static CLogger log = CLogger.getCLogger(ModelValidationEngine.class);
-//	/** Change Support			*/
-//	private VetoableChangeSupport m_changeSupport = new VetoableChangeSupport(this);
 
 	/**	Validators						*/
 	private ArrayList<ModelValidator>	m_validators = new ArrayList<ModelValidator>();
@@ -197,9 +201,9 @@ public class ModelValidationEngine
 	private ArrayList<ModelValidator> m_globalValidators = new ArrayList<ModelValidator>();
 
 	/**
-	 * 	Initialize and add validator
+	 * 	Initialize and add validator to global or client validator list.
 	 *	@param validator
-	 *	@param client
+	 *	@param client null for global validator, not null for client specific validator
 	 */
 	private void initialize(ModelValidator validator, MClient client)
 	{
@@ -211,7 +215,10 @@ public class ModelValidationEngine
 	}	//	initialize
 
 	/**
-	 * 	Called when login is complete
+	 * 	Called when login is complete.<br/>
+	 *  - Call {@link ModelValidator#login(int, int, int)} on register validators.
+	 *  - Call script validator (AD_Table_ScriptValidator) <br/>
+	 *  - Fire {@link IEventTopics#AFTER_LOGIN} OSGi event.
 	 * 	@param AD_Client_ID client
 	 *	@param AD_Org_ID org
 	 *	@param AD_Role_ID role
@@ -232,7 +239,7 @@ public class ModelValidationEngine
 			}
 		}
 
-		// now process the script model validator login
+		// now process the script model validator for login
 		List<MRule> loginRules = MRule.getModelValidatorLoginRules (Env.getCtx());
 		if (loginRules != null) {
 			for (MRule loginRule : loginRules) {
@@ -272,10 +279,16 @@ public class ModelValidationEngine
 		EventManager.getInstance().sendEvent(event);
 		@SuppressWarnings("unchecked")
 		List<String> errors = (List<String>) event.getProperty(IEventManager.EVENT_ERROR_MESSAGES);
-		if (errors != null && !errors.isEmpty())
-			return errors.get(0);
+		if (errors != null && !errors.isEmpty()) {
+			Collections.reverse(errors);
+			StringBuilder eventErrors = new StringBuilder("");
+			for (String error : errors) {
+				eventErrors.append(error).append("<br>");
+			}
+			return eventErrors.toString();
+		}
 
-		if (AD_User_ID == 0 && AD_Role_ID == 0)
+		if ((AD_User_ID == SystemIDs.USER_SYSTEM || AD_User_ID == SystemIDs.USER_SUPERUSER) && AD_Role_ID == SystemIDs.ROLE_SYSTEM)
 			; // don't validate for user system on role system
 		else
 			if (! Util.isEmpty(missingModelValidationMessage)) {
@@ -286,11 +299,10 @@ public class ModelValidationEngine
 		return null;
 	}	//	loginComplete
 
-
-	/**************************************************************************
-	 * 	Add Model Change Listener
+	/**
+	 * 	Add Model Change Listener for a table
 	 *	@param tableName table name
-	 *	@param listener listener
+	 *	@param listener listener (global or tenant specific)
 	 */
 	public void addModelChange (String tableName, ModelValidator listener)
 	{
@@ -313,9 +325,9 @@ public class ModelValidationEngine
 	}	//	addModelValidator
 
 	/**
-	 * 	Remove Model Change Listener
+	 * 	Remove Model Change Listener for a table
 	 *	@param tableName table name
-	 *	@param listener listener
+	 *	@param listener listener (global or tenant specific)
 	 */
 	public void removeModelChange (String tableName, ModelValidator listener)
 	{
@@ -334,10 +346,12 @@ public class ModelValidationEngine
 	}	//	removeModelValidator
 
 	/**
-	 * 	Fire Model Change.
-	 * 	Call modelChange method of added validators
-	 *	@param po persistent objects
-	 *	@param type ModelValidator.TYPE_*
+	 * 	Fire Model Change event of a table.
+	 * 	- Call {@link ModelValidator#modelChange(PO, int)} on register validators.<br/>
+	 *  - Call script validator (AD_Table_ScriptValidator) <br/>
+	 *  - Fire IEventTopics.PO_* OSGi event.
+	 *	@param po PO instance for the event
+	 *	@param changeType ModelValidator.TYPE_*
 	 *	@return error message or NULL for no veto
 	 */
 	public String fireModelChange (PO po, int changeType)
@@ -407,16 +421,30 @@ public class ModelValidationEngine
 
 		//now process osgi event handlers
 		Event event = EventManager.newEvent(ModelValidator.tableEventTopics[changeType],
-				new EventProperty(EventManager.EVENT_DATA, po), new EventProperty("tableName", po.get_TableName()));
+				new EventProperty(EventManager.EVENT_DATA, po), new EventProperty(EventManager.TABLE_NAME_PROPERTY, po.get_TableName()));
 		EventManager.getInstance().sendEvent(event);
 		@SuppressWarnings("unchecked")
 		List<String> errors = (List<String>) event.getProperty(IEventManager.EVENT_ERROR_MESSAGES);
-		if (errors != null && !errors.isEmpty())
-			return errors.get(0);
+		if (errors != null && !errors.isEmpty()) {
+			Collections.reverse(errors);
+			StringBuilder eventErrors = new StringBuilder("");
+			for (String error : errors) {
+				eventErrors.append(error).append("<br>");
+			}
+			return eventErrors.toString();
+		}
 
 		return null;
 	}	//	fireModelChange
 
+	/**
+	 * Fire model change event of a table.<br/>
+	 * - Call {@link ModelValidator#modelChange(PO, int)} on register validators.
+	 * @param po PO instance for the event
+	 * @param changeType ModelValidator.TYPE_*
+	 * @param list register validators
+	 * @return error message or null
+	 */
 	private String fireModelChange(PO po, int changeType, ArrayList<ModelValidator> list)
 	{
 		for (int i = 0; i < list.size(); i++)
@@ -451,11 +479,10 @@ public class ModelValidationEngine
 		return null;
 	}
 
-
-	/**************************************************************************
-	 * 	Add Document Validation Listener
+	/**
+	 * 	Add Document Validation Listener for a table
 	 *	@param tableName table name
-	 *	@param listener listener
+	 *	@param listener listener (global or tenant specific)
 	 */
 	public void addDocValidate (String tableName, ModelValidator listener)
 	{
@@ -480,9 +507,9 @@ public class ModelValidationEngine
 	}	//	addDocValidate
 
 	/**
-	 * 	Remove Document Validation Listener
+	 * 	Remove Document Validation Listener of a table
 	 *	@param tableName table name
-	 *	@param listener listener
+	 *	@param listener listener (global or tenant specific)
 	 */
 	public void removeDocValidate (String tableName, ModelValidator listener)
 	{
@@ -501,10 +528,12 @@ public class ModelValidationEngine
 	}	//	removeDocValidate
 
 	/**
-	 * 	Fire Document Validation.
-	 * 	Call docValidate method of added validators
-	 *	@param po persistent objects
-	 *	@param timing see ModelValidator.TIMING_ constants
+	 * 	Fire Document Validation event of a table.<br/>
+	 * 	- Call {@link ModelValidator#docValidate(PO, int)} on register validators.<br/>
+	 *  - Call script validator (AD_Table_ScriptValidator) <br/>
+	 *  - Fire IEventTopics.DOC_* OSGi event.
+	 *	@param po PO instance for the event
+	 *	@param docTiming see ModelValidator.TIMING_ constants
      *	@return error message or null
 	 */
 	public String fireDocValidate (PO po, int docTiming)
@@ -574,16 +603,29 @@ public class ModelValidationEngine
 
 		//now process osgi event handlers
 		Event event = EventManager.newEvent(ModelValidator.documentEventTopics[docTiming],
-				new EventProperty(EventManager.EVENT_DATA, po), new EventProperty("tableName", po.get_TableName()));
+				new EventProperty(EventManager.EVENT_DATA, po), new EventProperty(EventManager.TABLE_NAME_PROPERTY, po.get_TableName()));
 		EventManager.getInstance().sendEvent(event);
 		@SuppressWarnings("unchecked")
 		List<String> errors = (List<String>) event.getProperty(IEventManager.EVENT_ERROR_MESSAGES);
-		if (errors != null && !errors.isEmpty())
-			return errors.get(0);
-
+		if (errors != null && !errors.isEmpty()) {
+			Collections.reverse(errors);
+			StringBuilder eventErrors = new StringBuilder("");
+			for (String error : errors) {
+				eventErrors.append(error).append("<br>");
+			}
+			return eventErrors.toString();
+		}
 		return null;
 	}	//	fireDocValidate
 
+	/**
+	 * Fire Document Validation event of a table.<br/>
+	 * - Call {@link ModelValidator#docValidate(PO, int)} on register validators.
+	 * @param po
+	 * @param docTiming
+	 * @param list register validators
+	 * @return error message or null
+	 */
 	private String fireDocValidate(PO po, int docTiming, ArrayList<ModelValidator> list)
 	{
 		for (int i = 0; i < list.size(); i++)
@@ -610,7 +652,7 @@ public class ModelValidationEngine
 			{
 				//log the stack trace
 				log.log(Level.SEVERE, e.getLocalizedMessage(), e);
-				// Exeptions are errors and should stop the document processing - teo_sarca [ 1679692 ]
+				// Exceptions are errors and should stop the document processing - teo_sarca [ 1679692 ]
 				String error = e.getLocalizedMessage();
 				if (error == null)
 					error = e.toString();
@@ -620,10 +662,10 @@ public class ModelValidationEngine
 		return null;
 	}
 
-	/**************************************************************************
+	/**
 	 * 	Add Accounting Facts Validation Listener
 	 *	@param tableName table name
-	 *	@param listener listener
+	 *	@param listener listener (global or tenant specific)
 	 */
 	public void addFactsValidate (String tableName, FactsValidator listener)
 	{
@@ -645,9 +687,9 @@ public class ModelValidationEngine
 			list.add(listener);
 	}	//	addFactsValidate
 
-	/**************************************************************************
-	 * 	Add Date Import Validation Listener
-	 *	@param data.tableName table name
+	/**
+	 * 	Add Import Validation Listener of an import table
+	 *	@param importTableName table name
 	 *	@param listener listener
 	 */
 	public void addImportValidate (String importTableName, ImportValidator listener)
@@ -667,7 +709,7 @@ public class ModelValidationEngine
 	}
 
 	/**
-	 * 	Remove Accounting Facts Validation Listener
+	 * 	Remove Accounting Facts Validation Listener of a table
 	 *	@param tableName table name
 	 *	@param listener listener
 	 */
@@ -688,12 +730,12 @@ public class ModelValidationEngine
 	}	//	removeFactsValidate
 
 	/**
-	 * Fire Accounting Facts Validation.
-	 * Call factsValidate method of added validators
+	 * Fire Accounting Facts Validation event of a table.<br/>
+	 * - Call {@link FactsValidator#factsValidate(MAcctSchema, List, PO)} on register validators.<br/>
+	 * - Fire {@link IEventTopics#ACCT_FACTS_VALIDATE} OSGi event.
 	 * @param schema
 	 * @param facts
-	 * @param doc
-	 * @param po
+	 * @param po PO instance of event
 	 * @return error message or null
 	 */
 	public String fireFactsValidate (MAcctSchema schema, List<Fact> facts, PO po)
@@ -724,16 +766,31 @@ public class ModelValidationEngine
 		//process osgi event handlers
 		FactsEventData eventData = new FactsEventData(schema, facts, po);
 		Event event = EventManager.newEvent(IEventTopics.ACCT_FACTS_VALIDATE,
-				new EventProperty(EventManager.EVENT_DATA, eventData), new EventProperty("tableName", po.get_TableName()));
+				new EventProperty(EventManager.EVENT_DATA, eventData), new EventProperty(EventManager.TABLE_NAME_PROPERTY, po.get_TableName()));
 		EventManager.getInstance().sendEvent(event);
 		@SuppressWarnings("unchecked")
 		List<String> errors = (List<String>) event.getProperty(IEventManager.EVENT_ERROR_MESSAGES);
-		if (errors != null && !errors.isEmpty())
-			return errors.get(0);
+		if (errors != null && !errors.isEmpty()) {
+			Collections.reverse(errors);
+			StringBuilder eventErrors = new StringBuilder("");
+			for (String error : errors) {
+				eventErrors.append(error).append("<br>");
+			}
+			return eventErrors.toString();
+		}
 
 		return null;
 	}	//	fireFactsValidate
 
+	/**
+	 * Fire Accounting Facts Validation event of a table.<br/>
+	 * - Call {@link FactsValidator#factsValidate(MAcctSchema, List, PO)} on register validators.
+	 * @param schema
+	 * @param facts
+	 * @param po PO instance of event
+	 * @param list register validators
+	 * @return error message or null
+	 */
 	private String fireFactsValidate(MAcctSchema schema, List<Fact> facts, PO po,  ArrayList<FactsValidator> list)
 	{
 		for (int i = 0; i < list.size(); i++)
@@ -760,7 +817,7 @@ public class ModelValidationEngine
 			{
 				//log the stack trace
 				log.log(Level.SEVERE, e.getLocalizedMessage(), e);
-				// Exeptions are errors and should stop the document processing - teo_sarca [ 1679692 ]
+				// Exceptions are errors and should stop the document processing - teo_sarca [ 1679692 ]
 				String error = e.getLocalizedMessage();
 				if (error == null)
 					error = e.toString();
@@ -771,8 +828,9 @@ public class ModelValidationEngine
 	}
 
 	/**
-	 * Fire Import Validation.
-	 * Call {@link ImportValidator#validate(ImportProcess, Object, Object, int)} or registered validators.
+	 * Fire Import Validation event.<br/>
+	 * - Call {@link ImportValidator#validate(ImportProcess, Object, Object, int)} on registered validators.<br/>
+	 * - Fire IEventTopics.IMPORT_* OSGi event.
 	 * @param process import process
 	 * @param importModel import record (e.g. X_I_BPartner)
 	 * @param targetModel target model (e.g. MBPartner, MBPartnerLocation, MUser)
@@ -802,14 +860,16 @@ public class ModelValidationEngine
 			topic = IEventTopics.IMPORT_BEFORE_IMPORT;
 		else if (timing == ImportValidator.TIMING_BEFORE_VALIDATE)
 			topic = IEventTopics.IMPORT_BEFORE_VALIDATE;
-		Event event = EventManager.newEvent(topic, new EventProperty(EventManager.EVENT_DATA, eventData), new EventProperty("importTableName", process.getImportTableName()));
+		Event event = EventManager.newEvent(topic, new EventProperty(EventManager.EVENT_DATA, eventData), 
+				new EventProperty(EventManager.IMPORT_TABLE_NAME_PROPERTY, process.getImportTableName()));
 		EventManager.getInstance().sendEvent(event);
 	}
 
 	/**
-	* 	String Representation
-	*	@return info
-	*/
+	 * 	String Representation
+	 *	@return info
+	 */
+	@Override
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder("ModelValidationEngine[");
@@ -821,12 +881,12 @@ public class ModelValidationEngine
 	}	//	toString
 
 	/**
-	 *  Create Model Validators Info
+	 *  Get Model Validation Engine Info
 	 *  @param sb optional string buffer
 	 *  @param ctx context
-	 *  @return Model Validators Info
+	 *  @return Model Validation Engine Info
 	 *
-	 *  @author Teo Sarca, FR [ 1724662 ]
+	 *  author Teo Sarca, FR [ 1724662 ]
 	 */
 	public StringBuffer getInfoDetail(StringBuffer sb, Properties ctx) {
 		if (sb == null)
@@ -864,10 +924,11 @@ public class ModelValidationEngine
 	}
 
 	/**
-	 * After Load Preferences into Context for selected client.
+	 * After Load Preferences into Context for selected client. <br/>
+	 * Fire afterLoadPreferences model validator event and {@link IEventTopics#PREF_AFTER_LOAD} OSGi event.
 	 * @param ctx context
 	 * @see org.compiere.util.Login#loadPreferences(KeyNamePair, KeyNamePair, java.sql.Timestamp, String)
-	 * @author Teo Sarca - FR [ 1670025 ] - https://sourceforge.net/tracker/index.php?func=detail&aid=1670025&group_id=176962&atid=879335
+	 * author Teo Sarca - FR [ 1670025 ] - https://sourceforge.net/p/adempiere/feature-requests/78/
 	 */
 	public void afterLoadPreferences (Properties ctx)
 	{
@@ -902,7 +963,9 @@ public class ModelValidationEngine
 
 	/**
 	 * Before Save Properties for selected client.
+	 * @deprecated for deprecated swing client only
 	 */
+	@Deprecated
 	public void beforeSaveProperties ()
 	{
 		int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());

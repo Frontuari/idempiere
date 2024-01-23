@@ -20,6 +20,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.compiere.model.I_C_OrderLine;
@@ -77,6 +80,7 @@ public class Doc_InOut extends Doc
 	 *  Load Document Details
 	 *  @return error message or null
 	 */
+	@Override
 	protected String loadDocumentDetails()
 	{
 		setC_Currency_ID(NO_CURRENCY);
@@ -129,7 +133,7 @@ public class Doc_InOut extends Doc
 				continue;
 			}
 
-			DocLine docLine = new DocLine (line, this);
+			DocLine_InOut docLine = new DocLine_InOut (line, this);
 			BigDecimal Qty = line.getMovementQty();
 			docLine.setReversalLine_ID(line.getReversalLine_ID());
 			docLine.setQty (Qty, getDocumentType().equals(DOCTYPE_MatShipment));    //  sets Trx and Storage Qty
@@ -153,6 +157,7 @@ public class Doc_InOut extends Doc
 	 *  Get Balance
 	 *  @return Zero (always balanced)
 	 */
+	@Override
 	public BigDecimal getBalance()
 	{
 		BigDecimal retValue = Env.ZERO;
@@ -176,6 +181,7 @@ public class Doc_InOut extends Doc
 	 *  @param as accounting schema
 	 *  @return Fact
 	 */
+	@Override
 	public ArrayList<Fact> createFacts (MAcctSchema as)
 	{
 		//
@@ -193,7 +199,8 @@ public class Doc_InOut extends Doc
 		{
 			for (int i = 0; i < p_lines.length; i++)
 			{
-				DocLine line = p_lines[i];				
+				Map<String, BigDecimal> batchLotCostMap = null;
+				DocLine_InOut line = (DocLine_InOut) p_lines[i];				
 				MProduct product = line.getProduct();
 				BigDecimal costs = null;
 				if (!isReversal(line))
@@ -206,16 +213,19 @@ public class Doc_InOut extends Doc
 							MInOutLineMA mas[] = MInOutLineMA.get(getCtx(), ioLine.get_ID(), getTrxName());
 							if (mas != null && mas.length > 0 )
 							{
+								batchLotCostMap = new HashMap<>();
 								costs  = BigDecimal.ZERO;
 								for (int j = 0; j < mas.length; j++)
 								{
 									MInOutLineMA ma = mas[j];
 									BigDecimal QtyMA = ma.getMovementQty();
+									if (QtyMA.signum() != line.getQty().signum())
+										QtyMA = QtyMA.negate();
 									ProductCost pc = line.getProductCost();
 									pc.setQty(QtyMA);
 									pc.setM_M_AttributeSetInstance_ID(ma.getM_AttributeSetInstance_ID());
 									BigDecimal maCosts = line.getProductCosts(as, line.getAD_Org_ID(), true, "M_InOutLine_ID=?");
-								
+									batchLotCostMap.put(ma.getM_InOutLineMA_UU(), maCosts);
 									costs = costs.add(maCosts);
 								}						
 							}
@@ -310,7 +320,7 @@ public class Doc_InOut extends Doc
 				{
 					//	Set AmtAcctCr from Original Shipment/Receipt
 					if (!cr.updateReverseLine (MInOut.Table_ID,
-							m_Reversal_ID, line.getReversalLine_ID(),Env.ONE))
+							m_Reversal_ID, line.getReversalLine_ID(),Env.ONE, dr))
 					{
 						p_Error = Msg.getMsg(getCtx(),"Original Shipment/Receipt not posted yet");
 						return null;
@@ -328,10 +338,31 @@ public class Doc_InOut extends Doc
 							for (int j = 0; j < mas.length; j++)
 							{
 								MInOutLineMA ma = mas[j];
+								BigDecimal qty = ma.getMovementQty();
+								if (qty.signum() != line.getQty().signum())
+									qty = qty.negate();
+								BigDecimal amt = batchLotCostMap != null ? batchLotCostMap.get(ma.getM_InOutLineMA_UU()) : null;
+								if (amt == null && isReversal(line))
+								{
+									amt = findReversalCostDetailAmt(as, line.getM_Product_ID(), ma, line.getReversalLine_ID());
+									if (amt != null)
+										amt = amt.negate();
+								}
+								if (amt == null) 
+								{
+									amt = costs.divide(line.getProductCost().getQty(), RoundingMode.HALF_UP);
+									amt = amt.multiply(qty);
+								}
+								else if (!isReversal(line) && line.getProductCost().getQty().signum() != line.getQty().signum())
+								{
+									if (amt.signum() != (costs.signum() * -1)) {
+										amt = amt.negate();
+									}
+								}
 								if (!MCostDetail.createShipment(as, line.getAD_Org_ID(),
 										line.getM_Product_ID(), ma.getM_AttributeSetInstance_ID(),
 										line.get_ID(), 0,
-										costs, ma.getMovementQty().negate(),
+										amt, qty,
 										line.getDescription(), true, getTrxName()))
 								{
 									p_Error = Msg.getMsg(getCtx(),"Failed to create cost detail record");
@@ -345,10 +376,13 @@ public class Doc_InOut extends Doc
 						//
 						if (line.getM_Product_ID() != 0)
 						{
+							BigDecimal amt = costs;
+							if (line.getProductCost().getQty().signum() != line.getQty().signum() && !isReversal(line))
+								amt = amt.negate();
 							if (!MCostDetail.createShipment(as, line.getAD_Org_ID(),
 								line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
 								line.get_ID(), 0,
-								costs, line.getQty(),
+								amt, line.getQty(),
 								line.getDescription(), true, getTrxName()))
 							{
 								p_Error = Msg.getMsg(getCtx(),"Failed to create cost detail record");
@@ -362,10 +396,13 @@ public class Doc_InOut extends Doc
 					//
 					if (line.getM_Product_ID() != 0)
 					{
+						BigDecimal amt = costs;
+						if (line.getProductCost().getQty().signum() != line.getQty().signum() && !isReversal(line))
+							amt = amt.negate();
 						if (!MCostDetail.createShipment(as, line.getAD_Org_ID(),
 							line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
 							line.get_ID(), 0,
-							costs, line.getQty(),
+							amt, line.getQty(),
 							line.getDescription(), true, getTrxName()))
 						{
 							p_Error = Msg.getMsg(getCtx(),"Failed to create cost detail record");
@@ -380,7 +417,7 @@ public class Doc_InOut extends Doc
 			{
 				for (int i = 0; i < p_lines.length; i++)
 				{
-					DocLine line = p_lines[i];
+					DocLine_InOut line = (DocLine_InOut) p_lines[i];
 					Fact factcomm = Doc_Order.getCommitmentSalesRelease(as, this,
 						line.getQty(), line.get_ID(), Env.ONE);
 					if (factcomm != null)
@@ -394,9 +431,10 @@ public class Doc_InOut extends Doc
 		{
 			for (int i = 0; i < p_lines.length; i++)
 			{
-				DocLine line = p_lines[i];
+				DocLine_InOut line = (DocLine_InOut) p_lines[i];
 				MProduct product = line.getProduct();
 				BigDecimal costs = null;
+				Map<String, BigDecimal> batchLotCostMap = null;
 				if (!isReversal(line)) 
 				{
 					if (MAcctSchema.COSTINGLEVEL_BatchLot.equals(product.getCostingLevel(as)) ) 
@@ -408,15 +446,18 @@ public class Doc_InOut extends Doc
 							costs = BigDecimal.ZERO;
 							if (mas != null && mas.length > 0 )
 							{
+								batchLotCostMap = new HashMap<>();
 								for (int j = 0; j < mas.length; j++)
 								{
 									MInOutLineMA ma = mas[j];
 									BigDecimal QtyMA = ma.getMovementQty();
+									if (QtyMA.signum() != line.getQty().signum())
+										QtyMA = QtyMA.negate();
 									ProductCost pc = line.getProductCost();
 									pc.setQty(QtyMA);
 									pc.setM_M_AttributeSetInstance_ID(ma.getM_AttributeSetInstance_ID());
 									BigDecimal maCosts = line.getProductCosts(as, line.getAD_Org_ID(), true, "M_InOutLine_ID=?");
-								
+									batchLotCostMap.put(ma.getM_InOutLineMA_UU(), maCosts);
 									costs = costs.add(maCosts);
 								}
 							}
@@ -489,10 +530,31 @@ public class Doc_InOut extends Doc
 							for (int j = 0; j < mas.length; j++)
 							{
 								MInOutLineMA ma = mas[j];
+								BigDecimal qty = ma.getMovementQty();
+								if (qty.signum() != line.getQty().signum())
+									qty = qty.negate();
+								BigDecimal amt = batchLotCostMap != null ? batchLotCostMap.get(ma.getM_InOutLineMA_UU()) : null;
+								if (amt == null && isReversal(line))
+								{
+									amt = findReversalCostDetailAmt(as, line.getM_Product_ID(), ma, line.getReversalLine_ID());
+									if (amt != null)
+										amt = amt.negate();
+								}
+								if (amt == null) 
+								{
+									amt = costs.divide(line.getProductCost().getQty(), RoundingMode.HALF_UP);
+									amt = amt.multiply(qty);
+								}
+								else if (!isReversal(line) && line.getProductCost().getQty().signum() != line.getQty().signum())
+								{
+									if (amt.signum() != (costs.signum() * -1)) {
+										amt = amt.negate();
+									}
+								}
 								if (!MCostDetail.createShipment(as, line.getAD_Org_ID(),
 										line.getM_Product_ID(), ma.getM_AttributeSetInstance_ID(),
 										line.get_ID(), 0,
-										costs, ma.getMovementQty(),
+										amt, qty,
 										line.getDescription(), true, getTrxName()))
 								{
 									p_Error = Msg.getMsg(getCtx(),"Failed to create cost detail record");
@@ -504,10 +566,13 @@ public class Doc_InOut extends Doc
 					{
 						if (line.getM_Product_ID() != 0)
 						{
+							BigDecimal amt = costs;
+							if (line.getProductCost().getQty().signum() != line.getQty().signum() && !isReversal(line))
+								amt = amt.negate();
 							if (!MCostDetail.createShipment(as, line.getAD_Org_ID(),
 								line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
 								line.get_ID(), 0,
-								costs, line.getQty(),
+								amt, line.getQty(),
 								line.getDescription(), true, getTrxName()))
 							{
 								p_Error = Msg.getMsg(getCtx(),"Failed to create cost detail record");
@@ -520,10 +585,13 @@ public class Doc_InOut extends Doc
 					//
 					if (line.getM_Product_ID() != 0)
 					{
+						BigDecimal amt = costs;
+						if (line.getProductCost().getQty().signum() != line.getQty().signum() && !isReversal(line))
+							amt = amt.negate();
 						if (!MCostDetail.createShipment(as, line.getAD_Org_ID(),
 							line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
 							line.get_ID(), 0,
-							costs, line.getQty(),
+							amt, line.getQty(),
 							line.getDescription(), true, getTrxName()))
 						{
 							p_Error = Msg.getMsg(getCtx(),"Failed to create cost detail record");
@@ -551,7 +619,7 @@ public class Doc_InOut extends Doc
 				{
 					//	Set AmtAcctCr from Original Shipment/Receipt
 					if (!cr.updateReverseLine (MInOut.Table_ID,
-							m_Reversal_ID, line.getReversalLine_ID(),Env.ONE))
+							m_Reversal_ID, line.getReversalLine_ID(),Env.ONE, dr))
 					{
 						p_Error = Msg.getMsg(getCtx(),"Original Shipment/Receipt not posted yet");
 						return null;
@@ -568,7 +636,7 @@ public class Doc_InOut extends Doc
 				// Elaine 2008/06/26
 				int C_Currency_ID = as.getC_Currency_ID();
 				//
-				DocLine line = p_lines[i];
+				DocLine_InOut line = (DocLine_InOut) p_lines[i];
 				BigDecimal costs = null;
 				MProduct product = line.getProduct();
 				MOrderLine orderLine = null;
@@ -599,7 +667,6 @@ public class Doc_InOut extends Doc
 						// Low - check if c_orderline_id is valid
 						if (orderLine != null)
 						{
-						    // Elaine 2008/06/26
 						    C_Currency_ID = orderLine.getC_Currency_ID();
 						    //
 						    costs = orderLine.getPriceCost();
@@ -616,9 +683,57 @@ public class Doc_InOut extends Doc
 										int stdPrecision = MCurrency.getStdPrecision(getCtx(), C_Currency_ID);
 										BigDecimal costTax = tax.calculateTax(costs, true, stdPrecision);
 										if (log.isLoggable(Level.FINE)) log.fine("Costs=" + costs + " - Tax=" + costTax);
-										costs = costs.subtract(costTax);
+										if(tax.isSummary())
+										{
+											MTax[] cTaxes = tax.getChildTaxes(false);
+											List<MTax> toSubtract = new ArrayList<>();
+											for(MTax cTax : cTaxes)
+											{
+												if (!cTax.isDistributeTaxWithLineItem())
+													toSubtract.add(cTax);
+											}
+											if (toSubtract.size() > 0)
+											{
+												BigDecimal base = costs.subtract(costTax);
+												for(MTax cTax : toSubtract)
+												{
+													BigDecimal ts = cTax.calculateTax(base, false, stdPrecision);
+													costs = costs.subtract(ts);
+												}												
+											}
+										}
+										else if (!tax.isDistributeTaxWithLineItem())
+										{											
+											costs = costs.subtract(costTax);
+										}
 									}
 								}	//	correct included Tax
+								else if (C_Tax_ID != 0)
+								{
+									MTax tax = MTax.get(getCtx(), C_Tax_ID);
+									if(tax.isSummary())
+									{
+										MTax[] cTaxes = tax.getChildTaxes(false);
+										BigDecimal base = costs;
+										for(MTax cTax : cTaxes)
+										{
+											if (cTax.isDistributeTaxWithLineItem())
+											{
+												//do not round to stdprecision before multiply qty
+												BigDecimal costTax = cTax.calculateTax(base, false, 12);
+												if (log.isLoggable(Level.FINE)) log.fine("Costs=" + base + " - Tax=" + costTax);
+												costs = costs.add(costTax);
+											}																						
+										}
+									}
+									else if (tax.isDistributeTaxWithLineItem())
+									{
+										//do not round to stdprecision before multiply qty
+										BigDecimal costTax = tax.calculateTax(costs, false, 12);
+										if (log.isLoggable(Level.FINE)) log.fine("Costs=" + costs + " - Tax=" + costTax);
+										costs = costs.add(costTax);
+									}
+								}
 						    }
 						    costs = costs.multiply(line.getQty());
 	                    }
@@ -719,7 +834,7 @@ public class Doc_InOut extends Doc
 				{
 					//	Set AmtAcctCr from Original Shipment/Receipt
 					if (!cr.updateReverseLine (MInOut.Table_ID,
-							m_Reversal_ID, line.getReversalLine_ID(),Env.ONE))
+							m_Reversal_ID, line.getReversalLine_ID(),Env.ONE, dr))
 					{
 						p_Error = Msg.getMsg(getCtx(),"Original Receipt not posted yet");
 						return null;
@@ -764,10 +879,9 @@ public class Doc_InOut extends Doc
 		{
 			for (int i = 0; i < p_lines.length; i++)
 			{
-				// Elaine 2008/06/26
 				int C_Currency_ID = as.getC_Currency_ID();
 				//
-				DocLine line = p_lines[i];
+				DocLine_InOut line = (DocLine_InOut) p_lines[i];
 				BigDecimal costs = null;
 				MProduct product = line.getProduct();
 				if (!isReversal(line))
@@ -781,24 +895,56 @@ public class Doc_InOut extends Doc
 						MOrderLine originalOrderLine = (MOrderLine) originalInOutLine.getC_OrderLine();
 						//	Goodwill: Correct included Tax
 				    	int C_Tax_ID = originalOrderLine.getC_Tax_ID();
+				    	MTax tax = MTax.get(getCtx(), C_Tax_ID);
+				    	int stdPrecision = MCurrency.getStdPrecision(getCtx(), originalOrderLine.getC_Currency_ID());
 				    	if (originalOrderLine.isTaxIncluded() && C_Tax_ID != 0)
 						{
-							MTax tax = MTax.get(getCtx(), C_Tax_ID);
-							if (!tax.isZeroTax())
+							BigDecimal costTax = tax.calculateTax(costs, true, stdPrecision);
+				    		if (log.isLoggable(Level.FINE)) log.fine("Costs=" + costs + " - Tax=" + costTax);
+				    		if (tax.isSummary())
+				    		{
+				    			costs = costs.subtract(costTax);
+				    			BigDecimal base = costs;
+				    			for(MTax cTax : tax.getChildTaxes(false))
+				    			{
+				    				if (!cTax.isZeroTax() && cTax.isDistributeTaxWithLineItem())
+				    				{
+				    					costTax = cTax.calculateTax(base, false, stdPrecision);
+						    			costs = costs.add(costTax);
+				    				}
+				    			}
+				    		}
+							else if (!tax.isZeroTax() && !tax.isDistributeTaxWithLineItem())
 							{
-								int stdPrecision = MCurrency.getStdPrecision(getCtx(), originalOrderLine.getC_Currency_ID());
-								BigDecimal costTax = tax.calculateTax(costs, true, stdPrecision);
-								if (log.isLoggable(Level.FINE)) log.fine("Costs=" + costs + " - Tax=" + costTax);
 								costs = costs.subtract(costTax);
 							}
 						}	//	correct included Tax
-				    	
+				    	else 
+				    	{
+				    		if (tax.isSummary())
+				    		{
+				    			BigDecimal base = costs;
+				    			for(MTax cTax : tax.getChildTaxes(false))
+				    			{
+				    				if (!cTax.isZeroTax() && cTax.isDistributeTaxWithLineItem())
+				    				{
+				    					BigDecimal costTax = cTax.calculateTax(base, false, stdPrecision);
+						    			costs = costs.add(costTax);
+				    				}
+				    			}
+				    		}
+				    		else if (tax.isDistributeTaxWithLineItem())
+				    		{
+				    			BigDecimal costTax = tax.calculateTax(costs, false, stdPrecision);
+				    			costs = costs.add(costTax);
+				    		}
+				    	}
 				    	// different currency
 				    	if (C_Currency_ID  != originalOrderLine.getC_Currency_ID()) 
 						{
 							costs = MConversionRate.convert (getCtx(),
 									costs, originalOrderLine.getC_Currency_ID(), C_Currency_ID,
-									getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID(), true);
+									getDateAcct(), line.getC_ConversionType_ID(), getAD_Client_ID(), getAD_Org_ID(), true);
 						}
 
 				    	costs = costs.multiply(line.getQty());
@@ -818,6 +964,8 @@ public class Doc_InOut extends Doc
 									{
 										MInOutLineMA ma = mas[j];
 										BigDecimal QtyMA = ma.getMovementQty();
+										if (QtyMA.signum() != line.getQty().signum())
+											QtyMA = QtyMA.negate();
 										ProductCost pc = line.getProductCost();
 										pc.setQty(QtyMA);
 										pc.setM_M_AttributeSetInstance_ID(ma.getM_AttributeSetInstance_ID());
@@ -850,11 +998,7 @@ public class Doc_InOut extends Doc
 					//update below
 					costs = Env.ONE;
 				}
-				//  NotInvoicedReceipt				DR
-				// Elaine 2008/06/26
-				/*dr = fact.createLine(line,
-					getAccount(Doc.ACCTTYPE_NotInvoicedReceipts, as),
-					as.getC_Currency_ID(), costs , null);*/
+
 				dr = fact.createLine(line,
 					getAccount(Doc.ACCTTYPE_NotInvoicedReceipts, as),
 					C_Currency_ID, costs , null);
@@ -888,9 +1032,7 @@ public class Doc_InOut extends Doc
 				MAccount assets = line.getAccount(ProductCost.ACCTTYPE_P_Asset, as);
 				if (product.isService())
 					assets = line.getAccount(ProductCost.ACCTTYPE_P_Expense, as);
-				// Elaine 2008/06/26
-				/*cr = fact.createLine(line, assets,
-					as.getC_Currency_ID(), null, costs);*/
+
 				cr = fact.createLine(line, assets,
 					C_Currency_ID, null, costs);
 				//
@@ -907,7 +1049,7 @@ public class Doc_InOut extends Doc
 				{
 					//	Set AmtAcctCr from Original Shipment/Receipt
 					if (!cr.updateReverseLine (MInOut.Table_ID,
-							m_Reversal_ID, line.getReversalLine_ID(),Env.ONE))
+							m_Reversal_ID, line.getReversalLine_ID(),Env.ONE, dr))
 					{
 						p_Error = Msg.getMsg(getCtx(),"Original Receipt not posted yet");
 						return null;
@@ -934,10 +1076,39 @@ public class Doc_InOut extends Doc
 		return facts;
 	}   //  createFact
 
+	/**
+	 * @param as
+	 * @param M_Product_ID
+	 * @param ma
+	 * @param reversalLine_ID
+	 * @return MCostDetail.Amt
+	 */
+	private BigDecimal findReversalCostDetailAmt(MAcctSchema as, int M_Product_ID, MInOutLineMA ma, int reversalLine_ID) {
+		StringBuilder select = new StringBuilder("SELECT ").append(MCostDetail.COLUMNNAME_Amt)
+				.append(" FROM ").append(MCostDetail.Table_Name).append(" WHERE ")
+				.append(MCostDetail.COLUMNNAME_C_AcctSchema_ID).append("=? ")
+				.append("AND ").append(MCostDetail.COLUMNNAME_M_AttributeSetInstance_ID).append("=? ")
+				.append("AND ").append(MCostDetail.COLUMNNAME_M_InOutLine_ID).append("=? ")
+				.append("AND ").append(MCostDetail.COLUMNNAME_M_Product_ID).append("=? ");
+		BigDecimal amt = DB.getSQLValueBDEx(getTrxName(), select.toString(), as.getC_AcctSchema_ID(), ma.getM_AttributeSetInstance_ID(), reversalLine_ID, M_Product_ID);
+		return amt;
+	}
+
+	/**
+	 * @param line
+	 * @return true if line is for reversal
+	 */
 	private boolean isReversal(DocLine line) {
 		return m_Reversal_ID !=0 && line.getReversalLine_ID() != 0;
 	}
 
+	/**
+	 * Create cost detail record from purchase return
+	 * @param as
+	 * @param line
+	 * @param costs
+	 * @return error message or empty string
+	 */
 	private String createVendorRMACostDetail(MAcctSchema as, DocLine line, BigDecimal costs)
 	{		
 		BigDecimal tQty = line.getQty();
@@ -985,5 +1156,35 @@ public class Doc_InOut extends Doc
 	@Override
 	public boolean isDeferPosting() {
 		return m_deferPosting;
+	}
+	
+	@Override
+	public int getC_Currency_ID()
+	{
+		MInOut io = (MInOut) getPO();
+		if (io.getC_Order_ID() > 0)
+			return io.getC_Order().getC_Currency_ID();
+		else if (io.getM_RMA_ID() > 0) {
+			if (io.getM_RMA().getInOut_ID() > 0) {
+				if (io.getM_RMA().getInOut().getC_Order_ID() > 0)
+					return io.getM_RMA().getInOut().getC_Order().getC_Currency_ID();
+			}
+		}
+		return super.getC_Currency_ID();
+	}
+	
+	@Override
+	public int getC_ConversionType_ID()
+	{
+		MInOut io = (MInOut) getPO();
+		if (io.getC_Order_ID() > 0)
+			return io.getC_Order().getC_ConversionType_ID();
+		else if (io.getM_RMA_ID() > 0) {
+			if (io.getM_RMA().getInOut_ID() > 0) {
+				if (io.getM_RMA().getInOut().getC_Order_ID() > 0)
+					return io.getM_RMA().getInOut().getC_Order().getC_ConversionType_ID();
+			}
+		}
+		return super.getC_ConversionType_ID();
 	}
 }   //  Doc_InOut

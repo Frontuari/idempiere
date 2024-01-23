@@ -22,21 +22,55 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for M_CostType
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_CostType extends PO implements I_M_CostType, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_CostType")
+public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_CostType (Properties ctx, int M_CostType_ID, String trxName)
     {
       super (ctx, M_CostType_ID, trxName);
       /** if (M_CostType_ID == 0)
+        {
+			setM_CostType_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_CostType (Properties ctx, int M_CostType_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_CostType_ID, trxName, virtualColumns);
+      /** if (M_CostType_ID == 0)
+        {
+			setM_CostType_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_CostType (Properties ctx, String M_CostType_UU, String trxName)
+    {
+      super (ctx, M_CostType_UU, trxName);
+      /** if (M_CostType_UU == null)
+        {
+			setM_CostType_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_CostType (Properties ctx, String M_CostType_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_CostType_UU, trxName, virtualColumns);
+      /** if (M_CostType_UU == null)
         {
 			setM_CostType_ID (0);
 			setName (null);
@@ -50,7 +84,7 @@ public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
     }
 
     /** AccessLevel
-      * @return 2 - Client 
+      * @return 2 - Client
       */
     protected int get_AccessLevel()
     {
@@ -72,9 +106,8 @@ public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -83,15 +116,14 @@ public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -100,27 +132,26 @@ public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Cost Type.
-		@param M_CostType_ID 
-		Type of Cost (e.g. Current, Plan, Future)
-	  */
+		@param M_CostType_ID Type of Cost (e.g. Current, Plan, Future)
+	*/
 	public void setM_CostType_ID (int M_CostType_ID)
 	{
-		if (M_CostType_ID < 1) 
+		if (M_CostType_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_CostType_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_CostType_ID, Integer.valueOf(M_CostType_ID));
 	}
 
 	/** Get Cost Type.
 		@return Type of Cost (e.g. Current, Plan, Future)
 	  */
-	public int getM_CostType_ID () 
+	public int getM_CostType_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_CostType_ID);
 		if (ii == null)
@@ -129,7 +160,8 @@ public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
 	}
 
 	/** Set M_CostType_UU.
-		@param M_CostType_UU M_CostType_UU	  */
+		@param M_CostType_UU M_CostType_UU
+	*/
 	public void setM_CostType_UU (String M_CostType_UU)
 	{
 		set_Value (COLUMNNAME_M_CostType_UU, M_CostType_UU);
@@ -137,15 +169,14 @@ public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
 
 	/** Get M_CostType_UU.
 		@return M_CostType_UU	  */
-	public String getM_CostType_UU () 
+	public String getM_CostType_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_CostType_UU);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -154,7 +185,7 @@ public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -162,7 +193,7 @@ public class X_M_CostType extends PO implements I_M_CostType, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }

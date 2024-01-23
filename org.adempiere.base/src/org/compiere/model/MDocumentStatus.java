@@ -26,7 +26,6 @@
 * - Murilo Ht                                                         *
 * - Carlos Ruiz                                                       *
 **********************************************************************/
-
 package org.compiere.model;
 
 import java.sql.ResultSet;
@@ -36,20 +35,100 @@ import java.util.Properties;
 
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.idempiere.cache.ImmutableIntPOCache;
+import org.idempiere.cache.ImmutablePOSupport;
 
-public class MDocumentStatus extends X_PA_DocumentStatus {
+/**
+ * Named status of records in a table via SQL criteria
+ */
+public class MDocumentStatus extends X_PA_DocumentStatus implements ImmutablePOSupport {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = 5908220133480463782L;
+	private static final long serialVersionUID = 4028519324986534673L;
 
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param PA_DocumentStatus_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MDocumentStatus(Properties ctx, String PA_DocumentStatus_UU, String trxName) {
+        super(ctx, PA_DocumentStatus_UU, trxName);
+    }
+
+    /**
+     * @param ctx
+     * @param PA_DocumentStatus_ID
+     * @param trxName
+     */
 	public MDocumentStatus(Properties ctx, int PA_DocumentStatus_ID, String trxName) {
 		super(ctx, PA_DocumentStatus_ID, trxName);
 	}
 	
+	/**
+	 * @param ctx
+	 * @param rs
+	 * @param trxName
+	 */
 	public MDocumentStatus(Properties ctx, ResultSet rs, String trxName) {
 		super(ctx, rs, trxName);
 	}
+
+	/**
+	 * Copy constructor
+	 * @param copy
+	 */
+	public MDocumentStatus(MDocumentStatus copy) 
+	{
+		this(Env.getCtx(), copy);
+	}
+
+	/**
+	 * Copy constructor
+	 * @param ctx
+	 * @param copy
+	 */
+	public MDocumentStatus(Properties ctx, MDocumentStatus copy) 
+	{
+		this(ctx, copy, (String) null);
+	}
+
+	/**
+	 * Copy constructor
+	 * @param ctx
+	 * @param copy
+	 * @param trxName
+	 */
+	public MDocumentStatus(Properties ctx, MDocumentStatus copy, String trxName) 
+	{
+		this(ctx, 0, trxName);
+		copyPO(copy);
+	}
+	
+	/**	MDocumentStatus Cache				*/
+	private static ImmutableIntPOCache<Integer,MDocumentStatus>	s_cache = new ImmutableIntPOCache<Integer,MDocumentStatus>(Table_Name, 20);
+	
+	/**
+	 * 	Get from Cache (immutable)
+	 *	@param ctx context
+	 *	@param PA_DocumentStatus_ID id
+	 *	@return document status
+	 */
+	public static MDocumentStatus get (Properties ctx, int PA_DocumentStatus_ID)
+	{
+		Integer ii = Integer.valueOf(PA_DocumentStatus_ID);
+		MDocumentStatus retValue = s_cache.get(ctx, ii, e -> new MDocumentStatus(ctx, e));
+		if (retValue != null)
+			return retValue;
+		retValue = new MDocumentStatus (ctx, PA_DocumentStatus_ID, (String)null);
+		if (retValue.get_ID () == PA_DocumentStatus_ID)
+		{
+			s_cache.put (PA_DocumentStatus_ID, retValue, e -> new MDocumentStatus(Env.getCtx(), e));
+			return retValue;
+		}
+		return null;
+	}	//	get
 
 	/**
 	 * 	Get Document Status Indicators
@@ -60,28 +139,43 @@ public class MDocumentStatus extends X_PA_DocumentStatus {
 	 */
 	public static MDocumentStatus[] getDocumentStatusIndicators(Properties ctx, int AD_User_ID, int AD_Role_ID)
 	{
+		return getDocumentStatusIndicators(ctx,AD_User_ID,AD_Role_ID,null);
+	}
+	
+	/**
+	 * Get Document Status Indicators
+	 * @param ctx
+	 * @param AD_User_ID
+	 * @param AD_Role_ID
+	 * @param trxName
+	 * @return array of document status
+	 */
+	public static MDocumentStatus[] getDocumentStatusIndicators(Properties ctx, int AD_User_ID, int AD_Role_ID, String trxName)
+	{
 		if (AD_User_ID < 0)
 			return new MDocumentStatus[0];
 
-		String whereClause = "AD_Client_ID IN (0,?) AND ((AD_User_ID IS NULL OR AD_User_ID=?) AND ( AD_Role_ID IS NULL OR AD_Role_ID=?))";
+		String whereClause = "AD_Client_ID IN (0,?)";
 
-		List<MDocumentStatus> list = new Query(ctx, MDocumentStatus.Table_Name, whereClause, null)
+		List<MDocumentStatus> list = new Query(ctx, MDocumentStatus.Table_Name, whereClause, trxName)
 				.setOnlyActiveRecords(true)
 				.setOrderBy(MDocumentStatus.COLUMNNAME_SeqNo)
-				.setParameters(Env.getAD_Client_ID(ctx), AD_User_ID, AD_Role_ID)
+				.setParameters(Env.getAD_Client_ID(ctx))
 				.list();
 
 		/* Verify access for user/role */
 		List<MDocumentStatus> listWithAccess = new ArrayList<MDocumentStatus>();
 		for (MDocumentStatus ds : list) {
-			if (ds.getAD_Window_ID() > 0) {
-				Boolean access = MRole.getDefault().getWindowAccess(ds.getAD_Window_ID());
-				if (access != null)
-					listWithAccess.add(ds);
-			} else if (ds.getAD_Form_ID() > 0) {
-				Boolean access = MRole.getDefault().getFormAccess(ds.getAD_Form_ID());
-				if (access != null)
-					listWithAccess.add(ds);
+			if (ds.canAccess(ctx, AD_User_ID, AD_Role_ID, trxName)) {
+				if (ds.getAD_Window_ID() > 0) {
+					Boolean access = MRole.getDefault().getWindowAccess(ds.getAD_Window_ID());
+					if (access != null)
+						listWithAccess.add(ds);
+				} else if (ds.getAD_Form_ID() > 0) {
+					Boolean access = MRole.getDefault().getFormAccess(ds.getAD_Form_ID());
+					if (access != null)
+						listWithAccess.add(ds);
+				}
 			}
 		}
 
@@ -90,6 +184,10 @@ public class MDocumentStatus extends X_PA_DocumentStatus {
 		return retValue;
 	}	//	getDocumentStatusIndicators
 
+	/**
+	 * @param documentStatus
+	 * @return number of matching records
+	 */
 	public static int evaluate(MDocumentStatus documentStatus) {
 		StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM ");
 		String tableName = MTable.getTableName(Env.getCtx(), documentStatus.getAD_Table_ID());
@@ -101,6 +199,10 @@ public class MDocumentStatus extends X_PA_DocumentStatus {
 		return DB.getSQLValue(null, sqlS);
 	}
 
+	/**
+	 * @param documentStatus
+	 * @return where clause to find matching records
+	 */
 	public static String getWhereClause(MDocumentStatus documentStatus) {
 		String tableName = MTable.getTableName(Env.getCtx(), documentStatus.getAD_Table_ID());
 		StringBuilder where = new StringBuilder(" ").append(tableName).append(".AD_Client_ID=" + Env.getAD_Client_ID(Env.getCtx()) );
@@ -128,4 +230,40 @@ public class MDocumentStatus extends X_PA_DocumentStatus {
 		return sb.toString();
 	}
 
+	/**
+	 * Verify access against the table PA_DocumentStatusAccess
+	 * @param userId  AD_User_ID
+	 * @param roleId  AD_Role_ID
+	 * @return true if the user/role has access
+	 */
+	private boolean canAccess(Properties ctx, int userId, int roleId, String trxName) {
+		List<MDocumentStatusAccess> accessList = new Query(ctx, MDocumentStatusAccess.Table_Name, "PA_DocumentStatus_ID=? AND AD_Client_ID IN (0,?)", trxName)
+				.setOnlyActiveRecords(true)
+				.setParameters(getPA_DocumentStatus_ID(), Env.getAD_Client_ID(ctx))
+				.list();
+
+		if (accessList.size() == 0)
+			return true; // no permissions set on System or Tenant - allow access
+
+		for (MDocumentStatusAccess access : accessList) {
+			/* the only problem here is that is not easy to hide things from System role or System user
+			 * but as they are the administrators is not a problem
+			 */
+			if (   (access.getAD_Role_ID() == roleId && access.getAD_User_ID() == userId)
+				|| (access.getAD_Role_ID() == roleId && access.getAD_User_ID() == 0     )   // user not set
+				|| (access.getAD_Role_ID() == 0      && access.getAD_User_ID() == userId) ) // role not set
+				return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public PO markImmutable() {
+		if (is_Immutable())
+			return this;
+
+		makeImmutable();
+		return this;
+	}
 }

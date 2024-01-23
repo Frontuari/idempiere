@@ -34,7 +34,8 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 
 /**
- *  Accounting Fact
+ *  Accounting Fact for {@link Doc}.<br/>
+ *  Create and save one or more {@link FactLine} for an accounting document.
  *
  *  @author 	Jorg Janke
  *  @version 	$Id: Fact.java,v 1.2 2006/07/30 00:53:33 jjanke Exp $
@@ -60,7 +61,6 @@ public final class Fact
 		if (log.isLoggable(Level.CONFIG)) log.config(toString());
 	}	//	Fact
 
-
 	/**	Log					*/
 	private static final CLogger	log = CLogger.getCLogger(Fact.class);
 
@@ -83,13 +83,11 @@ public final class Fact
 	/** Encumbrance Posting */
 	public static final String	POST_Reservation = MFactAcct.POSTINGTYPE_Reservation;
 
-
 	/** Is Converted        */
 	private boolean		    m_converted = false;
 
 	/** Lines               */
 	private ArrayList<FactLine>	m_lines = new ArrayList<FactLine>();
-
 
 	/**
 	 *  Dispose
@@ -114,8 +112,6 @@ public final class Fact
 	public FactLine createLine (DocLine docLine, MAccount account,
 		int C_Currency_ID, BigDecimal debitAmt, BigDecimal creditAmt)
 	{
-	//	log.fine("createLine - " + account	+ " - Dr=" + debitAmt + ", Cr=" + creditAmt);
-
 		//  Data Check
 		if (account == null)
 		{
@@ -293,10 +289,10 @@ public final class Fact
 	}	//	getSourceBalance
 
 	/**
-	 *	Create Source Line for Suspense Balancing.
+	 *	Create Source Line for Suspense Balancing.<br/>
 	 *  Only if Suspense Balancing is enabled and not a multi-currency document
-	 *  (double check as otherwise the rule should not have fired)
-	 *  If not balanced create balancing entry in currency of the document
+	 *  (double check as, otherwise the rule should not have fired). <br/>
+	 *  If not balanced, create balancing entry in currency of the document.
 	 *  @return FactLine
 	 */
 	public FactLine balanceSource()
@@ -329,9 +325,8 @@ public final class Fact
 		m_lines.add(line);
 		return line;
 	}   //  balancingSource
-
 	
-	/**************************************************************************
+	/**
 	 *  Are all segments balanced
 	 *  @return true if segments are balanced
 	 */
@@ -354,9 +349,9 @@ public final class Fact
 
 	/**
 	 *  Is Source Segment balanced.
-	 *  @param  segmentType - see AcctSchemaElement.SEGMENT_*
-	 *  Implemented only for Org
-	 *  Other sensible candidates are Project, User1/2
+	 *  @param  segmentType - see AcctSchemaElement.SEGMENT_*.<br/>
+	 *  Implemented only for Org.
+	 *  Other sensible candidates are Project, User1/2.
 	 *  @return true if segments are balanced
 	 */
 	public boolean isSegmentBalanced (String segmentType)
@@ -403,7 +398,7 @@ public final class Fact
 	 *  Balance all segments.
 	 *  - For all balancing segments
 	 *      - For all segment values
-	 *          - If balance <> 0 create dueTo/dueFrom line
+	 *          - If balance &lt;&gt; 0 create dueTo/dueFrom line
 	 *              overwriting the segment value
 	 */
 	public void balanceSegments()
@@ -439,7 +434,6 @@ public final class Fact
 			{
 				FactLine line = (FactLine)m_lines.get(i);
 				Integer key = Integer.valueOf(line.getAD_Org_ID());
-			//	BigDecimal balance = line.getSourceBalance();
 				Balance oldBalance = (Balance)map.get(key);
 				if (oldBalance == null)
 				{
@@ -448,7 +442,6 @@ public final class Fact
 				}
 				else
 					oldBalance.add(line.getAmtSourceDr(), line.getAmtSourceCr());
-			//	log.info ("Key=" + key + ", Balance=" + balance + " - " + line);
 			}
 
 			//  Create entry for non-zero element
@@ -503,9 +496,8 @@ public final class Fact
 			map.clear();
 		}
 	}   //  balanceSegment
-
 	
-	/**************************************************************************
+	/**
 	 *	Are the lines Accounting Balanced
 	 *  @return true if accounting lines are balanced
 	 */
@@ -536,18 +528,19 @@ public final class Fact
 			FactLine line = (FactLine)m_lines.get(i);
 			result = result.add(line.getAcctBalance());
 		}
-	//	log.fine(result.toString());
 		return result;
 	}	//	getAcctBalance
 
 	/**
 	 *  Balance Accounting Currency.
+	 *  <pre>
 	 *  If the accounting currency is not balanced,
 	 *      if Currency balancing is enabled
 	 *          create a new line using the currency balancing account with zero source balance
 	 *      or
 	 *          adjust the line with the largest balance sheet account
 	 *          or if no balance sheet account exist, the line with the largest amount
+	 *  </pre>
 	 *  @return FactLine
 	 */
 	public FactLine balanceAccounting()
@@ -706,11 +699,6 @@ public final class Fact
 			//	No Distribution for this line
 			//AZ Goodwill
 			//The above "get" only work in GL Journal because it's using ValidCombination Account
-			//Old:
-			//if (distributions == null || distributions.length == 0)
-			//	continue;
-			//For other document, we try the followings (from FactLine):
-			//New:	
 			if (distributions == null || distributions.length == 0)
 			{
 				distributions = MDistribution.get (dLine.getCtx(), dLine.getC_AcctSchema_ID(),
@@ -753,35 +741,64 @@ public final class Fact
 					m_doc.get_ID(), dLine.getLine_ID(), m_trxName);
 				//  Set Info & Account
 				factLine.setDocumentInfo(m_doc, dLine.getDocLine());
+				factLine.setDescription(dLine.getDescription());
 				factLine.setAccount(m_acctSchema, dl.getAccount());
 				factLine.setPostingType(m_postingType);
 				if (dl.isOverwriteOrg())	//	set Org explicitly
 					factLine.setAD_Org_ID(dl.getOrg_ID());
+				else
+					factLine.setAD_Org_ID(dLine.getAD_Org_ID());
 				// Silvano - freepath - F3P - Bug#2904994 Fact distribtution only overwriting Org
 				if(dl.isOverwriteAcct())
 					factLine.setAccount_ID(dl.getAccount_ID());
+				else
+					factLine.setAccount_ID(dLine.getAccount_ID());
 				if(dl.isOverwriteActivity())
 					factLine.setC_Activity_ID(dl.getC_Activity_ID());
+				else
+					factLine.setC_Activity_ID(dLine.getC_Activity_ID());
 				if(dl.isOverwriteBPartner())
 					factLine.setC_BPartner_ID(dl.getC_BPartner_ID());
+				else
+					factLine.setC_BPartner_ID(dLine.getC_BPartner_ID());
 				if(dl.isOverwriteCampaign())
 					factLine.setC_Campaign_ID(dl.getC_Campaign_ID());
+				else
+					factLine.setC_Campaign_ID(dLine.getC_Campaign_ID());
 				if(dl.isOverwriteLocFrom())
 					factLine.setC_LocFrom_ID(dl.getC_LocFrom_ID());
+				else
+					factLine.setC_LocFrom_ID(dLine.getC_LocFrom_ID());
 				if(dl.isOverwriteLocTo())
 					factLine.setC_LocTo_ID(dl.getC_LocTo_ID());
+				else
+					factLine.setC_LocTo_ID(dLine.getC_LocTo_ID());
 				if(dl.isOverwriteOrgTrx())
 					factLine.setAD_OrgTrx_ID(dl.getAD_OrgTrx_ID());
+				else
+					factLine.setAD_OrgTrx_ID(dLine.getAD_OrgTrx_ID());
 				if(dl.isOverwriteProduct())
 					factLine.setM_Product_ID(dl.getM_Product_ID());
+				else
+					factLine.setM_Product_ID(dLine.getM_Product_ID());
 				if(dl.isOverwriteProject())
 					factLine.setC_Project_ID(dl.getC_Project_ID());
+				else
+					factLine.setC_Project_ID(dLine.getC_Project_ID());
 				if(dl.isOverwriteSalesRegion())
 					factLine.setC_SalesRegion_ID(dl.getC_SalesRegion_ID());
+				else
+					factLine.setC_SalesRegion_ID(dLine.getC_SalesRegion_ID());
 				if(dl.isOverwriteUser1())				
 					factLine.setUser1_ID(dl.getUser1_ID());
+				else
+					factLine.setUser1_ID(dLine.getUser1_ID());
 				if(dl.isOverwriteUser2())				
 					factLine.setUser2_ID(dl.getUser2_ID());					
+				else
+					factLine.setUser2_ID(dLine.getUser2_ID());
+				factLine.setUserElement1_ID(dLine.getUserElement1_ID());
+				factLine.setUserElement2_ID(dLine.getUserElement2_ID());
 				// F3P end
 				//
 				if (dLine.getAmtAcctCr().signum() != 0) // isCredit
@@ -809,7 +826,7 @@ public final class Fact
 		return true;
 	}	//	distribute	
 	
-	/**************************************************************************
+	/**
 	 * String representation
 	 * @return String
 	 */
@@ -835,7 +852,7 @@ public final class Fact
 	}	//	getLines
 
 	/**
-	 *  Save Fact
+	 *  Save Fact Lines
 	 *  @param trxName transaction
 	 *  @return true if all lines were saved
 	 */
@@ -846,7 +863,6 @@ public final class Fact
 		for (int i = 0; i < m_lines.size(); i++)
 		{
 			FactLine fl = (FactLine)m_lines.get(i);
-		//	log.fine("save - " + fl);
 			if (!fl.save(trxName))  //  abort on first error
 				return false;
 		}
@@ -854,8 +870,8 @@ public final class Fact
 	}   //  commit
 
 	/**
-	 * 	Get Transaction
-	 *	@return trx
+	 * 	Get Transaction Name
+	 *	@return trx nam
 	 */
 	public String get_TrxName() 
 	{
@@ -881,7 +897,6 @@ public final class Fact
 	public static class Balance
 	{
 		/**
-		 * 	New Balance
 		 *	@param dr DR
 		 *	@param cr CR
 		 */

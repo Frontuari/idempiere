@@ -19,6 +19,7 @@ package org.compiere.process;
 import java.util.logging.Level;
 
 import org.compiere.model.MField;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MTab;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
@@ -30,6 +31,7 @@ import org.compiere.util.DB;
  *  @author Jorg Janke
  *  @version $Id: TabCopy.java,v 1.3 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class TabCopy extends SvrProcess
 {
 	/**	Tab	To					*/
@@ -51,7 +53,7 @@ public class TabCopy extends SvrProcess
 			else if (name.equals("AD_Tab_ID"))
 				p_AD_TabFrom_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_AD_TabTo_ID = getRecord_ID();
 	}	//	prepare

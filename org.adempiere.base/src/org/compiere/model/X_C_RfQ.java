@@ -25,21 +25,103 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for C_RfQ
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_RfQ")
+public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_RfQ (Properties ctx, int C_RfQ_ID, String trxName)
     {
       super (ctx, C_RfQ_ID, trxName);
       /** if (C_RfQ_ID == 0)
+        {
+			setC_Currency_ID (0);
+// @$C_Currency_ID @
+			setC_RfQ_ID (0);
+			setC_RfQ_Topic_ID (0);
+			setDateResponse (new Timestamp( System.currentTimeMillis() ));
+			setDocumentNo (null);
+			setIsInvitedVendorsOnly (false);
+			setIsQuoteAllQty (false);
+			setIsQuoteTotalAmt (false);
+			setIsRfQResponseAccepted (true);
+// Y
+			setIsSelfService (true);
+// Y
+			setName (null);
+			setProcessed (false);
+			setQuoteType (null);
+// S
+			setSalesRep_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RfQ (Properties ctx, int C_RfQ_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_RfQ_ID, trxName, virtualColumns);
+      /** if (C_RfQ_ID == 0)
+        {
+			setC_Currency_ID (0);
+// @$C_Currency_ID @
+			setC_RfQ_ID (0);
+			setC_RfQ_Topic_ID (0);
+			setDateResponse (new Timestamp( System.currentTimeMillis() ));
+			setDocumentNo (null);
+			setIsInvitedVendorsOnly (false);
+			setIsQuoteAllQty (false);
+			setIsQuoteTotalAmt (false);
+			setIsRfQResponseAccepted (true);
+// Y
+			setIsSelfService (true);
+// Y
+			setName (null);
+			setProcessed (false);
+			setQuoteType (null);
+// S
+			setSalesRep_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RfQ (Properties ctx, String C_RfQ_UU, String trxName)
+    {
+      super (ctx, C_RfQ_UU, trxName);
+      /** if (C_RfQ_UU == null)
+        {
+			setC_Currency_ID (0);
+// @$C_Currency_ID @
+			setC_RfQ_ID (0);
+			setC_RfQ_Topic_ID (0);
+			setDateResponse (new Timestamp( System.currentTimeMillis() ));
+			setDocumentNo (null);
+			setIsInvitedVendorsOnly (false);
+			setIsQuoteAllQty (false);
+			setIsQuoteTotalAmt (false);
+			setIsRfQResponseAccepted (true);
+// Y
+			setIsSelfService (true);
+// Y
+			setName (null);
+			setProcessed (false);
+			setQuoteType (null);
+// S
+			setSalesRep_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RfQ (Properties ctx, String C_RfQ_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_RfQ_UU, trxName, virtualColumns);
+      /** if (C_RfQ_UU == null)
         {
 			setC_Currency_ID (0);
 // @$C_Currency_ID @
@@ -69,7 +151,7 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
     }
 
     /** AccessLevel
-      * @return 1 - Org 
+      * @return 1 - Org
       */
     protected int get_AccessLevel()
     {
@@ -91,26 +173,26 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
     }
 
 	public org.compiere.model.I_AD_User getAD_User() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_Name)
-			.getPO(getAD_User_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_ID)
+			.getPO(getAD_User_ID(), get_TrxName());
+	}
 
 	/** Set User/Contact.
-		@param AD_User_ID 
-		User within the system - Internal or Business Partner Contact
-	  */
+		@param AD_User_ID User within the system - Internal or Business Partner Contact
+	*/
 	public void setAD_User_ID (int AD_User_ID)
 	{
-		if (AD_User_ID < 1) 
+		if (AD_User_ID < 1)
 			set_Value (COLUMNNAME_AD_User_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_User_ID, Integer.valueOf(AD_User_ID));
 	}
 
 	/** Get User/Contact.
 		@return User within the system - Internal or Business Partner Contact
 	  */
-	public int getAD_User_ID () 
+	public int getAD_User_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_User_ID);
 		if (ii == null)
@@ -119,26 +201,26 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	public org.compiere.model.I_C_BPartner getC_BPartner() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_BPartner)MTable.get(getCtx(), org.compiere.model.I_C_BPartner.Table_Name)
-			.getPO(getC_BPartner_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_BPartner)MTable.get(getCtx(), org.compiere.model.I_C_BPartner.Table_ID)
+			.getPO(getC_BPartner_ID(), get_TrxName());
+	}
 
-	/** Set Business Partner .
-		@param C_BPartner_ID 
-		Identifies a Business Partner
-	  */
+	/** Set Business Partner.
+		@param C_BPartner_ID Identifies a Business Partner
+	*/
 	public void setC_BPartner_ID (int C_BPartner_ID)
 	{
-		if (C_BPartner_ID < 1) 
+		if (C_BPartner_ID < 1)
 			set_Value (COLUMNNAME_C_BPartner_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_BPartner_ID, Integer.valueOf(C_BPartner_ID));
 	}
 
-	/** Get Business Partner .
+	/** Get Business Partner.
 		@return Identifies a Business Partner
 	  */
-	public int getC_BPartner_ID () 
+	public int getC_BPartner_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_BPartner_ID);
 		if (ii == null)
@@ -147,26 +229,26 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	public org.compiere.model.I_C_BPartner_Location getC_BPartner_Location() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_BPartner_Location)MTable.get(getCtx(), org.compiere.model.I_C_BPartner_Location.Table_Name)
-			.getPO(getC_BPartner_Location_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_BPartner_Location)MTable.get(getCtx(), org.compiere.model.I_C_BPartner_Location.Table_ID)
+			.getPO(getC_BPartner_Location_ID(), get_TrxName());
+	}
 
 	/** Set Partner Location.
-		@param C_BPartner_Location_ID 
-		Identifies the (ship to) address for this Business Partner
-	  */
+		@param C_BPartner_Location_ID Identifies the (ship to) address for this Business Partner
+	*/
 	public void setC_BPartner_Location_ID (int C_BPartner_Location_ID)
 	{
-		if (C_BPartner_Location_ID < 1) 
+		if (C_BPartner_Location_ID < 1)
 			set_Value (COLUMNNAME_C_BPartner_Location_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_BPartner_Location_ID, Integer.valueOf(C_BPartner_Location_ID));
 	}
 
 	/** Get Partner Location.
 		@return Identifies the (ship to) address for this Business Partner
 	  */
-	public int getC_BPartner_Location_ID () 
+	public int getC_BPartner_Location_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_BPartner_Location_ID);
 		if (ii == null)
@@ -175,26 +257,26 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	public org.compiere.model.I_C_Currency getC_Currency() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_Currency)MTable.get(getCtx(), org.compiere.model.I_C_Currency.Table_Name)
-			.getPO(getC_Currency_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_Currency)MTable.get(getCtx(), org.compiere.model.I_C_Currency.Table_ID)
+			.getPO(getC_Currency_ID(), get_TrxName());
+	}
 
 	/** Set Currency.
-		@param C_Currency_ID 
-		The Currency for this record
-	  */
+		@param C_Currency_ID The Currency for this record
+	*/
 	public void setC_Currency_ID (int C_Currency_ID)
 	{
-		if (C_Currency_ID < 1) 
+		if (C_Currency_ID < 1)
 			set_Value (COLUMNNAME_C_Currency_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_Currency_ID, Integer.valueOf(C_Currency_ID));
 	}
 
 	/** Get Currency.
 		@return The Currency for this record
 	  */
-	public int getC_Currency_ID () 
+	public int getC_Currency_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_Currency_ID);
 		if (ii == null)
@@ -203,7 +285,8 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	/** Set Copy Lines.
-		@param CopyLines Copy Lines	  */
+		@param CopyLines Copy Lines
+	*/
 	public void setCopyLines (String CopyLines)
 	{
 		set_Value (COLUMNNAME_CopyLines, CopyLines);
@@ -211,32 +294,32 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 
 	/** Get Copy Lines.
 		@return Copy Lines	  */
-	public String getCopyLines () 
+	public String getCopyLines()
 	{
 		return (String)get_Value(COLUMNNAME_CopyLines);
 	}
 
 	public org.compiere.model.I_C_Order getC_Order() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_Order)MTable.get(getCtx(), org.compiere.model.I_C_Order.Table_Name)
-			.getPO(getC_Order_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_Order)MTable.get(getCtx(), org.compiere.model.I_C_Order.Table_ID)
+			.getPO(getC_Order_ID(), get_TrxName());
+	}
 
 	/** Set Order.
-		@param C_Order_ID 
-		Order
-	  */
+		@param C_Order_ID Order
+	*/
 	public void setC_Order_ID (int C_Order_ID)
 	{
-		if (C_Order_ID < 1) 
+		if (C_Order_ID < 1)
 			set_Value (COLUMNNAME_C_Order_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_Order_ID, Integer.valueOf(C_Order_ID));
 	}
 
 	/** Get Order.
 		@return Order
 	  */
-	public int getC_Order_ID () 
+	public int getC_Order_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_Order_ID);
 		if (ii == null)
@@ -245,9 +328,8 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	/** Set Create PO.
-		@param CreatePO 
-		Create Purchase Order
-	  */
+		@param CreatePO Create Purchase Order
+	*/
 	public void setCreatePO (String CreatePO)
 	{
 		set_Value (COLUMNNAME_CreatePO, CreatePO);
@@ -256,13 +338,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Create PO.
 		@return Create Purchase Order
 	  */
-	public String getCreatePO () 
+	public String getCreatePO()
 	{
 		return (String)get_Value(COLUMNNAME_CreatePO);
 	}
 
 	/** Set Create SO.
-		@param CreateSO Create SO	  */
+		@param CreateSO Create SO
+	*/
 	public void setCreateSO (String CreateSO)
 	{
 		set_Value (COLUMNNAME_CreateSO, CreateSO);
@@ -270,27 +353,26 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 
 	/** Get Create SO.
 		@return Create SO	  */
-	public String getCreateSO () 
+	public String getCreateSO()
 	{
 		return (String)get_Value(COLUMNNAME_CreateSO);
 	}
 
 	/** Set RfQ.
-		@param C_RfQ_ID 
-		Request for Quotation
-	  */
+		@param C_RfQ_ID Request for Quotation
+	*/
 	public void setC_RfQ_ID (int C_RfQ_ID)
 	{
-		if (C_RfQ_ID < 1) 
+		if (C_RfQ_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_RfQ_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_RfQ_ID, Integer.valueOf(C_RfQ_ID));
 	}
 
 	/** Get RfQ.
 		@return Request for Quotation
 	  */
-	public int getC_RfQ_ID () 
+	public int getC_RfQ_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_RfQ_ID);
 		if (ii == null)
@@ -299,26 +381,26 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	public org.compiere.model.I_C_RfQ_Topic getC_RfQ_Topic() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_RfQ_Topic)MTable.get(getCtx(), org.compiere.model.I_C_RfQ_Topic.Table_Name)
-			.getPO(getC_RfQ_Topic_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_RfQ_Topic)MTable.get(getCtx(), org.compiere.model.I_C_RfQ_Topic.Table_ID)
+			.getPO(getC_RfQ_Topic_ID(), get_TrxName());
+	}
 
 	/** Set RfQ Topic.
-		@param C_RfQ_Topic_ID 
-		Topic for Request for Quotations
-	  */
+		@param C_RfQ_Topic_ID Topic for Request for Quotations
+	*/
 	public void setC_RfQ_Topic_ID (int C_RfQ_Topic_ID)
 	{
-		if (C_RfQ_Topic_ID < 1) 
+		if (C_RfQ_Topic_ID < 1)
 			set_Value (COLUMNNAME_C_RfQ_Topic_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_RfQ_Topic_ID, Integer.valueOf(C_RfQ_Topic_ID));
 	}
 
 	/** Get RfQ Topic.
 		@return Topic for Request for Quotations
 	  */
-	public int getC_RfQ_Topic_ID () 
+	public int getC_RfQ_Topic_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_RfQ_Topic_ID);
 		if (ii == null)
@@ -327,7 +409,8 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	/** Set C_RfQ_UU.
-		@param C_RfQ_UU C_RfQ_UU	  */
+		@param C_RfQ_UU C_RfQ_UU
+	*/
 	public void setC_RfQ_UU (String C_RfQ_UU)
 	{
 		set_Value (COLUMNNAME_C_RfQ_UU, C_RfQ_UU);
@@ -335,15 +418,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 
 	/** Get C_RfQ_UU.
 		@return C_RfQ_UU	  */
-	public String getC_RfQ_UU () 
+	public String getC_RfQ_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_RfQ_UU);
 	}
 
 	/** Set Response Date.
-		@param DateResponse 
-		Date of the Response
-	  */
+		@param DateResponse Date of the Response
+	*/
 	public void setDateResponse (Timestamp DateResponse)
 	{
 		set_Value (COLUMNNAME_DateResponse, DateResponse);
@@ -352,15 +434,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Response Date.
 		@return Date of the Response
 	  */
-	public Timestamp getDateResponse () 
+	public Timestamp getDateResponse()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_DateResponse);
 	}
 
 	/** Set Work Complete.
-		@param DateWorkComplete 
-		Date when work is (planned to be) complete
-	  */
+		@param DateWorkComplete Date when work is (planned to be) complete
+	*/
 	public void setDateWorkComplete (Timestamp DateWorkComplete)
 	{
 		set_Value (COLUMNNAME_DateWorkComplete, DateWorkComplete);
@@ -369,15 +450,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Work Complete.
 		@return Date when work is (planned to be) complete
 	  */
-	public Timestamp getDateWorkComplete () 
+	public Timestamp getDateWorkComplete()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_DateWorkComplete);
 	}
 
 	/** Set Work Start.
-		@param DateWorkStart 
-		Date when work is (planned to be) started
-	  */
+		@param DateWorkStart Date when work is (planned to be) started
+	*/
 	public void setDateWorkStart (Timestamp DateWorkStart)
 	{
 		set_Value (COLUMNNAME_DateWorkStart, DateWorkStart);
@@ -386,15 +466,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Work Start.
 		@return Date when work is (planned to be) started
 	  */
-	public Timestamp getDateWorkStart () 
+	public Timestamp getDateWorkStart()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_DateWorkStart);
 	}
 
 	/** Set Delivery Days.
-		@param DeliveryDays 
-		Number of Days (planned) until Delivery
-	  */
+		@param DeliveryDays Number of Days (planned) until Delivery
+	*/
 	public void setDeliveryDays (int DeliveryDays)
 	{
 		set_Value (COLUMNNAME_DeliveryDays, Integer.valueOf(DeliveryDays));
@@ -403,7 +482,7 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Delivery Days.
 		@return Number of Days (planned) until Delivery
 	  */
-	public int getDeliveryDays () 
+	public int getDeliveryDays()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_DeliveryDays);
 		if (ii == null)
@@ -412,9 +491,8 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -423,15 +501,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Document No.
-		@param DocumentNo 
-		Document sequence number of the document
-	  */
+		@param DocumentNo Document sequence number of the document
+	*/
 	public void setDocumentNo (String DocumentNo)
 	{
 		set_Value (COLUMNNAME_DocumentNo, DocumentNo);
@@ -440,7 +517,7 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Document No.
 		@return Document sequence number of the document
 	  */
-	public String getDocumentNo () 
+	public String getDocumentNo()
 	{
 		return (String)get_Value(COLUMNNAME_DocumentNo);
 	}
@@ -448,15 +525,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getDocumentNo());
     }
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -465,15 +541,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Invited Vendors Only.
-		@param IsInvitedVendorsOnly 
-		Only invited vendors can respond to an RfQ
-	  */
+		@param IsInvitedVendorsOnly Only invited vendors can respond to an RfQ
+	*/
 	public void setIsInvitedVendorsOnly (boolean IsInvitedVendorsOnly)
 	{
 		set_Value (COLUMNNAME_IsInvitedVendorsOnly, Boolean.valueOf(IsInvitedVendorsOnly));
@@ -482,22 +557,21 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Invited Vendors Only.
 		@return Only invited vendors can respond to an RfQ
 	  */
-	public boolean isInvitedVendorsOnly () 
+	public boolean isInvitedVendorsOnly()
 	{
 		Object oo = get_Value(COLUMNNAME_IsInvitedVendorsOnly);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Quote All Quantities.
-		@param IsQuoteAllQty 
-		Suppliers are requested to provide responses for all quantities
-	  */
+		@param IsQuoteAllQty Suppliers are requested to provide responses for all quantities
+	*/
 	public void setIsQuoteAllQty (boolean IsQuoteAllQty)
 	{
 		set_Value (COLUMNNAME_IsQuoteAllQty, Boolean.valueOf(IsQuoteAllQty));
@@ -506,22 +580,21 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Quote All Quantities.
 		@return Suppliers are requested to provide responses for all quantities
 	  */
-	public boolean isQuoteAllQty () 
+	public boolean isQuoteAllQty()
 	{
 		Object oo = get_Value(COLUMNNAME_IsQuoteAllQty);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Quote Total Amt.
-		@param IsQuoteTotalAmt 
-		The response can have just the total amount for the RfQ
-	  */
+		@param IsQuoteTotalAmt The response can have just the total amount for the RfQ
+	*/
 	public void setIsQuoteTotalAmt (boolean IsQuoteTotalAmt)
 	{
 		set_Value (COLUMNNAME_IsQuoteTotalAmt, Boolean.valueOf(IsQuoteTotalAmt));
@@ -530,22 +603,21 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Quote Total Amt.
 		@return The response can have just the total amount for the RfQ
 	  */
-	public boolean isQuoteTotalAmt () 
+	public boolean isQuoteTotalAmt()
 	{
 		Object oo = get_Value(COLUMNNAME_IsQuoteTotalAmt);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Responses Accepted.
-		@param IsRfQResponseAccepted 
-		Are Responses to the Request for Quotation accepted
-	  */
+		@param IsRfQResponseAccepted Are Responses to the Request for Quotation accepted
+	*/
 	public void setIsRfQResponseAccepted (boolean IsRfQResponseAccepted)
 	{
 		set_Value (COLUMNNAME_IsRfQResponseAccepted, Boolean.valueOf(IsRfQResponseAccepted));
@@ -554,22 +626,21 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Responses Accepted.
 		@return Are Responses to the Request for Quotation accepted
 	  */
-	public boolean isRfQResponseAccepted () 
+	public boolean isRfQResponseAccepted()
 	{
 		Object oo = get_Value(COLUMNNAME_IsRfQResponseAccepted);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Self-Service.
-		@param IsSelfService 
-		This is a Self-Service entry or this entry can be changed via Self-Service
-	  */
+		@param IsSelfService This is a Self-Service entry or this entry can be changed via Self-Service
+	*/
 	public void setIsSelfService (boolean IsSelfService)
 	{
 		set_Value (COLUMNNAME_IsSelfService, Boolean.valueOf(IsSelfService));
@@ -578,22 +649,21 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Self-Service.
 		@return This is a Self-Service entry or this entry can be changed via Self-Service
 	  */
-	public boolean isSelfService () 
+	public boolean isSelfService()
 	{
 		Object oo = get_Value(COLUMNNAME_IsSelfService);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Margin %.
-		@param Margin 
-		Margin for a product as a percentage
-	  */
+		@param Margin Margin for a product as a percentage
+	*/
 	public void setMargin (BigDecimal Margin)
 	{
 		set_Value (COLUMNNAME_Margin, Margin);
@@ -602,7 +672,7 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Margin %.
 		@return Margin for a product as a percentage
 	  */
-	public BigDecimal getMargin () 
+	public BigDecimal getMargin()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_Margin);
 		if (bd == null)
@@ -611,9 +681,8 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -622,15 +691,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
 
 	/** Set Processed.
-		@param Processed 
-		The document has been processed
-	  */
+		@param Processed The document has been processed
+	*/
 	public void setProcessed (boolean Processed)
 	{
 		set_Value (COLUMNNAME_Processed, Boolean.valueOf(Processed));
@@ -639,20 +707,21 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get Processed.
 		@return The document has been processed
 	  */
-	public boolean isProcessed () 
+	public boolean isProcessed()
 	{
 		Object oo = get_Value(COLUMNNAME_Processed);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Process Now.
-		@param Processing Process Now	  */
+		@param Processing Process Now
+	*/
 	public void setProcessing (boolean Processing)
 	{
 		set_Value (COLUMNNAME_Processing, Boolean.valueOf(Processing));
@@ -660,20 +729,21 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 
 	/** Get Process Now.
 		@return Process Now	  */
-	public boolean isProcessing () 
+	public boolean isProcessing()
 	{
 		Object oo = get_Value(COLUMNNAME_Processing);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Publish RfQ.
-		@param PublishRfQ Publish RfQ	  */
+		@param PublishRfQ Publish RfQ
+	*/
 	public void setPublishRfQ (String PublishRfQ)
 	{
 		set_Value (COLUMNNAME_PublishRfQ, PublishRfQ);
@@ -681,23 +751,22 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 
 	/** Get Publish RfQ.
 		@return Publish RfQ	  */
-	public String getPublishRfQ () 
+	public String getPublishRfQ()
 	{
 		return (String)get_Value(COLUMNNAME_PublishRfQ);
 	}
 
 	/** QuoteType AD_Reference_ID=314 */
 	public static final int QUOTETYPE_AD_Reference_ID=314;
-	/** Quote Total only = T */
-	public static final String QUOTETYPE_QuoteTotalOnly = "T";
-	/** Quote Selected Lines = S */
-	public static final String QUOTETYPE_QuoteSelectedLines = "S";
 	/** Quote All Lines = A */
 	public static final String QUOTETYPE_QuoteAllLines = "A";
+	/** Quote Selected Lines = S */
+	public static final String QUOTETYPE_QuoteSelectedLines = "S";
+	/** Quote Total only = T */
+	public static final String QUOTETYPE_QuoteTotalOnly = "T";
 	/** Set RfQ Type.
-		@param QuoteType 
-		Request for Quotation Type
-	  */
+		@param QuoteType Request for Quotation Type
+	*/
 	public void setQuoteType (String QuoteType)
 	{
 
@@ -707,13 +776,14 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 	/** Get RfQ Type.
 		@return Request for Quotation Type
 	  */
-	public String getQuoteType () 
+	public String getQuoteType()
 	{
 		return (String)get_Value(COLUMNNAME_QuoteType);
 	}
 
 	/** Set Rank RfQ.
-		@param RankRfQ Rank RfQ	  */
+		@param RankRfQ Rank RfQ
+	*/
 	public void setRankRfQ (String RankRfQ)
 	{
 		set_Value (COLUMNNAME_RankRfQ, RankRfQ);
@@ -721,32 +791,32 @@ public class X_C_RfQ extends PO implements I_C_RfQ, I_Persistent
 
 	/** Get Rank RfQ.
 		@return Rank RfQ	  */
-	public String getRankRfQ () 
+	public String getRankRfQ()
 	{
 		return (String)get_Value(COLUMNNAME_RankRfQ);
 	}
 
 	public org.compiere.model.I_AD_User getSalesRep() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_Name)
-			.getPO(getSalesRep_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_ID)
+			.getPO(getSalesRep_ID(), get_TrxName());
+	}
 
 	/** Set Sales Representative.
-		@param SalesRep_ID 
-		Sales Representative or Company Agent
-	  */
+		@param SalesRep_ID Sales Representative or Company Agent
+	*/
 	public void setSalesRep_ID (int SalesRep_ID)
 	{
-		if (SalesRep_ID < 1) 
+		if (SalesRep_ID < 1)
 			set_Value (COLUMNNAME_SalesRep_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_SalesRep_ID, Integer.valueOf(SalesRep_ID));
 	}
 
 	/** Get Sales Representative.
 		@return Sales Representative or Company Agent
 	  */
-	public int getSalesRep_ID () 
+	public int getSalesRep_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_SalesRep_ID);
 		if (ii == null)

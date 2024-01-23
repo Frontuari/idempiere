@@ -49,6 +49,7 @@
 			tofile="jettyhome/etc/jetty-http.xml" filtering="yes" overwrite="yes"/>
 		<copy file="hazelcast-template.xml"
 			tofile="hazelcast.xml" filtering="yes" overwrite="yes"/>
+		<chmod file="jettyhome/etc/jetty-ssl-context.xml" perm="0600"/>
 
 		<mkdir dir="jettyhome/work"/>
 		<mkdir dir="log"/>
@@ -71,9 +72,16 @@
 		<copy file="utils/RUN_WinEnvTemplate.bat"
 			tofile="utils/RUN_WinEnv.bat" filtering="yes" overwrite="yes" />
 
-		<delete>
-			<fileset dir="." includes="**/*.sh" />
-		</delete>
+		<!--	Filter files No Overwrite	-->
+		<copy file="utils/myDBcopyTemplate.sh"
+			tofile="utils/myDBcopy.sh" filtering="yes" overwrite="no" />
+
+		<!--	Filter files Overwrite		-->
+		<copy file="utils/myEnvironmentTemplate.sh"
+			tofile="utils/myEnvironment.sh" filtering="yes" overwrite="yes" />
+
+		<copy file="utils/RUN_UnixEnvTemplate.sh"
+			tofile="utils/RUN_UnixEnv.sh" filtering="yes" overwrite="yes" />
 
 	</target>
 
@@ -98,6 +106,14 @@
 		<!--	Fix OS stuff	-->
 		<fixcrlf srcdir="." eol="lf" eof="remove" includes="**/*.sh" />
 		<chmod dir="." perm="ugo+x" includes="**/*.sh" />
+		<chmod file="idempiereEnv.properties" perm="0600"/>
+		<chmod file="idempiere.properties" perm="0600"/>
+		<chmod file=".idpass" perm="0600"/>
+		<chmod file="utils/myEnvironment.sh" perm="0700"/>
+		<chmod file="utils/getVar.sh" perm="0700"/>
+		<chmod file="utils/setVar.sh" perm="0700"/>
+		<chmod file="utils/customGetVar.sh" perm="0700"/>
+		<chmod file="utils/customSetVar.sh" perm="0700"/>
 
 		<delete>
 			<fileset dir="." includes="*.bat" />

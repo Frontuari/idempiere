@@ -53,7 +53,7 @@ import org.idempiere.cache.ImmutablePOSupport;
  * 
  * @author Teo Sarca, www.arhipac.ro
  * 			<li>FR [ 2788430 ] MUser.getOfBPartner add trxName parameter
- * 				https://sourceforge.net/tracker/index.php?func=detail&aid=2788430&group_id=176962&atid=879335
+ * 				https://sourceforge.net/p/adempiere/feature-requests/714/
  */
 public class MUser extends X_AD_User implements ImmutablePOSupport
 {
@@ -154,7 +154,7 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 		if (retValue == null)
 		{
 			retValue = new MUser (ctx, AD_User_ID, (String)null);
-			if (AD_User_ID == 0)
+			if (AD_User_ID == SystemIDs.USER_SYSTEM_DEPRECATED)
 			{
 				String trxName = null;
 				retValue.load(trxName);	//	load System Record
@@ -194,23 +194,29 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 		return user;
 	}
 	
+	public static MUser get (Properties ctx, String name, String password)
+	{
+		return MUser.get(ctx, name, password, false);
+	}
+	
 	/**
 	 * 	Get User
 	 *	@param ctx context
 	 *	@param name name
 	 *	@param password password
+	 *	@param isSSOLogin when isSSOLogin is true, password is ignored.
 	 *	@return user or null
 	 */
-	public static MUser get (Properties ctx, String name, String password)
+	public static MUser get (Properties ctx, String name, String password, boolean isSSOLogin)
 	{
-		if (name == null || name.length() == 0 || password == null || password.length() == 0)
+		if (name == null || name.length() == 0 || (!isSSOLogin && (password == null || password.length() == 0)))
 		{
 			s_log.warning ("Invalid Name/Password = " + name);
 			return null;
 		}
 		boolean hash_password = MSysConfig.getBooleanValue(MSysConfig.USER_PASSWORD_HASH, false);
 		boolean email_login = MSysConfig.getBooleanValue(MSysConfig.USE_EMAIL_FOR_LOGIN, false);
-//		ArrayList<KeyNamePair> clientList = new ArrayList<KeyNamePair>();
+
 		ArrayList<Integer> clientsValidated = new ArrayList<Integer>();
 		MUser retValue = null;
 		
@@ -250,8 +256,9 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 			if (system == null)
 				throw new IllegalStateException("No System Info");
 			
-			
-			if (system.isLDAP() && ! Util.isEmpty(user.getLDAPUser())) {
+			if (isSSOLogin) {
+				valid = true;
+			} else if (system.isLDAP() && ! Util.isEmpty(user.getLDAPUser())) {
 				valid = system.isLDAP(name, password);
 			} else if (hash_password) {
 				valid = user.authenticateHash(password);
@@ -305,6 +312,18 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 	private static CLogger	s_log	= CLogger.getCLogger (MUser.class);
 	
 	
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_User_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MUser(Properties ctx, String AD_User_UU, String trxName) {
+        super(ctx, AD_User_UU, trxName);
+		if (Util.isEmpty(AD_User_UU))
+			setInitialDefaults();
+    }
+
 	/**************************************************************************
 	 * 	Default Constructor
 	 *	@param ctx context
@@ -315,11 +334,16 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 	{
 		super (ctx, AD_User_ID, trxName);	//	0 is also System
 		if (AD_User_ID == 0)
-		{
-			setIsFullBPAccess (true);
-			setNotificationType(NOTIFICATIONTYPE_None);
-		}		
+			setInitialDefaults();
 	}	//	MUser
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setIsFullBPAccess (true);
+		setNotificationType(NOTIFICATIONTYPE_None);
+	}
 
 	/**
 	 * 	Parent Constructor
@@ -383,6 +407,8 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 	private MRole[] 			m_roles = null;
 	/**	Roles of User with Org	*/
 	private int		 			m_rolesAD_Org_ID = -1;
+	/**	AD_Client_ID for m_roles above	*/
+	private int					m_rolesAD_Client_ID = -1;
 	/** Is Administrator		*/
 	private Boolean				m_isAdministrator = null;
 	/** User Access Rights				*/
@@ -661,34 +687,9 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 	{
 		if (ia == null)
 			return "NoEmail";
-                else return ia.getAddress();
-		/*
-                if (true)
-			return null;
-		
-		Hashtable<String,String> env = new Hashtable<String,String>();
-		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.dns.DnsContextFactory");
-	//	env.put(Context.PROVIDER_URL, "dns://admin.adempiere.org");
-		try
-		{
-			DirContext ctx = new InitialDirContext(env);
-		//	Attributes atts = ctx.getAttributes("admin");
-			Attributes atts = ctx.getAttributes("dns://admin.adempiere.org", new String[] {"MX"});
-			NamingEnumeration en = atts.getAll();
-	//		NamingEnumeration en = ctx.list("adempiere.org");
-			while (en.hasMore())
-			{
-				System.out.println(en.next());
-			}
-			
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			return e.getLocalizedMessage();
-		}
-		return null;
-                */
+        else 
+        	return ia.getAddress();
+
 	}	//	validateEmail
 	
 	/**
@@ -728,7 +729,7 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 	}	//	getEMailValidationCode
 	
 	/**
-	 * 	Check & Set EMail Validation Code.
+	 * 	Check and Set EMail Validation Code.
 	 *	@param code code
 	 *	@param info info
 	 *	@return true if valid
@@ -787,16 +788,16 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 	 */
 	public MRole[] getRoles (int AD_Org_ID)
 	{
-		if (m_roles != null && m_rolesAD_Org_ID == AD_Org_ID)
+		if (m_roles != null && m_rolesAD_Org_ID == AD_Org_ID && m_rolesAD_Client_ID == Env.getAD_Client_ID(Env.getCtx()))
 			return m_roles;
 		
 		ArrayList<MRole> list = new ArrayList<MRole>();
 		// 2007-06-08, matthiasO.
-		// Extension of sql query so that not only roles with org acces for this user
+		// Extension of sql query so that not only roles with org access for this user
 		// are found but also roles which delegate org access to the user level where
 		// this user has access to the org in question
 		String sql = "SELECT * FROM AD_Role r " 
-			+ "WHERE r.IsActive='Y'" 
+			+ "WHERE r.IsActive='Y' AND r.AD_Client_ID IN (0, ?) " 
 			+ " AND EXISTS (SELECT * FROM AD_User_Roles ur" 
 			+ " WHERE r.AD_Role_ID=ur.AD_Role_ID AND ur.IsActive='Y' AND ur.AD_User_ID=?) "
 			+ " AND ( ( r.isaccessallorgs = 'Y' ) OR "
@@ -817,10 +818,11 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 		try
 		{
 			pstmt = DB.prepareStatement (sql, get_TrxName());
-			pstmt.setInt (1, getAD_User_ID());
-			pstmt.setInt (2, AD_Org_ID);
-			pstmt.setInt (3, getAD_User_ID());
-			pstmt.setInt (4, AD_Org_ID);
+			pstmt.setInt (1, Env.getAD_Client_ID(Env.getCtx()));
+			pstmt.setInt (2, getAD_User_ID());
+			pstmt.setInt (3, AD_Org_ID);
+			pstmt.setInt (4, getAD_User_ID());
+			pstmt.setInt (5, AD_Org_ID);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 				list.add (new MRole(Env.getCtx(), rs, get_TrxName()));
@@ -839,6 +841,7 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 			list.stream().forEach(e -> e.markImmutable());
 		
 		m_rolesAD_Org_ID = AD_Org_ID;
+		m_rolesAD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
 		m_roles = new MRole[list.size()];
 		list.toArray (m_roles);
 		return m_roles;
@@ -856,7 +859,7 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 			MRole[] roles = getRoles(0);
 			for (int i = 0; i < roles.length; i++)
 			{
-				if (roles[i].getAD_Role_ID() == 0)
+				if (roles[i].getAD_Role_ID() == SystemIDs.ROLE_SYSTEM)
 				{
 					m_isAdministrator = Boolean.TRUE;
 					break;
@@ -1105,25 +1108,6 @@ public class MUser extends X_AD_User implements ImmutablePOSupport
 		return retValue;
 	}
 	
-	/**
-	 * 	Test
-	 *	@param args ignored
-	 *
-	public static void main (String[] args)
-	{
-		try
-		{
-			validateEmail(new InternetAddress("jjanke@adempiere.org"));
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-		
-	//	org.compiere.Adempiere.startupClient();
-	//	System.out.println ( MUser.get(Env.getCtx(), "SuperUser", "22") );
-	}	//	main	/* */
-
 	@Override
 	public String getEMailUser() {
 		// IDEMPIERE-722

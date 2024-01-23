@@ -29,7 +29,7 @@ import org.compiere.util.Env;
 
 
 /**
- *	Time & Expense Report Callout 
+ *	Time and Expense Report Callout 
  *	
  *  @author Jorg Janke
  *  @version $Id: CalloutTimeExpense.java,v 1.3 2006/07/30 00:51:02 jjanke Exp $
@@ -76,6 +76,7 @@ public class CalloutTimeExpense extends CalloutEngine
 				+ " AND pp.M_PriceList_Version_ID=pv.M_PriceList_Version_ID"
 				+ " AND pv.M_PriceList_ID=pl.M_PriceList_ID"
 				+ " AND pv.IsActive='Y'"
+				+ " AND pp.IsActive='Y'"
 				+ " AND p.M_Product_ID=?"		//	1
 				+ " AND pl.M_PriceList_ID=?"	//	2
 				+ " ORDER BY pv.ValidFrom DESC";
@@ -117,6 +118,7 @@ public class CalloutTimeExpense extends CalloutEngine
 					+ " AND pp.M_PriceList_Version_ID=pv.M_PriceList_Version_ID"
 					+ " AND pv.M_PriceList_ID=bpl.M_PriceList_ID"
 					+ " AND pv.IsActive='Y'"
+					+ " AND pp.IsActive='Y'"
 					+ " AND bpl.M_PriceList_ID=pl.BasePriceList_ID"	//	Base
 					+ " AND p.M_Product_ID=?"		//  1
 					+ " AND pl.M_PriceList_ID=?"	//	2
@@ -170,7 +172,7 @@ public class CalloutTimeExpense extends CalloutEngine
 	/**
 	 *	Expense - Amount.
 	 *		- called from ExpenseAmt, C_Currency_ID
-	 *		- calculates ConvertedAmt
+	 *		- calculates ConvertedAmt and Line Net Amount
 	 *  @param ctx context
 	 *  @param WindowNo current Window No
 	 *  @param mTab Grid Tab
@@ -186,7 +188,7 @@ public class CalloutTimeExpense extends CalloutEngine
 		//	get values
 		BigDecimal ExpenseAmt = (BigDecimal)mTab.getValue("ExpenseAmt");
 		Integer C_Currency_From_ID = (Integer)mTab.getValue("C_Currency_ID");
-		int C_Currency_To_ID = Env.getContextAsInt(ctx, "$C_Currency_ID");
+		int C_Currency_To_ID = Env.getContextAsInt(ctx, Env.C_CURRENCY_ID);
 		Timestamp DateExpense = Env.getContextAsDate(ctx, WindowNo, "DateExpense");
 		//
 		if (log.isLoggable(Level.FINE)) log.fine("Amt=" + ExpenseAmt + ", C_Currency_ID=" + C_Currency_From_ID);
@@ -202,6 +204,11 @@ public class CalloutTimeExpense extends CalloutEngine
 				DateExpense, 0, AD_Client_ID, AD_Org_ID);
 		}
 		mTab.setValue("ConvertedAmt", ConvertedAmt);
+		
+		BigDecimal qty = (BigDecimal)mTab.getValue(MTimeExpenseLine.COLUMNNAME_Qty);
+		BigDecimal lineNetAmt = ExpenseAmt.multiply(qty);
+		mTab.setValue(MTimeExpenseLine.COLUMNNAME_LineNetAmt, lineNetAmt);
+		
 		if (log.isLoggable(Level.FINE)) log.fine("= ConvertedAmt=" + ConvertedAmt);
 
 		return "";

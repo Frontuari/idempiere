@@ -2,8 +2,8 @@
  * This file is part of Adempiere ERP Bazaar                                  *
  * http://www.adempiere.org                                                   *
  *                                                                            *
- * Copyright (C) Jorg Viola			                                          *
- * Copyright (C) Contributors												  *
+ * Copyright (C) Jorg Viola                                                   *
+ * Copyright (C) Contributors                                                 *
  *                                                                            *
  * This program is free software; you can redistribute it and/or modify it    *
  * under the terms version 2 of the GNU General Public License as published   *
@@ -17,6 +17,7 @@
  *                                                                            *
  * Contributors:                                                              *
  * - Heng Sin Low                                                             *
+ * - Andreas Sumerauer                                                        *
  *****************************************************************************/
 package org.adempiere.webui;
 
@@ -27,32 +28,40 @@ import java.util.stream.Collectors;
 import org.adempiere.base.IServiceReferenceHolder;
 import org.adempiere.base.Service;
 import org.adempiere.base.ServiceQuery;
+import org.adempiere.webui.adwindow.IADTabpanel;
 import org.adempiere.webui.apps.IProcessParameterListener;
 import org.adempiere.webui.apps.graph.IChartRendererService;
+import org.adempiere.webui.factory.IADTabPanelFactory;
 import org.adempiere.webui.factory.IDashboardGadgetFactory;
 import org.adempiere.webui.factory.IFormFactory;
+import org.adempiere.webui.factory.IMappedFormFactory;
+import org.adempiere.webui.factory.IQuickEntryFactory;
+import org.adempiere.webui.grid.AbstractWQuickEntry;
 import org.adempiere.webui.panel.ADForm;
 import org.compiere.grid.ICreateFrom;
 import org.compiere.grid.ICreateFromFactory;
 import org.compiere.grid.IPaymentForm;
 import org.compiere.grid.IPaymentFormFactory;
 import org.compiere.model.GridTab;
+import org.compiere.model.MDashboardContent;
 import org.compiere.util.CCache;
+import org.idempiere.ui.zk.media.IMediaView;
+import org.idempiere.ui.zk.media.IMediaViewProvider;
 import org.zkoss.zk.ui.Component;
 
 /**
- *
+ * Entry point to get implementation instance for UI extensions (through OSGI service or Equinox extension).
  * @author viola
  * @author hengsin
  *
  */
 public class Extensions {
 
+	/** FormId:IFormFactory Reference. FormId is Java class name, OSGi component name or Equinox extension Id */
 	private final static CCache<String, IServiceReferenceHolder<IFormFactory>> s_formFactoryCache = new CCache<>(null, "IFormFactory", 100, false);
 	
 	/**
-	 *
-	 * @param formId Java class name or equinox extension Id
+	 * @param formId Java class name, OSGi component name or equinox extension Id
 	 * @return IFormController instance or null if formId not found
 	 */
 	public static ADForm getForm(String formId) {
@@ -82,13 +91,14 @@ public class Extensions {
 		return null;
 	}
 	
+	/** CacheKey:IProcessParameterListener Reference. CacheKey is ProcessClassName|ColumnName */
 	private final static CCache<String, List<IServiceReferenceHolder<IProcessParameterListener>>> s_processParameterListenerCache = new CCache<>(null, "List<IProcessParameterListener>", 100, false);
 	
 	/**
 	 * 
-	 * @param processClass
+	 * @param processClass Java class name of process
 	 * @param columnName
-	 * @return list of parameter listener
+	 * @return list of {@link IProcessParameterListener}
 	 */
 	public static List<IProcessParameterListener> getProcessParameterListeners(String processClass, String columnName) {
 		String cacheKey = processClass + "|" + columnName;
@@ -107,10 +117,10 @@ public class Extensions {
 		return listeners.stream().filter(e -> e.getService() != null).map(e -> e.getService()).collect(Collectors.toCollection(ArrayList::new));
 	}
 	
+	/** AD_Tab_ID:ICreateFromFactory Reference */
 	private final static CCache<String, IServiceReferenceHolder<ICreateFromFactory>> s_createFromFactoryCache = new CCache<>(null, "ICreateFromFactory", 100, false);
 	
 	/**
-	 * 
 	 * @param mTab
 	 * @return ICreateFrom instance
 	 */
@@ -145,11 +155,12 @@ public class Extensions {
 		return null;
 	}
 	
+	/** CacheKey:IPaymentFormFactory Reference. CacheKey is AD_Tab_ID|Payment Rule */
 	private static final CCache<String, IServiceReferenceHolder<IPaymentFormFactory>> s_paymentFormFactoryCache = new CCache<>(null, "IPaymentFormFactory", 100, false);
+	
 	/**
-	 * 
 	 * @param windowNo
-	 * @param mTab
+	 * @param mTab GridTab
 	 * @param paymentRule
 	 * @return IPaymentForm instance
 	 */
@@ -180,20 +191,30 @@ public class Extensions {
 		return null;
 	}
 	
+	/** URL:IDashboardGadgetFactory Reference */
 	private static final CCache<String, IServiceReferenceHolder<IDashboardGadgetFactory>> s_dashboardGadgetFactoryCache = new CCache<>(null, "IDashboardGadgetFactory", 100, false);
 	
 	/**
-	 * 
 	 * @param url
 	 * @param parent
 	 * @return Gadget component
 	 */
 	public static final Component getDashboardGadget(String url, Component parent) {
+		return getDashboardGadget(url, parent, null);
+	}
+
+	/**
+	 * @param url
+	 * @param parent
+	 * @param dc
+	 * @return Gadget component
+	 */
+	public static final Component getDashboardGadget(String url, Component parent, MDashboardContent dc) {
 		IServiceReferenceHolder<IDashboardGadgetFactory> cache = s_dashboardGadgetFactoryCache.get(url);
 		if (cache != null) {
 			IDashboardGadgetFactory service = cache.getService();
 			if (service != null) {
-				Component component = service.getGadget(url,parent);
+				Component component = service.getGadget(url,parent,dc);
 	            if(component != null)
 	            	return component;
 			}
@@ -204,9 +225,11 @@ public class Extensions {
         for (IServiceReferenceHolder<IDashboardGadgetFactory> factory : f) {
         	IDashboardGadgetFactory service = factory.getService();
         	if (service != null) {
-	        	Component component = service.getGadget(url,parent);
-	            if(component != null)
+				Component component = service.getGadget(url,parent,dc);
+	            if (component != null) {
+	            	s_dashboardGadgetFactoryCache.put(url, factory);
 	            	return component;
+	            }
         	}
         }
         
@@ -214,10 +237,157 @@ public class Extensions {
 	}
 	
 	/**
-	 * 
 	 * @return list of {@link IChartRendererService}
 	 */
 	public static final List<IChartRendererService> getChartRendererServices() {
 		return Service.locator().list(IChartRendererService.class).getServices();
+	}
+
+	private static IServiceReferenceHolder<IMappedFormFactory> s_mappedFormFactoryReference = null;
+
+	/**
+	 * @return {@link IMappedFormFactory} instance
+	 */
+	public static IMappedFormFactory getMappedFormFactory(){
+		IMappedFormFactory formFactoryService = null;
+		if (s_mappedFormFactoryReference != null) {
+			formFactoryService = s_mappedFormFactoryReference.getService();
+			if (formFactoryService != null)
+				return formFactoryService;
+		}
+		IServiceReferenceHolder<IMappedFormFactory> serviceReference = Service.locator().locate(IMappedFormFactory.class).getServiceReference();
+		if (serviceReference != null) {
+			formFactoryService = serviceReference.getService();
+			s_mappedFormFactoryReference = serviceReference;
+		}
+		return formFactoryService;
+	}
+
+	/** AD_Window_ID:IQuickEntryFactory Reference */
+	private final static CCache<Integer, IServiceReferenceHolder<IQuickEntryFactory>> s_quickEntryFactoryCache = new CCache<>(null, "IQuickEntryFactory", 100, false);
+	
+	/**
+	 * @param AdWindowID AD_Window_ID
+	 * @return IQuickEntryFactory instance or null if AdWindowID not found
+	 */
+	public static AbstractWQuickEntry getQuickEntry(Integer AdWindowID) {
+		IServiceReferenceHolder<IQuickEntryFactory> cache = s_quickEntryFactoryCache.get(AdWindowID);
+		if (cache != null) {
+			IQuickEntryFactory service = cache.getService();
+			if (service != null) {
+				AbstractWQuickEntry quickEntry = service.newQuickEntryInstance(AdWindowID);
+				if (quickEntry != null)
+					return quickEntry;
+			}
+			s_quickEntryFactoryCache.remove(AdWindowID);
+		}
+		List<IServiceReferenceHolder<IQuickEntryFactory>> factories = Service.locator().list(IQuickEntryFactory.class).getServiceReferences();
+		if (factories != null) {
+			for(IServiceReferenceHolder<IQuickEntryFactory> factory : factories) {
+				IQuickEntryFactory service = factory.getService();
+				if (service != null) {
+					AbstractWQuickEntry quickEntry = service.newQuickEntryInstance(AdWindowID);
+					if (quickEntry != null) {
+						s_quickEntryFactoryCache.put(AdWindowID, factory);
+						return quickEntry;
+					}
+				}
+			}
+		}
+		return null;
 	}	
+	
+	/**
+	 * @param WindowNo 
+	 * @param TabNo 
+	 * @param AdWindowID AD_Window_ID
+	 * @return IQuickEntry instance or null if AdWindowID not found
+	 */
+	public static AbstractWQuickEntry getQuickEntry(int WindowNo, int TabNo, int AdWindowID) {
+		IServiceReferenceHolder<IQuickEntryFactory> cache = s_quickEntryFactoryCache.get(AdWindowID);
+		if (cache != null) {
+			IQuickEntryFactory service = cache.getService();
+			if (service != null) {
+				AbstractWQuickEntry quickEntry = service.newQuickEntryInstance(WindowNo, TabNo, AdWindowID);
+				if (quickEntry != null)
+					return quickEntry;
+			}
+			s_quickEntryFactoryCache.remove(AdWindowID);
+		}
+		List<IServiceReferenceHolder<IQuickEntryFactory>> factories = Service.locator().list(IQuickEntryFactory.class).getServiceReferences();
+		if (factories != null) {
+			for(IServiceReferenceHolder<IQuickEntryFactory> factory : factories) {
+				IQuickEntryFactory service = factory.getService();
+				if (service != null) {
+					AbstractWQuickEntry quickEntry = service.newQuickEntryInstance(WindowNo, TabNo, AdWindowID);
+					if (quickEntry != null) {
+						s_quickEntryFactoryCache.put(AdWindowID, factory);
+						return quickEntry;
+					}
+				}
+			}
+		}
+		return null;
+	}	
+	
+	/** CacheKey:IMediaViewProvider Reference. CacheKey is ContentType|File Extension */
+	private static final CCache<String, IServiceReferenceHolder<IMediaViewProvider>> s_mediaViewProviderCache = new CCache<>("_IMediaViewProvider_Cache", "IMediaViewProvider", 100, false);
+	
+	/**
+	 * @param contentType
+	 * @param extension
+	 * @param mobile true for mobile, otherwise for desktop
+	 * @return {@link IMediaView} instance
+	 */
+	public static IMediaView getMediaView(String contentType, String extension, boolean mobile) {
+		String key = contentType + "|" + extension;
+		
+		IMediaView view = null;
+		IServiceReferenceHolder<IMediaViewProvider> cache = s_mediaViewProviderCache.get(key);
+		if (cache != null) {
+			IMediaViewProvider service = cache.getService();
+			if (service != null) {
+				view = service.getMediaView(contentType, extension, mobile);
+				if (view != null)
+					return view;
+			}
+			s_mediaViewProviderCache.remove(key);
+		}
+		List<IServiceReferenceHolder<IMediaViewProvider>> serviceReferences = Service.locator().list(IMediaViewProvider.class).getServiceReferences();
+		if (serviceReferences == null) 
+			return null;
+		for (IServiceReferenceHolder<IMediaViewProvider> serviceReference : serviceReferences)
+		{
+			IMediaViewProvider service = serviceReference.getService();
+			if (service != null) {
+				view = service.getMediaView(contentType, extension, mobile);
+				if (view != null) {
+					s_mediaViewProviderCache.put(key, serviceReference);
+					return view;
+				}
+			}
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * @param  tabType build in - FORM or SORT, custom - through IADTabPanelFactory extension
+	 * @return {@link IADTabpanel} instance
+	 */
+	public static IADTabpanel getADTabPanel(String tabType)
+	{
+		IADTabpanel Object = null;
+		List<IADTabPanelFactory> factoryList = Service.locator().list(IADTabPanelFactory.class).getServices();
+		if (factoryList == null)
+			return null;
+
+		for (IADTabPanelFactory factory : factoryList)
+		{
+			Object = factory.getInstance(tabType);
+			if (Object != null)
+				return Object;
+		}
+		return null;
+	} // getADTabPanel
 }

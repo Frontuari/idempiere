@@ -21,21 +21,58 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for ASP_ClientLevel
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="ASP_ClientLevel")
+public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_ASP_ClientLevel (Properties ctx, int ASP_ClientLevel_ID, String trxName)
     {
       super (ctx, ASP_ClientLevel_ID, trxName);
       /** if (ASP_ClientLevel_ID == 0)
+        {
+			setASP_ClientLevel_ID (0);
+			setASP_Level_ID (0);
+			setASP_Module_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_ASP_ClientLevel (Properties ctx, int ASP_ClientLevel_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, ASP_ClientLevel_ID, trxName, virtualColumns);
+      /** if (ASP_ClientLevel_ID == 0)
+        {
+			setASP_ClientLevel_ID (0);
+			setASP_Level_ID (0);
+			setASP_Module_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_ASP_ClientLevel (Properties ctx, String ASP_ClientLevel_UU, String trxName)
+    {
+      super (ctx, ASP_ClientLevel_UU, trxName);
+      /** if (ASP_ClientLevel_UU == null)
+        {
+			setASP_ClientLevel_ID (0);
+			setASP_Level_ID (0);
+			setASP_Module_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_ASP_ClientLevel (Properties ctx, String ASP_ClientLevel_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, ASP_ClientLevel_UU, trxName, virtualColumns);
+      /** if (ASP_ClientLevel_UU == null)
         {
 			setASP_ClientLevel_ID (0);
 			setASP_Level_ID (0);
@@ -50,7 +87,7 @@ public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persis
     }
 
     /** AccessLevel
-      * @return 2 - Client 
+      * @return 2 - Client
       */
     protected int get_AccessLevel()
     {
@@ -71,19 +108,20 @@ public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persis
       return sb.toString();
     }
 
-	/** Set Client Level.
-		@param ASP_ClientLevel_ID Client Level	  */
+	/** Set Tenant Level.
+		@param ASP_ClientLevel_ID Tenant Level
+	*/
 	public void setASP_ClientLevel_ID (int ASP_ClientLevel_ID)
 	{
-		if (ASP_ClientLevel_ID < 1) 
+		if (ASP_ClientLevel_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_ASP_ClientLevel_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_ASP_ClientLevel_ID, Integer.valueOf(ASP_ClientLevel_ID));
 	}
 
-	/** Get Client Level.
-		@return Client Level	  */
-	public int getASP_ClientLevel_ID () 
+	/** Get Tenant Level.
+		@return Tenant Level	  */
+	public int getASP_ClientLevel_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_ASP_ClientLevel_ID);
 		if (ii == null)
@@ -92,7 +130,8 @@ public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persis
 	}
 
 	/** Set ASP_ClientLevel_UU.
-		@param ASP_ClientLevel_UU ASP_ClientLevel_UU	  */
+		@param ASP_ClientLevel_UU ASP_ClientLevel_UU
+	*/
 	public void setASP_ClientLevel_UU (String ASP_ClientLevel_UU)
 	{
 		set_Value (COLUMNNAME_ASP_ClientLevel_UU, ASP_ClientLevel_UU);
@@ -100,29 +139,31 @@ public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persis
 
 	/** Get ASP_ClientLevel_UU.
 		@return ASP_ClientLevel_UU	  */
-	public String getASP_ClientLevel_UU () 
+	public String getASP_ClientLevel_UU()
 	{
 		return (String)get_Value(COLUMNNAME_ASP_ClientLevel_UU);
 	}
 
 	public org.compiere.model.I_ASP_Level getASP_Level() throws RuntimeException
-    {
-		return (org.compiere.model.I_ASP_Level)MTable.get(getCtx(), org.compiere.model.I_ASP_Level.Table_Name)
-			.getPO(getASP_Level_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_ASP_Level)MTable.get(getCtx(), org.compiere.model.I_ASP_Level.Table_ID)
+			.getPO(getASP_Level_ID(), get_TrxName());
+	}
 
 	/** Set ASP Level.
-		@param ASP_Level_ID ASP Level	  */
+		@param ASP_Level_ID ASP Level
+	*/
 	public void setASP_Level_ID (int ASP_Level_ID)
 	{
-		if (ASP_Level_ID < 1) 
+		if (ASP_Level_ID < 1)
 			set_Value (COLUMNNAME_ASP_Level_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_ASP_Level_ID, Integer.valueOf(ASP_Level_ID));
 	}
 
 	/** Get ASP Level.
 		@return ASP Level	  */
-	public int getASP_Level_ID () 
+	public int getASP_Level_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_ASP_Level_ID);
 		if (ii == null)
@@ -131,23 +172,25 @@ public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persis
 	}
 
 	public org.compiere.model.I_ASP_Module getASP_Module() throws RuntimeException
-    {
-		return (org.compiere.model.I_ASP_Module)MTable.get(getCtx(), org.compiere.model.I_ASP_Module.Table_Name)
-			.getPO(getASP_Module_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_ASP_Module)MTable.get(getCtx(), org.compiere.model.I_ASP_Module.Table_ID)
+			.getPO(getASP_Module_ID(), get_TrxName());
+	}
 
 	/** Set ASP Module.
-		@param ASP_Module_ID ASP Module	  */
+		@param ASP_Module_ID ASP Module
+	*/
 	public void setASP_Module_ID (int ASP_Module_ID)
 	{
-		if (ASP_Module_ID < 1) 
+		if (ASP_Module_ID < 1)
 			set_Value (COLUMNNAME_ASP_Module_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_ASP_Module_ID, Integer.valueOf(ASP_Module_ID));
 	}
 
 	/** Get ASP Module.
 		@return ASP Module	  */
-	public int getASP_Module_ID () 
+	public int getASP_Module_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_ASP_Module_ID);
 		if (ii == null)
@@ -156,9 +199,8 @@ public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persis
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -167,7 +209,7 @@ public class X_ASP_ClientLevel extends PO implements I_ASP_ClientLevel, I_Persis
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}

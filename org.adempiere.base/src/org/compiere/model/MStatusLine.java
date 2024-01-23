@@ -28,16 +28,19 @@ import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.adempiere.base.event.EventManager;
+import org.adempiere.base.event.EventProperty;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.idempiere.cache.ImmutablePOSupport;
 import org.idempiere.cache.ImmutablePOCache;
+import org.idempiere.cache.ImmutablePOSupport;
+import org.osgi.service.event.Event;
 
 /**
- *	Status Line Model
+ *	Data Status Line Model
  *	
  *  @author Nicolas Micoud
  *  @version $Id: MStatusLine.java
@@ -45,19 +48,33 @@ import org.idempiere.cache.ImmutablePOCache;
 public class MStatusLine extends X_AD_StatusLine implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = -2804602992872075936L;
+	private static final long serialVersionUID = -1542116796861052734L;
+
 	/**	Logging								*/
 	private static CLogger		s_log = CLogger.getCLogger(MStatusLine.class);
 	/** Status Line Cache				*/
 	private static ImmutablePOCache<String, MStatusLine> s_cache = new ImmutablePOCache<String, MStatusLine>(Table_Name, 10);
 	private static CCache<String, MStatusLine[]> s_cachew = new CCache<String, MStatusLine[]>(Table_Name, Table_Name+"|MStatusLine[]", 10);
 
+	public static final String BEFORE_PARSE_STATUS_LINE = "idempiere/statusLine/beforeParse";
+	public static final String EVENT_WINDOWNO = "event.windowno";
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_StatusLine_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MStatusLine(Properties ctx, String AD_StatusLine_UU, String trxName) {
+        super(ctx, AD_StatusLine_UU, trxName);
+    }
+
 	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
-	 *	@param AD_Window_ID
+	 *	@param AD_StatusLine_ID
 	 *	@param trxName transaction
 	 */
 	public MStatusLine (Properties ctx, int AD_StatusLine_ID, String trxName)
@@ -77,7 +94,7 @@ public class MStatusLine extends X_AD_StatusLine implements ImmutablePOSupport
 	}	//	MStatusLine
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MStatusLine(MStatusLine copy) 
@@ -86,7 +103,7 @@ public class MStatusLine extends X_AD_StatusLine implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -96,7 +113,7 @@ public class MStatusLine extends X_AD_StatusLine implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -165,14 +182,26 @@ public class MStatusLine extends X_AD_StatusLine implements ImmutablePOSupport
 	}
 
 	/**
-	 * Get the widget lines defined for the window&tab&table (immutable)
+	 * Get the widget lines defined for the window and tab and table (immutable)
 	 * @param window_ID
 	 * @param tab_ID
 	 * @param table_ID
 	 * @return array of widget lines discovered for table or specific tab or general window
 	 */
 	public static MStatusLine[] getStatusLinesWidget(int window_ID, int tab_ID, int table_ID) {
-		StringBuilder key = new StringBuilder().append(window_ID).append("|").append(tab_ID).append("|").append(table_ID);
+		return getStatusLinesWidget(window_ID, tab_ID, table_ID, 0);
+	}
+	
+	/**
+	 * Get the widget lines defined for the window and tab and table and info window (immutable)
+	 * @param window_ID
+	 * @param tab_ID
+	 * @param table_ID
+	 * @param infoWindow_ID
+	 * @return array of widget lines discovered for table or specific tab or general window or info window
+	 */
+	public static MStatusLine[] getStatusLinesWidget(int window_ID, int tab_ID, int table_ID, int infoWindow_ID) {
+		StringBuilder key = new StringBuilder().append(window_ID).append("|").append(tab_ID).append("|").append(table_ID).append("|").append(infoWindow_ID);
 		MStatusLine[] retValue = null;
 		if (s_cachew.containsKey(key.toString()))
 		{
@@ -188,9 +217,12 @@ public class MStatusLine extends X_AD_StatusLine implements ImmutablePOSupport
 				+ "WHERE  slu.IsActive = 'Y' "
 				+ "       AND sl.IsActive = 'Y' "
 				+ "       AND slu.IsStatusLine = 'N' "
-				+ "       AND (slu.AD_Table_ID = ? OR (slu.AD_Window_ID=? AND slu.AD_Tab_ID=?) OR (slu.AD_Window_ID=? AND slu.AD_Tab_ID IS NULL)) "
+				+ "       AND (slu.AD_Table_ID = ? "
+				+ "				OR (slu.AD_Window_ID=? AND slu.AD_Tab_ID=?) "
+				+ "				OR (slu.AD_Window_ID=? AND slu.AD_Tab_ID IS NULL)"
+				+ "				OR slu.AD_InfoWindow_ID=?) "
 				+ "ORDER BY slu.SeqNo";
-		int[] wlids = DB.getIDsEx(null, sql, table_ID, window_ID, tab_ID, window_ID);
+		int[] wlids = DB.getIDsEx(null, sql, table_ID, window_ID, tab_ID, window_ID, infoWindow_ID);
 		if (wlids.length > 0) {
 	        ArrayList<MStatusLine> list = new ArrayList<MStatusLine>();
 	        for (int wlid : wlids) {
@@ -210,7 +242,16 @@ public class MStatusLine extends X_AD_StatusLine implements ImmutablePOSupport
 		return retValue;
 	}
 
+	/**
+	 * Parse and execute SQL statement. Combine result of execution (first row) with translated AD message.  
+	 * @param windowNo
+	 * @return AD message formatted output of SQL statement execution result
+	 */
 	public String parseLine(int windowNo) {
+		Event event = EventManager.newEvent(BEFORE_PARSE_STATUS_LINE,
+				new EventProperty(EventManager.EVENT_DATA, this), new EventProperty(EVENT_WINDOWNO, windowNo));
+		EventManager.getInstance().sendEvent(event);
+
 		String sql = getSQLStatement();
 
 		if (sql.indexOf("@") >= 0) {

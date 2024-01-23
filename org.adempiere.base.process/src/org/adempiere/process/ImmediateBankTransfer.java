@@ -39,6 +39,7 @@ import org.compiere.model.MBankAccount;
 import org.compiere.model.MCash;
 import org.compiere.model.MCashBook;
 import org.compiere.model.MCashLine;
+import org.compiere.model.MProcessPara;
 import org.compiere.process.DocAction;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
@@ -58,6 +59,7 @@ import org.compiere.util.Env;
  *	@author Alejandro Falcone
  *	
  **/
+@org.adempiere.base.annotation.Process
 public class ImmediateBankTransfer extends SvrProcess
 {
 	 /** DocAction          */
@@ -70,7 +72,7 @@ public class ImmediateBankTransfer extends SvrProcess
     private String p_Name = "";					// Name
 	private String p_Description= "";			// Description
 	private int p_C_CashBook_ID = 0;   			// CashBook to be used as bridge
-	private BigDecimal p_Amount = Env.ZERO;  			// Amount to be transfered between the accounts
+	private BigDecimal p_Amount = Env.ZERO;  			// Amount to be transferred between the accounts
 	private int p_From_C_BankAccount_ID = 0;	// Bank Account From
 	private int p_To_C_BankAccount_ID= 0;		// Bank Account To
 	private Timestamp	p_StatementDate = null;  // Date Statement
@@ -103,7 +105,7 @@ public class ImmediateBankTransfer extends SvrProcess
 			else if (name.equals("DateAcct"))
 				p_DateAcct = (Timestamp)para[i].getParameter();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 
@@ -139,7 +141,7 @@ public class ImmediateBankTransfer extends SvrProcess
 
 		//	Login Date
 		if (p_StatementDate == null)
-			p_StatementDate = Env.getContextAsDate(getCtx(), "#Date");
+			p_StatementDate = Env.getContextAsDate(getCtx(), Env.DATE);
 		if (p_StatementDate == null)
 			p_StatementDate = new Timestamp(System.currentTimeMillis());			
 

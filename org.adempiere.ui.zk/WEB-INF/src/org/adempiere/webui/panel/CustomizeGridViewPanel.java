@@ -40,13 +40,15 @@ import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.SimpleListModel;
 import org.adempiere.webui.factory.ButtonFactory;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.compiere.model.I_AD_Field;
 import org.compiere.model.MField;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTab;
 import org.compiere.model.Query;
 import org.compiere.model.X_AD_Tab_Customization;
@@ -68,28 +70,29 @@ import org.zkoss.zul.Separator;
 import org.zkoss.zul.South;
 
 /**
- * 
+ * Dialog to customize grid view (selected columns, column width, etc)
  * @author hengsin
  *
  */
 public class CustomizeGridViewPanel extends Panel
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -6200912526954948898L;
 
+	/** AD_Field_ID:Width */
 	private Map<Integer, String> m_columnsWidth;
-	ArrayList<Integer> tableSeqs;
-	GridView gridPanel = null;
-	MTabCustomization m_tabcust;
+	protected ArrayList<Integer> tableSeqs;
+	protected GridView gridPanel = null;
+	protected MTabCustomization m_tabcust;
 
 	/**
-	 *	Sort Tab Constructor
-	 *
-	 *  @param WindowNo Window No
-	 * @param columnsWidth 
-	 *  @param GridTab
+	 * @param WindowNo Window No
+	 * @param AD_Tab_ID
+	 * @param AD_User_ID
+	 * @param columnsWidth
+	 * @param gridFieldIds
 	 */
 	public CustomizeGridViewPanel(int WindowNo, int AD_Tab_ID, int AD_User_ID, Map<Integer, String> columnsWidth,ArrayList<Integer> gridFieldIds)
 	{
@@ -122,6 +125,7 @@ public class CustomizeGridViewPanel extends Panel
 	private Checkbox chkSaveWidth = new Checkbox();
 	private Label lblGridMode = new Label();
 	private Listbox lstGridMode = new Listbox();
+	private Checkbox chkAutoHideEmptyColumn = new Checkbox();
 
 	//
 	SimpleListModel noModel = new SimpleListModel();
@@ -132,9 +136,11 @@ public class CustomizeGridViewPanel extends Panel
 	private boolean uiCreated;
 	private boolean m_saved = false;
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true, false, true, false, false, false);
+	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
+	private boolean isUseEscForTabClosing = MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
 	
-/**
-	 * Static Layout
+	/**
+	 * Layout dialog
 	 * 
 	 * @throws Exception
 	 */
@@ -276,6 +282,11 @@ public class CustomizeGridViewPanel extends Panel
 		southPanel.appendChild(lstGridMode);
 		
 		sep = new Separator();
+		southPanel.appendChild(sep);
+		chkAutoHideEmptyColumn.setLabel(Msg.getElement(Env.getCtx(), "IsAutoHideEmptyColumn"));
+		southPanel.appendChild(chkAutoHideEmptyColumn);
+		
+		sep = new Separator();
 		sep.setSpacing("2px");
 		southPanel.appendChild(sep);
 
@@ -286,16 +297,14 @@ public class CustomizeGridViewPanel extends Panel
 			public void onEvent(Event event) throws Exception {
 				if (event.getTarget().equals(
 						confirmPanel.getButton(ConfirmPanel.A_OK))) {
-					saveData();
+					onOk();
 				} else if (event.getTarget().equals(
 						confirmPanel.getButton(ConfirmPanel.A_CANCEL))) {
-					getParent().detach();
+					onCancel();
 				} else if (event.getTarget().equals(confirmPanel.getButton(ConfirmPanel.A_RESET))) {
-					tableSeqs.clear();
-					loadData();
+					onReset();
 				}
-			}
-
+			}			
 		};
 
 		confirmPanel.addActionListener(onClickListener);
@@ -307,6 +316,35 @@ public class CustomizeGridViewPanel extends Panel
 		
 	}	//	init
 	
+	/**
+	 * reset form
+	 */
+	public void onReset() {
+		tableSeqs.clear();
+		loadData();
+	}
+
+	/**
+	 * save changes
+	 */
+	public void onOk() {
+		saveData();
+	}
+
+	/**
+	 * cancel form
+	 */
+	public void onCancel() {
+		// do not allow to close tab for Events.ON_CTRL_KEY event
+		if(isUseEscForTabClosing)
+			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
+
+		getParent().detach();
+	}
+	
+	/**
+	 * Load customization data
+	 */
 	public void loadData()
 	{
 		m_tabcust = MTabCustomization.get(Env.getCtx(), m_AD_User_ID, m_AD_Tab_ID, null);
@@ -325,7 +363,7 @@ public class CustomizeGridViewPanel extends Panel
 		{
 			List<MField> lsFieldsOfGrid = query.list();
 			HashMap<Integer, ListElement> curTabSel = new HashMap<Integer, CustomizeGridViewPanel.ListElement>();
-			MTab tab = new MTab(Env.getCtx(), m_AD_Tab_ID, null);
+			MTab tab = MTab.get(m_AD_Tab_ID);
 			
 			for (MField field : lsFieldsOfGrid)
 			{
@@ -386,12 +424,19 @@ public class CustomizeGridViewPanel extends Panel
 
 		if (m_tabcust != null && m_tabcust.getCustom().indexOf("px") > 0)
 			chkSaveWidth.setChecked(true);
+		
+		if (m_tabcust != null && m_tabcust.getIsAutoHideEmptyColumn() != null) {
+			chkAutoHideEmptyColumn.setChecked("Y".equalsIgnoreCase(m_tabcust.getIsAutoHideEmptyColumn()));
+			chkAutoHideEmptyColumn.setAttribute("ad_tab_customization.value", m_tabcust.getIsAutoHideEmptyColumn());
+		} else {
+			chkAutoHideEmptyColumn.setChecked(MSysConfig.getBooleanValue(MSysConfig.ZK_GRID_AUTO_HIDE_EMPTY_COLUMNS, false, Env.getAD_Client_ID(Env.getCtx())));
+		}
 	}	//	loadData
 
 	/**
 	 * @param event
 	 */
-	void migrateValueAcrossLists (Event event)
+	protected void migrateValueAcrossLists (Event event)
 	{
 		Object source = event.getTarget();
 		if (source instanceof ListItem) {
@@ -407,7 +452,13 @@ public class CustomizeGridViewPanel extends Panel
 		migrateLists (listFrom,listTo,endIndex);	
 	}
 
-	void migrateLists (Listbox listFrom , Listbox listTo , int endIndex	)
+	/**
+	 * Move selected items from listFrom to listTo
+	 * @param listFrom
+	 * @param listTo
+	 * @param endIndex
+	 */
+	protected void migrateLists (Listbox listFrom , Listbox listTo , int endIndex	)
 	{
 		int index = 0;
 		SimpleListModel lmFrom = (SimpleListModel) listFrom.getModel();
@@ -434,10 +485,11 @@ public class CustomizeGridViewPanel extends Panel
 	}
 	
 	/**
-	 * 	Move within Yes List with Drag Event and Multiple Choice
-	 *	@param event event
+	 * 	Move selected items within Yes List
+	 *  @param endIndex
+	 *  @param selObjects
 	 */
-	void migrateValueWithinYesList (int endIndex, List<ListElement> selObjects)
+	protected void migrateValueWithinYesList (int endIndex, List<ListElement> selObjects)
 	{
 		int iniIndex =0;
 		Arrays.sort(selObjects.toArray());	
@@ -452,10 +504,10 @@ public class CustomizeGridViewPanel extends Panel
 	}
 
 	/**
-	 * 	Move within Yes List
+	 * 	Move selected items within Yes List
 	 *	@param event event
 	 */
-	void migrateValueWithinYesList (Event event)
+	protected void migrateValueWithinYesList (Event event)
 	{
 		Object[] selObjects = yesList.getSelectedItems().toArray();
 		
@@ -517,9 +569,13 @@ public class CustomizeGridViewPanel extends Panel
 		}
 	}	//	migrateValueWithinYesList
 
+	/**
+	 * Save changes
+	 */
 	public void saveData()
 	{
-		log.fine("");
+		if (log.isLoggable(Level.FINE))
+			log.fine("");
 		//	yesList
 		//int index = 0;
 		boolean ok = true;
@@ -557,16 +613,21 @@ public class CustomizeGridViewPanel extends Panel
 			gridview = lstGridMode.getSelectedItem().toString();
 		final String dView = gridview;
 
-		ok = MTabCustomization.saveData(Env.getCtx(), m_AD_Tab_ID, m_AD_User_ID, custom.toString(), dView, null, false);
+		String isAutoHide = null;
+		if (chkAutoHideEmptyColumn.isChecked() != MSysConfig.getBooleanValue(MSysConfig.ZK_GRID_AUTO_HIDE_EMPTY_COLUMNS, false, Env.getAD_Client_ID(Env.getCtx()))) {
+			isAutoHide = chkAutoHideEmptyColumn.isChecked() ? "Y" : "N";
+		} else if (chkAutoHideEmptyColumn.getAttribute("ad_tab_customization.value") != null) {
+			isAutoHide = chkAutoHideEmptyColumn.isChecked() ? "Y" : "N";
+		}
+		ok = MTabCustomization.saveData(Env.getCtx(), m_AD_Tab_ID, m_AD_User_ID, custom.toString(), dView, null, false, isAutoHide);
 		if(ok) {
 			m_saved = true;
-			// FDialog.info(m_WindowNo, null, "Saved");
 			getParent().detach();
 			if(gridPanel!=null){
 				Events.postEvent("onCustomizeGrid", gridPanel, null);
 			}
 		} else {
-			FDialog.error(m_WindowNo, null, "SaveError", custom.toString());
+			Dialog.error(m_WindowNo, "SaveError", custom.toString());
 		}
 	}	//	saveData
 
@@ -630,7 +691,8 @@ public class CustomizeGridViewPanel extends Panel
 			return s;
 		}
 	}
-		/**
+	
+	/**
 	 * @author eslatis
 	 *
 	 */
@@ -638,7 +700,7 @@ public class CustomizeGridViewPanel extends Panel
 	{
 
 		/**
-		 * Creates a ADSortTab.DragListener.
+		 * Constructor
 		 */
 		public DragListener()
 		{
@@ -679,10 +741,16 @@ public class CustomizeGridViewPanel extends Panel
 		}
 	}
 
+	/**
+	 * @param b
+	 */
 	public void activate(boolean b) {
 		if (b && !uiCreated) createUI();
 	}
 
+	/**
+	 * Layout dialog
+	 */
 	public void createUI() {
 		if (uiCreated) return;
 		try
@@ -697,14 +765,23 @@ public class CustomizeGridViewPanel extends Panel
 		uiCreated = true;
 	}
 
+	/**
+	 * Load data
+	 */
 	public void query() {
 		loadData();
 	}
 
+	/**
+	 * @return true if changes have been saved
+	 */
 	public boolean isSaved() {
 		return m_saved;
 	}
 
+	/**
+	 * @param gridPanel
+	 */
 	public void setGridPanel(GridView gridPanel){
 		this.gridPanel = gridPanel;
 	}

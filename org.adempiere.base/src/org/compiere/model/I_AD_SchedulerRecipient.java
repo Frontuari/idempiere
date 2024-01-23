@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for AD_SchedulerRecipient
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_AD_SchedulerRecipient 
 {
@@ -41,11 +41,22 @@ public interface I_AD_SchedulerRecipient
 
     /** Load Meta Data */
 
+    /** Column name AD_AuthorizationAccount_ID */
+    public static final String COLUMNNAME_AD_AuthorizationAccount_ID = "AD_AuthorizationAccount_ID";
+
+	/** Set Authorization Account	  */
+	public void setAD_AuthorizationAccount_ID (int AD_AuthorizationAccount_ID);
+
+	/** Get Authorization Account	  */
+	public int getAD_AuthorizationAccount_ID();
+
+	public org.compiere.model.I_AD_AuthorizationAccount getAD_AuthorizationAccount() throws RuntimeException;
+
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +64,12 @@ public interface I_AD_SchedulerRecipient
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -145,6 +156,19 @@ public interface I_AD_SchedulerRecipient
 	  */
 	public int getCreatedBy();
 
+    /** Column name FileName */
+    public static final String COLUMNNAME_FileName = "FileName";
+
+	/** Set File Name.
+	  * Name of the local file or URL
+	  */
+	public void setFileName (String FileName);
+
+	/** Get File Name.
+	  * Name of the local file or URL
+	  */
+	public String getFileName();
+
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
 
@@ -157,6 +181,15 @@ public interface I_AD_SchedulerRecipient
 	  * The record is active in the system
 	  */
 	public boolean isActive();
+
+    /** Column name IsUpload */
+    public static final String COLUMNNAME_IsUpload = "IsUpload";
+
+	/** Set Upload	  */
+	public void setIsUpload (boolean IsUpload);
+
+	/** Get Upload	  */
+	public boolean isUpload();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";

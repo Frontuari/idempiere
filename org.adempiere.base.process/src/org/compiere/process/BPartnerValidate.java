@@ -25,6 +25,7 @@ import org.compiere.model.I_C_BPartner;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MPayment;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.Query;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.Msg;
@@ -37,6 +38,7 @@ import org.compiere.util.Msg;
  *  @version $Id: BPartnerValidate.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  *  FR: [ 2214883 ] Remove SQL code and Replace for Query - red1, teo_sarca
  */
+@org.adempiere.base.annotation.Process
 public class BPartnerValidate extends SvrProcess
 {
 	/**	BPartner ID			*/
@@ -61,7 +63,7 @@ public class BPartnerValidate extends SvrProcess
 			else if (name.equals("C_BP_Group_ID"))
 				p_C_BP_Group_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 
@@ -115,7 +117,6 @@ public class BPartnerValidate extends SvrProcess
 		bp.setActualLifeTimeValue();
 		bp.saveEx();
 		//
-	//	if (bp.getSO_CreditUsed().signum() != 0)
 		addLog(0, null, bp.getSO_CreditUsed(), Msg.getElement(getCtx(), "SO_CreditUsed"));
 		addLog(0, null, bp.getTotalOpenBalance(), Msg.getElement(getCtx(), "TotalOpenBalance"));
 		addLog(0, null, bp.getActualLifeTimeValue(), Msg.getElement(getCtx(), "ActualLifeTimeValue"));

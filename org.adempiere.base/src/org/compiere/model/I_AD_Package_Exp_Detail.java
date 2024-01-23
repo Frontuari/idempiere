@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for AD_Package_Exp_Detail
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_AD_Package_Exp_Detail 
 {
@@ -44,8 +44,8 @@ public interface I_AD_Package_Exp_Detail
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -150,12 +150,12 @@ public interface I_AD_Package_Exp_Detail
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -326,21 +326,6 @@ public interface I_AD_Package_Exp_Detail
 
 	public org.compiere.model.I_AD_Window getAD_Window() throws RuntimeException;
 
-    /** Column name AD_Workbench_ID */
-    public static final String COLUMNNAME_AD_Workbench_ID = "AD_Workbench_ID";
-
-	/** Set Workbench.
-	  * Collection of windows, reports
-	  */
-	public void setAD_Workbench_ID (int AD_Workbench_ID);
-
-	/** Get Workbench.
-	  * Collection of windows, reports
-	  */
-	public int getAD_Workbench_ID();
-
-	public org.compiere.model.I_AD_Workbench getAD_Workbench() throws RuntimeException;
-
     /** Column name AD_Workflow_ID */
     public static final String COLUMNNAME_AD_Workflow_ID = "AD_Workflow_ID";
 
@@ -375,10 +360,10 @@ public interface I_AD_Package_Exp_Detail
     /** Column name DBType */
     public static final String COLUMNNAME_DBType = "DBType";
 
-	/** Set DBType	  */
+	/** Set DB Type	  */
 	public void setDBType (String DBType);
 
-	/** Get DBType	  */
+	/** Get DB Type	  */
 	public String getDBType();
 
     /** Column name Description */
@@ -411,6 +396,15 @@ public interface I_AD_Package_Exp_Detail
 
 	/** Get Destination_FileName	  */
 	public String getDestination_FileName();
+
+    /** Column name ExecCode */
+    public static final String COLUMNNAME_ExecCode = "ExecCode";
+
+	/** Set Execution Code	  */
+	public void setExecCode (String ExecCode);
+
+	/** Get Execution Code	  */
+	public String getExecCode();
 
     /** Column name File_Directory */
     public static final String COLUMNNAME_File_Directory = "File_Directory";
@@ -511,10 +505,10 @@ public interface I_AD_Package_Exp_Detail
     /** Column name SQLStatement */
     public static final String COLUMNNAME_SQLStatement = "SQLStatement";
 
-	/** Set SQLStatement	  */
+	/** Set SQL Expression/Statement	  */
 	public void setSQLStatement (String SQLStatement);
 
-	/** Get SQLStatement	  */
+	/** Get SQL Expression/Statement	  */
 	public String getSQLStatement();
 
     /** Column name Target_Directory */

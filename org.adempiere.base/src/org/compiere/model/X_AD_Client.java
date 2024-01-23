@@ -22,15 +22,16 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for AD_Client
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_Client extends PO implements I_AD_Client, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_Client")
+public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_Client (Properties ctx, int AD_Client_ID, String trxName)
@@ -38,6 +39,8 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
       super (ctx, AD_Client_ID, trxName);
       /** if (AD_Client_ID == 0)
         {
+			setAuthenticationType (null);
+// AAS
 			setAutoArchive (null);
 // N
 			setIsMultiLingualDocument (false);
@@ -45,7 +48,90 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 // N
 			setIsSecureSMTP (false);
 // N
-			setIsServerEMail (false);
+			setIsSmtpAuthorization (false);
+// N
+			setIsUseASP (false);
+// N
+			setIsUseBetaFunctions (true);
+// Y
+			setMMPolicy (null);
+// F
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Client (Properties ctx, int AD_Client_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_Client_ID, trxName, virtualColumns);
+      /** if (AD_Client_ID == 0)
+        {
+			setAuthenticationType (null);
+// AAS
+			setAutoArchive (null);
+// N
+			setIsMultiLingualDocument (false);
+			setIsPostImmediate (false);
+// N
+			setIsSecureSMTP (false);
+// N
+			setIsSmtpAuthorization (false);
+// N
+			setIsUseASP (false);
+// N
+			setIsUseBetaFunctions (true);
+// Y
+			setMMPolicy (null);
+// F
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Client (Properties ctx, String AD_Client_UU, String trxName)
+    {
+      super (ctx, AD_Client_UU, trxName);
+      /** if (AD_Client_UU == null)
+        {
+			setAuthenticationType (null);
+// AAS
+			setAutoArchive (null);
+// N
+			setIsMultiLingualDocument (false);
+			setIsPostImmediate (false);
+// N
+			setIsSecureSMTP (false);
+// N
+			setIsSmtpAuthorization (false);
+// N
+			setIsUseASP (false);
+// N
+			setIsUseBetaFunctions (true);
+// Y
+			setMMPolicy (null);
+// F
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Client (Properties ctx, String AD_Client_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_Client_UU, trxName, virtualColumns);
+      /** if (AD_Client_UU == null)
+        {
+			setAuthenticationType (null);
+// AAS
+			setAutoArchive (null);
+// N
+			setIsMultiLingualDocument (false);
+			setIsPostImmediate (false);
+// N
+			setIsSecureSMTP (false);
+// N
 			setIsSmtpAuthorization (false);
 // N
 			setIsUseASP (false);
@@ -66,7 +152,7 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -88,7 +174,8 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
     }
 
 	/** Set AD_Client_UU.
-		@param AD_Client_UU AD_Client_UU	  */
+		@param AD_Client_UU AD_Client_UU
+	*/
 	public void setAD_Client_UU (String AD_Client_UU)
 	{
 		set_Value (COLUMNNAME_AD_Client_UU, AD_Client_UU);
@@ -96,7 +183,7 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 
 	/** Get AD_Client_UU.
 		@return AD_Client_UU	  */
-	public String getAD_Client_UU () 
+	public String getAD_Client_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_Client_UU);
 	}
@@ -104,9 +191,8 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** AD_Language AD_Reference_ID=327 */
 	public static final int AD_LANGUAGE_AD_Reference_ID=327;
 	/** Set Language.
-		@param AD_Language 
-		Language for this entity
-	  */
+		@param AD_Language Language for this entity
+	*/
 	public void setAD_Language (String AD_Language)
 	{
 
@@ -116,29 +202,31 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Language.
 		@return Language for this entity
 	  */
-	public String getAD_Language () 
+	public String getAD_Language()
 	{
 		return (String)get_Value(COLUMNNAME_AD_Language);
 	}
 
 	public org.compiere.model.I_AD_PasswordRule getAD_PasswordRule() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_PasswordRule)MTable.get(getCtx(), org.compiere.model.I_AD_PasswordRule.Table_Name)
-			.getPO(getAD_PasswordRule_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_PasswordRule)MTable.get(getCtx(), org.compiere.model.I_AD_PasswordRule.Table_ID)
+			.getPO(getAD_PasswordRule_ID(), get_TrxName());
+	}
 
 	/** Set Password Policies.
-		@param AD_PasswordRule_ID Password Policies	  */
+		@param AD_PasswordRule_ID Password Policies
+	*/
 	public void setAD_PasswordRule_ID (int AD_PasswordRule_ID)
 	{
-		if (AD_PasswordRule_ID < 1) 
+		if (AD_PasswordRule_ID < 1)
 			set_Value (COLUMNNAME_AD_PasswordRule_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_PasswordRule_ID, Integer.valueOf(AD_PasswordRule_ID));
 	}
 
 	/** Get Password Policies.
 		@return Password Policies	  */
-	public int getAD_PasswordRule_ID () 
+	public int getAD_PasswordRule_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_PasswordRule_ID);
 		if (ii == null)
@@ -147,26 +235,26 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	}
 
 	public org.compiere.model.I_AD_ReplicationStrategy getAD_ReplicationStrategy() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_ReplicationStrategy)MTable.get(getCtx(), org.compiere.model.I_AD_ReplicationStrategy.Table_Name)
-			.getPO(getAD_ReplicationStrategy_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_ReplicationStrategy)MTable.get(getCtx(), org.compiere.model.I_AD_ReplicationStrategy.Table_ID)
+			.getPO(getAD_ReplicationStrategy_ID(), get_TrxName());
+	}
 
 	/** Set Replication Strategy.
-		@param AD_ReplicationStrategy_ID 
-		Data Replication Strategy
-	  */
+		@param AD_ReplicationStrategy_ID Data Replication Strategy
+	*/
 	public void setAD_ReplicationStrategy_ID (int AD_ReplicationStrategy_ID)
 	{
-		if (AD_ReplicationStrategy_ID < 1) 
+		if (AD_ReplicationStrategy_ID < 1)
 			set_Value (COLUMNNAME_AD_ReplicationStrategy_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_ReplicationStrategy_ID, Integer.valueOf(AD_ReplicationStrategy_ID));
 	}
 
 	/** Get Replication Strategy.
 		@return Data Replication Strategy
 	  */
-	public int getAD_ReplicationStrategy_ID () 
+	public int getAD_ReplicationStrategy_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_ReplicationStrategy_ID);
 		if (ii == null)
@@ -174,20 +262,43 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 		return ii.intValue();
 	}
 
+	/** AuthenticationType AD_Reference_ID=200239 */
+	public static final int AUTHENTICATIONTYPE_AD_Reference_ID=200239;
+	/** Application and SSO = AAS */
+	public static final String AUTHENTICATIONTYPE_ApplicationAndSSO = "AAS";
+	/** Application Only = APO */
+	public static final String AUTHENTICATIONTYPE_ApplicationOnly = "APO";
+	/** SSO Only = SSO */
+	public static final String AUTHENTICATIONTYPE_SSOOnly = "SSO";
+	/** Set Authentication Type.
+		@param AuthenticationType Authentication Type
+	*/
+	public void setAuthenticationType (String AuthenticationType)
+	{
+
+		set_Value (COLUMNNAME_AuthenticationType, AuthenticationType);
+	}
+
+	/** Get Authentication Type.
+		@return Authentication Type	  */
+	public String getAuthenticationType()
+	{
+		return (String)get_Value(COLUMNNAME_AuthenticationType);
+	}
+
 	/** AutoArchive AD_Reference_ID=334 */
 	public static final int AUTOARCHIVE_AD_Reference_ID=334;
-	/** None = N */
-	public static final String AUTOARCHIVE_None = "N";
 	/** All (Reports, Documents) = 1 */
 	public static final String AUTOARCHIVE_AllReportsDocuments = "1";
 	/** Documents = 2 */
 	public static final String AUTOARCHIVE_Documents = "2";
 	/** External Documents = 3 */
 	public static final String AUTOARCHIVE_ExternalDocuments = "3";
+	/** None = N */
+	public static final String AUTOARCHIVE_None = "N";
 	/** Set Auto Archive.
-		@param AutoArchive 
-		Enable and level of automatic Archive of documents
-	  */
+		@param AutoArchive Enable and level of automatic Archive of documents
+	*/
 	public void setAutoArchive (String AutoArchive)
 	{
 
@@ -197,15 +308,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Auto Archive.
 		@return Enable and level of automatic Archive of documents
 	  */
-	public String getAutoArchive () 
+	public String getAutoArchive()
 	{
 		return (String)get_Value(COLUMNNAME_AutoArchive);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -214,15 +324,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Document Directory.
-		@param DocumentDir 
-		Directory for documents from the application server
-	  */
+		@param DocumentDir Directory for documents from the application server
+	*/
 	public void setDocumentDir (String DocumentDir)
 	{
 		set_Value (COLUMNNAME_DocumentDir, DocumentDir);
@@ -231,15 +340,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Document Directory.
 		@return Directory for documents from the application server
 	  */
-	public String getDocumentDir () 
+	public String getDocumentDir()
 	{
 		return (String)get_Value(COLUMNNAME_DocumentDir);
 	}
 
 	/** Set EMail Test.
-		@param EMailTest 
-		Test EMail
-	  */
+		@param EMailTest Test EMail
+	*/
 	public void setEMailTest (String EMailTest)
 	{
 		set_Value (COLUMNNAME_EMailTest, EMailTest);
@@ -248,15 +356,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get EMail Test.
 		@return Test EMail
 	  */
-	public String getEMailTest () 
+	public String getEMailTest()
 	{
 		return (String)get_Value(COLUMNNAME_EMailTest);
 	}
 
 	/** Set Multi Lingual Documents.
-		@param IsMultiLingualDocument 
-		Documents are Multi Lingual
-	  */
+		@param IsMultiLingualDocument Documents are Multi Lingual
+	*/
 	public void setIsMultiLingualDocument (boolean IsMultiLingualDocument)
 	{
 		set_Value (COLUMNNAME_IsMultiLingualDocument, Boolean.valueOf(IsMultiLingualDocument));
@@ -265,22 +372,21 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Multi Lingual Documents.
 		@return Documents are Multi Lingual
 	  */
-	public boolean isMultiLingualDocument () 
+	public boolean isMultiLingualDocument()
 	{
 		Object oo = get_Value(COLUMNNAME_IsMultiLingualDocument);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Post Immediately (Deprecated).
-		@param IsPostImmediate 
-		Post the accounting immediately for testing (Deprecated)
-	  */
+		@param IsPostImmediate Post the accounting immediately for testing (Deprecated)
+	*/
 	public void setIsPostImmediate (boolean IsPostImmediate)
 	{
 		set_Value (COLUMNNAME_IsPostImmediate, Boolean.valueOf(IsPostImmediate));
@@ -289,22 +395,21 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Post Immediately (Deprecated).
 		@return Post the accounting immediately for testing (Deprecated)
 	  */
-	public boolean isPostImmediate () 
+	public boolean isPostImmediate()
 	{
 		Object oo = get_Value(COLUMNNAME_IsPostImmediate);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set SMTP SSL/TLS.
-		@param IsSecureSMTP 
-		Use SSL/TLS for SMTP
-	  */
+		@param IsSecureSMTP Use SSL/TLS for SMTP
+	*/
 	public void setIsSecureSMTP (boolean IsSecureSMTP)
 	{
 		set_Value (COLUMNNAME_IsSecureSMTP, Boolean.valueOf(IsSecureSMTP));
@@ -313,46 +418,21 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get SMTP SSL/TLS.
 		@return Use SSL/TLS for SMTP
 	  */
-	public boolean isSecureSMTP () 
+	public boolean isSecureSMTP()
 	{
 		Object oo = get_Value(COLUMNNAME_IsSecureSMTP);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
-			return "Y".equals(oo);
-		}
-		return false;
-	}
-
-	/** Set Server EMail.
-		@param IsServerEMail 
-		Send EMail from Server
-	  */
-	public void setIsServerEMail (boolean IsServerEMail)
-	{
-		set_Value (COLUMNNAME_IsServerEMail, Boolean.valueOf(IsServerEMail));
-	}
-
-	/** Get Server EMail.
-		@return Send EMail from Server
-	  */
-	public boolean isServerEMail () 
-	{
-		Object oo = get_Value(COLUMNNAME_IsServerEMail);
-		if (oo != null) 
-		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set SMTP Authentication.
-		@param IsSmtpAuthorization 
-		Your mail server requires Authentication
-	  */
+		@param IsSmtpAuthorization Your mail server requires Authentication
+	*/
 	public void setIsSmtpAuthorization (boolean IsSmtpAuthorization)
 	{
 		set_Value (COLUMNNAME_IsSmtpAuthorization, Boolean.valueOf(IsSmtpAuthorization));
@@ -361,43 +441,43 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get SMTP Authentication.
 		@return Your mail server requires Authentication
 	  */
-	public boolean isSmtpAuthorization () 
+	public boolean isSmtpAuthorization()
 	{
 		Object oo = get_Value(COLUMNNAME_IsSmtpAuthorization);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
-	/** Set IsUseASP.
-		@param IsUseASP IsUseASP	  */
+	/** Set Is Use ASP.
+		@param IsUseASP Is Use ASP
+	*/
 	public void setIsUseASP (boolean IsUseASP)
 	{
 		set_Value (COLUMNNAME_IsUseASP, Boolean.valueOf(IsUseASP));
 	}
 
-	/** Get IsUseASP.
-		@return IsUseASP	  */
-	public boolean isUseASP () 
+	/** Get Is Use ASP.
+		@return Is Use ASP	  */
+	public boolean isUseASP()
 	{
 		Object oo = get_Value(COLUMNNAME_IsUseASP);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Use Beta Functions.
-		@param IsUseBetaFunctions 
-		Enable the use of Beta Functionality
-	  */
+		@param IsUseBetaFunctions Enable the use of Beta Functionality
+	*/
 	public void setIsUseBetaFunctions (boolean IsUseBetaFunctions)
 	{
 		set_Value (COLUMNNAME_IsUseBetaFunctions, Boolean.valueOf(IsUseBetaFunctions));
@@ -406,28 +486,42 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Use Beta Functions.
 		@return Enable the use of Beta Functionality
 	  */
-	public boolean isUseBetaFunctions () 
+	public boolean isUseBetaFunctions()
 	{
 		Object oo = get_Value(COLUMNNAME_IsUseBetaFunctions);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
+	/** Set Login Prefix.
+		@param LoginPrefix Login Prefix
+	*/
+	public void setLoginPrefix (String LoginPrefix)
+	{
+		set_Value (COLUMNNAME_LoginPrefix, LoginPrefix);
+	}
+
+	/** Get Login Prefix.
+		@return Login Prefix	  */
+	public String getLoginPrefix()
+	{
+		return (String)get_Value(COLUMNNAME_LoginPrefix);
+	}
+
 	/** MMPolicy AD_Reference_ID=335 */
 	public static final int MMPOLICY_AD_Reference_ID=335;
-	/** LiFo = L */
-	public static final String MMPOLICY_LiFo = "L";
 	/** FiFo = F */
 	public static final String MMPOLICY_FiFo = "F";
+	/** LiFo = L */
+	public static final String MMPOLICY_LiFo = "L";
 	/** Set Material Policy.
-		@param MMPolicy 
-		Material Movement Policy
-	  */
+		@param MMPolicy Material Movement Policy
+	*/
 	public void setMMPolicy (String MMPolicy)
 	{
 
@@ -437,15 +531,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Material Policy.
 		@return Material Movement Policy
 	  */
-	public String getMMPolicy () 
+	public String getMMPolicy()
 	{
 		return (String)get_Value(COLUMNNAME_MMPolicy);
 	}
 
 	/** Set Model Validation Classes.
-		@param ModelValidationClasses 
-		List of data model validation classes separated by ;
-	  */
+		@param ModelValidationClasses List of data model validation classes separated by ;
+	*/
 	public void setModelValidationClasses (String ModelValidationClasses)
 	{
 		set_Value (COLUMNNAME_ModelValidationClasses, ModelValidationClasses);
@@ -454,15 +547,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Model Validation Classes.
 		@return List of data model validation classes separated by ;
 	  */
-	public String getModelValidationClasses () 
+	public String getModelValidationClasses()
 	{
 		return (String)get_Value(COLUMNNAME_ModelValidationClasses);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -471,7 +563,7 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -479,15 +571,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Request EMail.
-		@param RequestEMail 
-		EMail address to send automated mails from or receive mails for automated processing (fully qualified)
-	  */
+		@param RequestEMail EMail address to send automated mails from or receive mails for automated processing (fully qualified)
+	*/
 	public void setRequestEMail (String RequestEMail)
 	{
 		set_Value (COLUMNNAME_RequestEMail, RequestEMail);
@@ -496,15 +587,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Request EMail.
 		@return EMail address to send automated mails from or receive mails for automated processing (fully qualified)
 	  */
-	public String getRequestEMail () 
+	public String getRequestEMail()
 	{
 		return (String)get_Value(COLUMNNAME_RequestEMail);
 	}
 
 	/** Set Request Folder.
-		@param RequestFolder 
-		EMail folder to process incoming emails; if empty INBOX is used
-	  */
+		@param RequestFolder EMail folder to process incoming emails; if empty INBOX is used
+	*/
 	public void setRequestFolder (String RequestFolder)
 	{
 		set_Value (COLUMNNAME_RequestFolder, RequestFolder);
@@ -513,15 +603,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Request Folder.
 		@return EMail folder to process incoming emails; if empty INBOX is used
 	  */
-	public String getRequestFolder () 
+	public String getRequestFolder()
 	{
 		return (String)get_Value(COLUMNNAME_RequestFolder);
 	}
 
 	/** Set Request User.
-		@param RequestUser 
-		User Name (ID) of the email owner
-	  */
+		@param RequestUser User Name (ID) of the email owner
+	*/
 	public void setRequestUser (String RequestUser)
 	{
 		set_Value (COLUMNNAME_RequestUser, RequestUser);
@@ -530,15 +619,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Request User.
 		@return User Name (ID) of the email owner
 	  */
-	public String getRequestUser () 
+	public String getRequestUser()
 	{
 		return (String)get_Value(COLUMNNAME_RequestUser);
 	}
 
 	/** Set Request User Password.
-		@param RequestUserPW 
-		Password of the user name (ID) for mail processing
-	  */
+		@param RequestUserPW Password of the user name (ID) for mail processing
+	*/
 	public void setRequestUserPW (String RequestUserPW)
 	{
 		set_Value (COLUMNNAME_RequestUserPW, RequestUserPW);
@@ -547,15 +635,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Request User Password.
 		@return Password of the user name (ID) for mail processing
 	  */
-	public String getRequestUserPW () 
+	public String getRequestUserPW()
 	{
 		return (String)get_Value(COLUMNNAME_RequestUserPW);
 	}
 
 	/** Set Mail Host.
-		@param SMTPHost 
-		Hostname of Mail Server for SMTP and IMAP
-	  */
+		@param SMTPHost Hostname of Mail Server for SMTP and IMAP
+	*/
 	public void setSMTPHost (String SMTPHost)
 	{
 		set_Value (COLUMNNAME_SMTPHost, SMTPHost);
@@ -564,15 +651,14 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Mail Host.
 		@return Hostname of Mail Server for SMTP and IMAP
 	  */
-	public String getSMTPHost () 
+	public String getSMTPHost()
 	{
 		return (String)get_Value(COLUMNNAME_SMTPHost);
 	}
 
 	/** Set SMTP Port.
-		@param SMTPPort 
-		SMTP Port Number
-	  */
+		@param SMTPPort SMTP Port Number
+	*/
 	public void setSMTPPort (int SMTPPort)
 	{
 		set_Value (COLUMNNAME_SMTPPort, Integer.valueOf(SMTPPort));
@@ -581,7 +667,7 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get SMTP Port.
 		@return SMTP Port Number
 	  */
-	public int getSMTPPort () 
+	public int getSMTPPort()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_SMTPPort);
 		if (ii == null)
@@ -590,9 +676,8 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	}
 
 	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
+		@param Value Search key for the record in the format required - must be unique
+	*/
 	public void setValue (String Value)
 	{
 		set_Value (COLUMNNAME_Value, Value);
@@ -601,7 +686,7 @@ public class X_AD_Client extends PO implements I_AD_Client, I_Persistent
 	/** Get Search Key.
 		@return Search key for the record in the format required - must be unique
 	  */
-	public String getValue () 
+	public String getValue()
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}

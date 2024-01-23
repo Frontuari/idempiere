@@ -21,21 +21,58 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for U_BlackListCheque
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_U_BlackListCheque extends PO implements I_U_BlackListCheque, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="U_BlackListCheque")
+public class X_U_BlackListCheque extends PO implements I_U_BlackListCheque, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_U_BlackListCheque (Properties ctx, int U_BlackListCheque_ID, String trxName)
     {
       super (ctx, U_BlackListCheque_ID, trxName);
       /** if (U_BlackListCheque_ID == 0)
+        {
+			setBankName (null);
+			setChequeNo (null);
+			setU_BlackListCheque_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_U_BlackListCheque (Properties ctx, int U_BlackListCheque_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, U_BlackListCheque_ID, trxName, virtualColumns);
+      /** if (U_BlackListCheque_ID == 0)
+        {
+			setBankName (null);
+			setChequeNo (null);
+			setU_BlackListCheque_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_U_BlackListCheque (Properties ctx, String U_BlackListCheque_UU, String trxName)
+    {
+      super (ctx, U_BlackListCheque_UU, trxName);
+      /** if (U_BlackListCheque_UU == null)
+        {
+			setBankName (null);
+			setChequeNo (null);
+			setU_BlackListCheque_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_U_BlackListCheque (Properties ctx, String U_BlackListCheque_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, U_BlackListCheque_UU, trxName, virtualColumns);
+      /** if (U_BlackListCheque_UU == null)
         {
 			setBankName (null);
 			setChequeNo (null);
@@ -50,7 +87,7 @@ public class X_U_BlackListCheque extends PO implements I_U_BlackListCheque, I_Pe
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -72,7 +109,8 @@ public class X_U_BlackListCheque extends PO implements I_U_BlackListCheque, I_Pe
     }
 
 	/** Set Bank Name.
-		@param BankName Bank Name	  */
+		@param BankName Bank Name
+	*/
 	public void setBankName (String BankName)
 	{
 		set_Value (COLUMNNAME_BankName, BankName);
@@ -80,13 +118,14 @@ public class X_U_BlackListCheque extends PO implements I_U_BlackListCheque, I_Pe
 
 	/** Get Bank Name.
 		@return Bank Name	  */
-	public String getBankName () 
+	public String getBankName()
 	{
 		return (String)get_Value(COLUMNNAME_BankName);
 	}
 
 	/** Set Cheque No.
-		@param ChequeNo Cheque No	  */
+		@param ChequeNo Cheque No
+	*/
 	public void setChequeNo (String ChequeNo)
 	{
 		set_Value (COLUMNNAME_ChequeNo, ChequeNo);
@@ -94,24 +133,25 @@ public class X_U_BlackListCheque extends PO implements I_U_BlackListCheque, I_Pe
 
 	/** Get Cheque No.
 		@return Cheque No	  */
-	public String getChequeNo () 
+	public String getChequeNo()
 	{
 		return (String)get_Value(COLUMNNAME_ChequeNo);
 	}
 
 	/** Set Black List Cheque.
-		@param U_BlackListCheque_ID Black List Cheque	  */
+		@param U_BlackListCheque_ID Black List Cheque
+	*/
 	public void setU_BlackListCheque_ID (int U_BlackListCheque_ID)
 	{
-		if (U_BlackListCheque_ID < 1) 
+		if (U_BlackListCheque_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_U_BlackListCheque_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_U_BlackListCheque_ID, Integer.valueOf(U_BlackListCheque_ID));
 	}
 
 	/** Get Black List Cheque.
 		@return Black List Cheque	  */
-	public int getU_BlackListCheque_ID () 
+	public int getU_BlackListCheque_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_U_BlackListCheque_ID);
 		if (ii == null)
@@ -120,7 +160,8 @@ public class X_U_BlackListCheque extends PO implements I_U_BlackListCheque, I_Pe
 	}
 
 	/** Set U_BlackListCheque_UU.
-		@param U_BlackListCheque_UU U_BlackListCheque_UU	  */
+		@param U_BlackListCheque_UU U_BlackListCheque_UU
+	*/
 	public void setU_BlackListCheque_UU (String U_BlackListCheque_UU)
 	{
 		set_Value (COLUMNNAME_U_BlackListCheque_UU, U_BlackListCheque_UU);
@@ -128,7 +169,7 @@ public class X_U_BlackListCheque extends PO implements I_U_BlackListCheque, I_Pe
 
 	/** Get U_BlackListCheque_UU.
 		@return U_BlackListCheque_UU	  */
-	public String getU_BlackListCheque_UU () 
+	public String getU_BlackListCheque_UU()
 	{
 		return (String)get_Value(COLUMNNAME_U_BlackListCheque_UU);
 	}

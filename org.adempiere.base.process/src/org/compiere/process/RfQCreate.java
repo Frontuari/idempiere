@@ -18,6 +18,7 @@ package org.compiere.process;
 
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRfQ;
 import org.compiere.model.MRfQResponse;
 import org.compiere.model.MRfQTopic;
@@ -29,6 +30,7 @@ import org.compiere.model.MRfQTopicSubscriber;
  *  @author Jorg Janke
  *  @version $Id: RfQCreate.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class RfQCreate extends SvrProcess
 {
 	/**	Send RfQ				*/
@@ -50,7 +52,7 @@ public class RfQCreate extends SvrProcess
 			else if (name.equals("IsSendRfQ"))
 				p_IsSendRfQ = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_C_RfQ_ID = getRecord_ID();
 	}	//	prepare

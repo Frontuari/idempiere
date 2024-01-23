@@ -31,15 +31,16 @@ package org.adempiere.process;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.Level;
 
 import org.adempiere.model.GenericPO;
 import org.compiere.model.MHouseKeeping;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MTable;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
@@ -52,6 +53,7 @@ import org.compiere.util.Msg;
  *	
  *  @author Diego Ruiz - globalqss
  */
+@org.adempiere.base.annotation.Process
 public class HouseKeeping extends SvrProcess{
 	
 	private int		p_AD_HouseKeeping_ID = 0;
@@ -65,7 +67,7 @@ public class HouseKeeping extends SvrProcess{
 			else if (name.equals("AD_HouseKeeping_ID"))
 				p_AD_HouseKeeping_ID = parameter[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), parameter[i]);
 		}
 		if (p_AD_HouseKeeping_ID == 0)
 			p_AD_HouseKeeping_ID = getRecord_ID();		
@@ -102,7 +104,7 @@ public class HouseKeeping extends SvrProcess{
 			String pathFile = houseKeeping.getBackupFolder();
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 			String dateString = dateFormat.format(date);
-			FileWriter file = new FileWriter(pathFile+File.separator+tableName+dateString+".xml");
+			FileWriter file = null;
 			StringBuilder sql = new StringBuilder("SELECT * FROM ").append(tableName);
 			if (whereClause != null && whereClause.length() > 0)				
 				sql.append(" WHERE ").append(whereClause);
@@ -111,6 +113,7 @@ public class HouseKeeping extends SvrProcess{
 			StringBuffer linexml = null;
 			try
 			{
+				file = new FileWriter(pathFile+File.separator+tableName+dateString+".xml");
 				pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
 				rs = pstmt.executeQuery();
 				while (rs.next()) {
@@ -120,7 +123,6 @@ public class HouseKeeping extends SvrProcess{
 				}
 				if(linexml != null)
 					file.write(linexml.toString());
-				file.close();
 			}
 			catch (Exception e)
 			{
@@ -128,6 +130,15 @@ public class HouseKeeping extends SvrProcess{
 			}
 			finally
 			{
+				if (file != null)
+				{
+					try {
+						file.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}					
+				}				
+				
 				DB.close(rs, pstmt);
 				pstmt = null;
 				rs=null;

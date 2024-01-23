@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for C_Project
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_C_Project 
 {
@@ -44,8 +44,8 @@ public interface I_C_Project
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +53,12 @@ public interface I_C_Project
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -108,12 +108,12 @@ public interface I_C_Project
     /** Column name C_BPartner_ID */
     public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
 
-	/** Set Business Partner .
+	/** Set Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public void setC_BPartner_ID (int C_BPartner_ID);
 
-	/** Get Business Partner .
+	/** Get Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public int getC_BPartner_ID();
@@ -368,12 +368,12 @@ public interface I_C_Project
     /** Column name InvoicedQty */
     public static final String COLUMNNAME_InvoicedQty = "InvoicedQty";
 
-	/** Set Quantity Invoiced .
+	/** Set Quantity Invoiced.
 	  * The quantity invoiced
 	  */
 	public void setInvoicedQty (BigDecimal InvoicedQty);
 
-	/** Get Quantity Invoiced .
+	/** Get Quantity Invoiced.
 	  * The quantity invoiced
 	  */
 	public BigDecimal getInvoicedQty();
@@ -503,12 +503,14 @@ public interface I_C_Project
     public static final String COLUMNNAME_PlannedMarginAmt = "PlannedMarginAmt";
 
 	/** Set Planned Margin.
-	  * Project's planned margin amount
+	  * Project&#039;
+s planned margin amount
 	  */
 	public void setPlannedMarginAmt (BigDecimal PlannedMarginAmt);
 
 	/** Get Planned Margin.
-	  * Project's planned margin amount
+	  * Project&#039;
+s planned margin amount
 	  */
 	public BigDecimal getPlannedMarginAmt();
 

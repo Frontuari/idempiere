@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 /**
  * Partner Location Model
@@ -29,13 +30,11 @@ import org.compiere.util.Env;
  * @version $Id: MBPartnerLocation.java,v 1.3 2006/07/30 00:51:03 jjanke Exp $
  * @author Teo Sarca, www.arhipac.ro <li>FR [ 2788465 ]
  *         MBPartnerLocation.getForBPartner method add trxName
- *         https://sourceforge
- *         .net/tracker/index.php?func=detail&aid=2788465&group_id
- *         =176962&atid=879335
+ *         https://sourceforge.net/p/adempiere/feature-requests/715/
  */
 public class MBPartnerLocation extends X_C_BPartner_Location {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -8412652367051443276L;
 
@@ -50,6 +49,7 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 	 * @deprecated Since 3.5.3a. Please use
 	 *             {@link #getForBPartner(Properties, int, String)}.
 	 */
+	@Deprecated(forRemoval = true, since = "11")
 	public static MBPartnerLocation[] getForBPartner(Properties ctx,
 			int C_BPartner_ID) {
 		return getForBPartner(ctx, C_BPartner_ID, null);
@@ -74,7 +74,19 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 		return retValue;
 	} // getForBPartner
 
-	/**************************************************************************
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_BPartner_Location_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MBPartnerLocation(Properties ctx, String C_BPartner_Location_UU, String trxName) {
+        super(ctx, C_BPartner_Location_UU, trxName);
+		if (Util.isEmpty(C_BPartner_Location_UU))
+			setInitialDefaults();
+    }
+
+	/**
 	 * Default Constructor
 	 * 
 	 * @param ctx
@@ -87,15 +99,21 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 	public MBPartnerLocation(Properties ctx, int C_BPartner_Location_ID,
 			String trxName) {
 		super(ctx, C_BPartner_Location_ID, trxName);
-		if (C_BPartner_Location_ID == 0) {
-			setName(".");
-			//
-			setIsShipTo(true);
-			setIsRemitTo(true);
-			setIsPayFrom(true);
-			setIsBillTo(true);
-		}
+		if (C_BPartner_Location_ID == 0)
+			setInitialDefaults();
 	} // MBPartner_Location
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setName(".");
+		//
+		setIsShipTo(true);
+		setIsRemitTo(true);
+		setIsPayFrom(true);
+		setIsBillTo(true);
+	}
 
 	/**
 	 * BP Parent Constructor
@@ -125,7 +143,7 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 	} // MBPartner_Location
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MBPartnerLocation(MBPartnerLocation copy) 
@@ -134,7 +152,7 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -144,7 +162,7 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -156,6 +174,16 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 		this.m_location = copy.m_location != null ? new MLocation(ctx, copy.m_location, trxName) : null;
 		this.m_uniqueName = copy.m_uniqueName;
 		this.m_unique = copy.m_unique;
+	}
+
+	/**
+	 * @param ctx
+	 * @param C_BPartner_Location_ID
+	 * @param trxName
+	 * @param virtualColumns
+	 */
+	public MBPartnerLocation(Properties ctx, int C_BPartner_Location_ID, String trxName, String... virtualColumns) {
+		super(ctx, C_BPartner_Location_ID, trxName, virtualColumns);
 	}
 
 	/** Cached Location */
@@ -181,6 +209,7 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 	 * 
 	 * @return info
 	 */
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("MBPartner_Location[ID=")
 				.append(get_ID()).append(",C_Location_ID=")
@@ -196,6 +225,7 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 	 *            new
 	 * @return save
 	 */
+	@Override
 	protected boolean beforeSave(boolean newRecord) {
 		if (getC_Location_ID() == 0)
 			return false;
@@ -259,6 +289,10 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 		}
 	} // makeUnique
 
+	/**
+	 * @param address
+	 * @return unique BP location name for address
+	 */
 	public String getBPLocName(MLocation address) {
 
 		if (isPreserveCustomName())
@@ -269,7 +303,7 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 				getAD_Client_ID(), getAD_Org_ID());
 		if (m_unique < 0 || m_unique > 4)
 			m_unique = 0;
-		if (m_uniqueName != null) { // && m_uniqueName.equals(".")) {
+		if (m_uniqueName != null) { 
 			// default
 			m_uniqueName = null;
 			makeUnique(address);
@@ -277,7 +311,7 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 
 		// Check uniqueness
 		MBPartnerLocation[] locations = getForBPartner(getCtx(),
-				getC_BPartner_ID());
+				getC_BPartner_ID(), null);
 		boolean unique = locations.length == 0;
 		while (!unique) {
 			unique = true;
@@ -286,7 +320,6 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
 				if (location.getC_BPartner_Location_ID() == get_ID())
 					continue;
 				if (m_uniqueName.equals(location.getName())) {
-					// m_uniqueName = null;
 					m_unique++;
 					makeUnique(address);
 					unique = false;

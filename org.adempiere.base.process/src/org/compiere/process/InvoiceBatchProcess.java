@@ -22,6 +22,7 @@ import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceBatch;
 import org.compiere.model.MInvoiceBatchLine;
 import org.compiere.model.MInvoiceLine;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.Msg;
 
@@ -32,6 +33,7 @@ import org.compiere.util.Msg;
  *  @author Jorg Janke
  *  @version $Id: InvoiceBatchProcess.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class InvoiceBatchProcess extends SvrProcess
 {
 	/**	Batch to process		*/
@@ -64,6 +66,8 @@ public class InvoiceBatchProcess extends SvrProcess
 				;
 			else if (name.equals("DocAction"))
 				p_DocAction = (String)para[i].getParameter();
+			else
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_C_InvoiceBatch_ID = getRecord_ID();
 	}   //  prepare

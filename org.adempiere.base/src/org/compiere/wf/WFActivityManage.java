@@ -18,17 +18,19 @@ package org.compiere.wf;
 
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MUser;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.StateEngine;
 import org.compiere.process.SvrProcess;
 
 /**
- *	Manage Workflow Activity
+ *	Process to Manage Workflow Activity
  *	
  *  @author Jorg Janke
  *  @version $Id: WFActivityManage.java,v 1.2 2006/07/30 00:51:05 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class WFActivityManage extends SvrProcess
 {
 	/**	Abort It				*/	
@@ -43,6 +45,7 @@ public class WFActivityManage extends SvrProcess
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
+	@Override
 	protected void prepare()
 	{
 		ProcessInfoParameter[] para = getParameter();
@@ -58,7 +61,7 @@ public class WFActivityManage extends SvrProcess
 			else if (name.equals("AD_WF_Responsible_ID"))
 				p_AD_WF_Responsible_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_AD_WF_Activity_ID = getRecord_ID();
 	}	//	prepare
@@ -68,6 +71,7 @@ public class WFActivityManage extends SvrProcess
 	 *  @return Message (variables are parsed)
 	 *  @throws Exception if not successful
 	 */
+	@Override
 	protected String doIt() throws Exception
 	{
 		MWFActivity activity = new MWFActivity (getCtx(), p_AD_WF_Activity_ID, get_TrxName());
@@ -85,6 +89,7 @@ public class WFActivityManage extends SvrProcess
 			// will leave the activity in an "unmanagable" state
 			activity.setProcessed(true);
 			activity.setWFState(StateEngine.STATE_Aborted);
+			activity.saveEx();
 			return msg;
 		}
 		String msg = null;

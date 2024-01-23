@@ -20,7 +20,8 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.compiere.util.Env;
-
+import org.idempiere.cache.ImmutableIntPOCache;
+import org.idempiere.cache.ImmutablePOSupport;
 
 /**
  *	Form Model
@@ -28,13 +29,56 @@ import org.compiere.util.Env;
  *  @author Jorg Janke
  *  @version $Id: MForm.java,v 1.3 2006/07/30 00:51:02 jjanke Exp $
  */
-public class MForm extends X_AD_Form
+public class MForm extends X_AD_Form implements ImmutablePOSupport
 {
-
 	/**
-	 * 
+	 * generated serial id 
 	 */
-	private static final long serialVersionUID = -2013533837940046638L;
+	private static final long serialVersionUID = -3617225890452735325L;
+	
+	/**	Cache						*/
+	private static ImmutableIntPOCache<Integer,MForm> s_cache = new ImmutableIntPOCache<Integer,MForm>(Table_Name, 20);
+	
+	/**
+	 * 	Get MForm from Cache (immutable)
+	 *	@param AD_Form_ID id
+	 *	@return MForm
+	 */
+	public static MForm get (int AD_Form_ID)
+	{
+		return get(Env.getCtx(), AD_Form_ID);
+	}
+	
+	/**
+	 * 	Get MFrom from Cache (immutable)
+	 *	@param ctx context
+	 *	@param AD_Form_ID id
+	 *	@return MForm
+	 */
+	public static MForm get (Properties ctx, int AD_Form_ID)
+	{
+		Integer key = Integer.valueOf(AD_Form_ID);
+		MForm retValue = s_cache.get (ctx, key, e -> new MForm(ctx, e));
+		if (retValue != null) 
+			return retValue;
+		
+		retValue = new MForm (ctx, AD_Form_ID, (String)null);
+		if (retValue.get_ID () == AD_Form_ID) {
+			s_cache.put (key, retValue, e -> new MForm(Env.getCtx(), e));
+			return retValue;
+		}
+		return null;
+	}	//	get
+	
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_Form_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MForm(Properties ctx, String AD_Form_UU, String trxName) {
+        super(ctx, AD_Form_UU, trxName);
+    }
 
 	/**
 	 * 	Default Constructor
@@ -59,11 +103,33 @@ public class MForm extends X_AD_Form
 	}	//	MForm
 	
 	/**
+	 * Copy constructor
+	 * @param ctx
+	 * @param copy
+	 */
+	public MForm(Properties ctx, MForm copy) {
+		this(ctx, copy, (String) null);
+	}
+
+	/**
+	 * Copy constructor
+	 * @param ctx
+	 * @param copy
+	 * @param trxName
+	 */
+	public MForm(Properties ctx, MForm copy, String trxName) 
+	{
+		this(ctx, 0, trxName);
+		copyPO(copy);
+	}
+	
+	/**
 	 * 	After Save
 	 *	@param newRecord new
 	 *	@param success success
 	 *	@return success
 	 */
+	@Override
 	protected boolean afterSave (boolean newRecord, boolean success)
 	{
 		if (!success)
@@ -91,4 +157,12 @@ public class MForm extends X_AD_Form
 		return success;
 	}	//	afterSave
 	
+	@Override
+	public MForm markImmutable() {
+		if (is_Immutable())
+			return this;
+		
+		makeImmutable();
+		return this;
+	}
 }	//	MForm

@@ -16,25 +16,25 @@
  *****************************************************************************/
 package org.idempiere.fa.process;
 
-
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import org.compiere.model.MAssetAddition;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategory;
 import org.compiere.model.MProject;
 import org.compiere.process.DocAction;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
-
+import org.compiere.util.Msg;
  
 /**
- *  Open Project.
- *  Opening project will automatically create asset and asset addition
+ *  Process to create project asset
  *
  *	@author zuhri utama
  */
+@org.adempiere.base.annotation.Process
 public class ProjectCreateAsset extends SvrProcess
 {
 	/**	Project 			*/
@@ -46,17 +46,15 @@ public class ProjectCreateAsset extends SvrProcess
 	/** DateTrx for create asset	*/
 	private Timestamp	m_DateTrx = null;
 	
-	private String message = "";
-	
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
+	@Override
 	protected void prepare()
 	{
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
-			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
 			else if (para[i].getParameterName().equalsIgnoreCase("C_Project_ID")) {
@@ -72,7 +70,7 @@ public class ProjectCreateAsset extends SvrProcess
 				m_DateTrx = (Timestamp)para[i].getParameter();
 			}
 			else {
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 			}
 		}
 		
@@ -83,6 +81,7 @@ public class ProjectCreateAsset extends SvrProcess
 	 *  @return Message (translated text)
 	 *  @throws Exception if not successful
 	 */
+	@Override
 	protected String doIt() throws Exception
 	{
 		if (m_C_Project_ID == 0 || m_Product_ID == 0) {
@@ -105,13 +104,14 @@ public class ProjectCreateAsset extends SvrProcess
 		
 		assetAdd.saveEx();
 		if (!assetAdd.processIt(DocAction.ACTION_Complete)) {
-			return "Error Process Asset Addition";
+			return "Error Process Asset Addition: " + assetAdd.getProcessMsg();
 		}
 		assetAdd.saveEx();
-		
-		message += ". @A_Asset_Addition_ID@ - " + assetAdd;
 
-		return "Asset Created " + message;
+		String message = Msg.parseTranslation(getCtx(), "@A_Asset_Addition_ID@ - " + assetAdd);
+		addBufferLog(0, null, null, message, MAssetAddition.Table_ID, assetAdd.getA_Asset_Addition_ID());
+
+		return "@Created@";
 	}	//	doIt
 
 }	//	ProjectClose

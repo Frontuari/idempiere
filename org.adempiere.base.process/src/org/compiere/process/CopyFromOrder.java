@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import org.compiere.model.MOrder;
+import org.compiere.model.MProcessPara;
 
 /**
  *  Copy Order Lines
@@ -27,6 +28,7 @@ import org.compiere.model.MOrder;
  *	@author Jorg Janke
  *	@version $Id: CopyFromOrder.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class CopyFromOrder extends SvrProcess
 {
 	/**	The Order				*/
@@ -46,7 +48,7 @@ public class CopyFromOrder extends SvrProcess
 			else if (name.equals("C_Order_ID"))
 				p_C_Order_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

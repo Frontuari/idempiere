@@ -22,10 +22,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
+import org.compiere.model.MPInstanceLog;
+import org.compiere.model.X_AD_PInstance_Log;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 
 /**
  * 	Process Info with Utilities
@@ -112,11 +115,15 @@ public class ProcessInfoUtil
 	}	//	setSummaryFromDB
 
 	/**
-	 *	Set Log of Process.
+	 *	Set Log of Process from Database JUST when they are not already in memory
 	 * 	@param pi process info
 	 */
 	public static void setLogFromDB (ProcessInfo pi)
 	{
+        ProcessInfoLog m_logs[] = pi.getLogs();
+        if (m_logs != null && m_logs.length > 0)
+        	return;
+
 	//	s_log.fine("setLogFromDB - AD_PInstance_ID=" + pi.getAD_PInstance_ID());
 		String sql = "SELECT Log_ID, P_ID, P_Date, P_Number, P_Msg, AD_Table_ID,Record_ID "				             
 			+ "FROM AD_PInstance_Log "
@@ -165,39 +172,12 @@ public class ProcessInfoUtil
 		}
 		for (int i = 0; i < logs.length; i++)
 		{
-			StringBuilder sql = new StringBuilder ("INSERT INTO AD_PInstance_Log "
-				+ "(AD_PInstance_ID, Log_ID, P_Date, P_ID, P_Number, P_Msg, AD_Table_ID,Record_ID)"
-				+ " VALUES (");
-			sql.append(pi.getAD_PInstance_ID()).append(",")
-				.append(logs[i].getLog_ID()).append(",");
-			if (logs[i].getP_Date() == null)
-				sql.append("NULL,");
-			else
-				sql.append(DB.TO_DATE(logs[i].getP_Date(), false)).append(",");
-			if (logs[i].getP_ID() == 0)
-				sql.append("NULL,");
-			else
-				sql.append(logs[i].getP_ID()).append(",");
-			if (logs[i].getP_Number() == null)
-				sql.append("NULL,");
-			else
-				sql.append(logs[i].getP_Number()).append(",");
-			if (logs[i].getP_Msg() == null)
-				sql.append("NULL,");
-			else
-				sql.append(DB.TO_STRING(logs[i].getP_Msg(),2000)).append(",");
-			if (logs[i].getAD_Table_ID() == 0)
-				sql.append("NULL,");
-			else
-				sql.append(logs[i].getAD_Table_ID()).append(",");
-			if (logs[i].getRecord_ID() == 0)
-				sql.append("NULL)");
-			else
-				sql.append(logs[i].getRecord_ID()).append(")");
-//
-			DB.executeUpdate(sql.toString(), null);
+			MPInstanceLog il = new MPInstanceLog(pi.getAD_PInstance_ID(), logs[i].getLog_ID(), logs[i].getP_Date(),
+					logs[i].getP_ID(), logs[i].getP_Number(), logs[i].getP_Msg(),
+					logs[i].getAD_Table_ID(), logs[i].getRecord_ID(), 
+					!Util.isEmpty(logs[i].getPInstanceLogType()) ? logs[i].getPInstanceLogType() : X_AD_PInstance_Log.PINSTANCELOGTYPE_Result);
+			il.save();
 		}
-		pi.setLogList(null);	//	otherwise log entries are twice
 	}   //  saveLogToDB
 
 	/**
@@ -210,7 +190,8 @@ public class ProcessInfoUtil
 		String sql = "SELECT p.ParameterName,"         			    	//  1
 			+ " p.P_String,p.P_String_To, p.P_Number,p.P_Number_To,"    //  2/3 4/5
 			+ " p.P_Date,p.P_Date_To, p.Info,p.Info_To, "               //  6/7 8/9
-			+ " i.AD_Client_ID, i.AD_Org_ID, i.AD_User_ID "				//	10..12
+			+ " i.AD_Client_ID, i.AD_Org_ID, i.AD_User_ID, "			//	10..12
+			+ " p.IsNotClause "											//  13
 			+ "FROM AD_PInstance_Para p"
 			+ " INNER JOIN AD_PInstance i ON (p.AD_PInstance_ID=i.AD_PInstance_ID) "
 			+ "WHERE p.AD_PInstance_ID=? "
@@ -244,7 +225,8 @@ public class ProcessInfoUtil
 				String Info = rs.getString(8);
 				String Info_To = rs.getString(9);
 				//
-				list.add (new ProcessInfoParameter(ParameterName, Parameter, Parameter_To, Info, Info_To));
+				boolean isNotClause = "Y".equals(rs.getString(13));
+				list.add (new ProcessInfoParameter(ParameterName, Parameter, Parameter_To, Info, Info_To, isNotClause));
 				//
 				if (pi.getAD_Client_ID() == null)
 					pi.setAD_Client_ID (rs.getInt(10));

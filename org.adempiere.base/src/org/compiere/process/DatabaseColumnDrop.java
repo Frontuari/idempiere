@@ -25,15 +25,15 @@
 
 package org.compiere.process;
 
-import java.util.logging.Level;
-
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MColumn;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MTable;
 import org.compiere.util.DB;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 
+@org.adempiere.base.annotation.Process
 public class DatabaseColumnDrop extends SvrProcess {
 
 	private int p_AD_Column_ID = 0;
@@ -51,8 +51,7 @@ public class DatabaseColumnDrop extends SvrProcess {
 			} else if ("IsEvenWithData".equals(name)) {
 				p_IsEvenWithData = para.getParameterAsBoolean();
 			} else {
-				if (log.isLoggable(Level.INFO))
-					log.log(Level.INFO, "Custom Parameter: " + name + "=" + para.getInfo());
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para);
 			}
 		}
 		p_AD_Column_ID = getRecord_ID();

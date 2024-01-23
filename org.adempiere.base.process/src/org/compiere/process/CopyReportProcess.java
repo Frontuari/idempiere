@@ -15,10 +15,9 @@
  *****************************************************************************/
 package org.compiere.process;
 
-import java.util.logging.Level;
-
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MProcess;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.Msg;
 
 /**
@@ -29,6 +28,7 @@ import org.compiere.util.Msg;
  * overwrites existing data (including translations)
  *
  */
+@org.adempiere.base.annotation.Process
 public class CopyReportProcess extends SvrProcess {
 
 	private int sourceId = 0;
@@ -61,7 +61,7 @@ public class CopyReportProcess extends SvrProcess {
 			else if ( para.equals("AD_Process_To_ID"))
 				targetId = parameter.getParameterAsInt();
 			else
-				log.log(Level.WARNING, "Unknown paramter: " + para);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), parameter);
 		}
 		
 		if ( targetId == 0 )

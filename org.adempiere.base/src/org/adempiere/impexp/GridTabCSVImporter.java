@@ -129,6 +129,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 	/**	Logger			*/
 	private static final CLogger log = CLogger.getCLogger(GridTabCSVImporter.class);
 	
+	@Override
 	public File fileImport(GridTab gridTab, List<GridTab> childs, InputStream filestream, Charset charset , String importMode) {		
 		return fileImport(gridTab, childs, filestream, charset, importMode, null);
 	}//fileImport
@@ -229,7 +230,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 						rowsTmpResult.add(rawLine);
 						continue;		 
 					}else if(isMasterok && isDetail && !isDetailok){
-						rawLine = rawLine + delimiter + quoteChar + "Record not proccesed due to detail record failure" + quoteChar + "\n";
+						rawLine = rawLine + delimiter + quoteChar + "Record not processed due to detail record failure" + quoteChar + "\n";
 						rowsTmpResult.add(rawLine);
 						continue;	 
 					}
@@ -307,7 +308,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 	}
 	
 	/**
-	 * Rollsback the trx and update the text in the file
+	 * Rollback trx and update the text in log file
 	 */
 	private void rollbackTrx(){
 		trx.rollback();
@@ -319,7 +320,8 @@ public class GridTabCSVImporter implements IGridTabImporter
 	}
 	
 	/**
-	 * Commit the trx and writes in the file
+	 * Commit trx and writes in log file
+	 * @return error message or null
 	 */
 	private String commitTrx(){
 		try {
@@ -336,7 +338,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 	/**
 	 * Map the header and returns the index where the detail starts
 	 * @param gridTab
-	 * @return
+	 * @return index where detail start
 	 */
 	private int mapCSVHeader(GridTab gridTab){
 		
@@ -374,7 +376,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 				GridField field 	= gridTab.getField(columnName);
 
 				if (field == null)
-					throwAdempiereException(Msg.getMsg(Env.getCtx(), "FieldNotFound" , new Object[] {columnName}) );
+					throwAdempiereException(Msg.getMsg(Env.getCtx(), "FieldNotFoundInTab" , new Object[] {columnName, gridTab.getName()}) );
 				else if(isKeyColumn && !isThereKey)
 					isThereKey =true;
 				else if (!isThereDocAction &&
@@ -387,11 +389,12 @@ public class GridTabCSVImporter implements IGridTabImporter
 		}
 		
 		return indxDetail;
-	}//mapFileHeader
+	}//mapCSVHeader
 	
 	/**
 	 * Map details fields in the csv file
 	 * @param indxDetail
+	 * @param childs
 	 */
 	private void mapCSVDetail(int indxDetail, List<GridTab> childs){
 
@@ -458,10 +461,10 @@ public class GridTabCSVImporter implements IGridTabImporter
 			tabMapIndexes.put(currentDetailTab,header.size()-1); 	   
 		}
 
-	}//mapFileDetail
+	}//mapCSVDetail
 	
 	/**
-	 * Pre process te file lookign for errors
+	 * Pre-process the input csv file and look for errors
 	 * @param processUI
 	 * @param gridTab
 	 * @param indxDetail
@@ -605,16 +608,16 @@ public class GridTabCSVImporter implements IGridTabImporter
 	} //createTrx
 	
 	/**
-	 * Process the record for each row
-	 * First insert the master tab - if no errors found proceeds with the details tabs when existing
-	 * Stops at the first error found in the row
+	 * Process the record for each row.<br/>
+	 * First insert the master tab - if no errors found proceeds with the details tabs when existing.<br/>
+	 * Stops at the first error found in the row.
 	 * @param importMode
 	 * @param gridTab
 	 * @param indxDetail
 	 * @param isDetail
 	 * @param idx
 	 * @param rowResult
-	 * @return
+	 * @return message or empty string
 	 */
 	private String processRecord(String importMode, GridTab gridTab, int indxDetail, boolean isDetail, int idx, StringBuilder rowResult, List<GridTab> childs){
 		
@@ -788,6 +791,11 @@ public class GridTabCSVImporter implements IGridTabImporter
 	    throw new AdempiereException(msg);
 	}
 	
+	/**
+	 * @param currentRecord
+	 * @param total
+	 * @return status text
+	 */
 	private String refreshImportStatus(int currentRecord, int total){
 		int percent = currentRecord * 100;
 		if (total > 0)
@@ -804,6 +812,12 @@ public class GridTabCSVImporter implements IGridTabImporter
 		}
 	}
 
+	/**
+	 * 
+	 * @param document
+	 * @param AD_Process_ID
+	 * @return message
+	 */
 	private String processDocAction(PO document, int AD_Process_ID){
 		int AD_Workflow_ID = MProcess.get(Env.getCtx(),AD_Process_ID).getAD_Workflow_ID();  
 		
@@ -812,7 +826,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 			wfProcess.setTransactionName(document.get_TrxName());  
 			MWFProcess wdPro = ProcessUtil.startWorkFlow(Env.getCtx(),wfProcess, AD_Workflow_ID);
 			if(wdPro == null) 
-			   return "Document action could not be proccesed"; 
+			   return "Document action could not be processed"; 
 			else if (wfProcess.isError())
 			   return "Document action error: "+wfProcess.getSummary();
 			else  	
@@ -838,6 +852,13 @@ public class GridTabCSVImporter implements IGridTabImporter
 		return isUpdateMode() || isMergeMode();
 	}
 
+	/**
+	 * @param isKey
+	 * @param isForeing
+	 * @param isDetail
+	 * @param headName
+	 * @return column name
+	 */
 	private String getColumnName(boolean isKey ,boolean isForeing ,boolean isDetail , String headName){		
 		
 		if(isKey){
@@ -864,6 +885,13 @@ public class GridTabCSVImporter implements IGridTabImporter
         return headName;
 	}
 	
+	/**
+	 * Get extra fields for Location display type
+	 * @param header
+	 * @param tableName
+	 * @param idx
+	 * @return Extra fields for Location display type
+	 */
 	private List<GridField> getSpecialMColumn(List<String> header, String tableName, int idx) {
 		
 		List<GridField> lsField = new ArrayList<GridField>();		
@@ -889,6 +917,12 @@ public class GridTabCSVImporter implements IGridTabImporter
 		return lsField;
 	}
 
+	/**
+	 * Get column value from map, order by header 
+	 * @param header
+	 * @param map
+	 * @return Value list for row
+	 */
 	private List<Object> getOrderedRowFromMap (List<String> header,Map<String, Object> map){
 		List<Object> tmpRow= new ArrayList<Object>();  
 		for (int i = 0; i < header.size(); i++)
@@ -903,6 +937,15 @@ public class GridTabCSVImporter implements IGridTabImporter
 		return tmpRow;	
 	}
 	
+	/**
+	 * Pre-process tmpRow and looks for error
+	 * @param gridTab
+	 * @param header
+	 * @param tmpRow
+	 * @param startindx
+	 * @param endindx
+	 * @return error message or null
+	 */
 	private StringBuilder preprocessRow (GridTab gridTab,List<String> header,List<Object> tmpRow,int startindx,int endindx){
 		
 	    boolean isEmptyRow = true;
@@ -948,9 +991,6 @@ public class GridTabCSVImporter implements IGridTabImporter
 			if (field.isParentValue())
 				continue;
 			
-//			if (field.isReadOnly() && !field.isParentValue() && !field.isParentColumn()) 
-//				return new StringBuilder(Msg.getMsg(Env.getCtx(), "FieldIsReadOnly",new Object[] {header.get(i)}));
-			
 			if (!(field.isDisplayed() || field.isDisplayedGrid())) 
 				return new StringBuilder(Msg.getMsg(Env.getCtx(), "FieldNotDisplayed",new Object[] {header.get(i)}));
 			
@@ -984,7 +1024,6 @@ public class GridTabCSVImporter implements IGridTabImporter
 				     return new StringBuilder(Msg.getMsg(Env.getCtx(),id==-2?"ForeignMultipleResolved":"ForeignNotResolved",new Object[]{header.get(i),value}));
 				}
 			} else {
-				// no validation here
 				// TODO: we could validate length of string or min/max
 			}
 		}
@@ -995,15 +1034,21 @@ public class GridTabCSVImporter implements IGridTabImporter
 		   return null;		
 	}
 	
+	/**
+	 * Validate extra fields for DisplayType.Location.
+	 * @param gridTab
+	 * @param header
+	 * @param tmpRow
+	 * @param i
+	 * @param sField
+	 * @return error message or null
+	 */
 	private StringBuilder validateSpecialFields(GridTab gridTab,List<String> header,List<Object> tmpRow,int i,String sField){
 
 	   GridField field = gridTab.getField(sField);
 	   if(field == null) 
 		  return new StringBuilder(Msg.getMsg(Env.getCtx(), "NotAWindowField",new Object[] {sField}));
 	    
-//	   if(field.isReadOnly() && !field.isParentValue()) 
-//		  return new StringBuilder(Msg.getMsg(Env.getCtx(), "FieldIsReadOnly",new Object[] {field.getColumnName()}));
-			
 	   if(!(field.isDisplayed() || field.isDisplayedGrid())) 
 		  return new StringBuilder(Msg.getMsg(Env.getCtx(), "FieldNotDisplayed",new Object[] {field.getColumnName()}));
 	   
@@ -1052,6 +1097,17 @@ public class GridTabCSVImporter implements IGridTabImporter
 	   return null;
 	}	
 	
+	/**
+	 * Process row for import
+	 * @param gridTab
+	 * @param header
+	 * @param map
+	 * @param startindx
+	 * @param endindx
+	 * @param masterRecord
+	 * @param trx
+	 * @return error message or null
+	 */
 	private String proccessRow(GridTab gridTab,List<String> header, Map<String, Object> map,int startindx,int endindx,PO masterRecord,Trx trx){
 		
 		String logMsg = null;	
@@ -1165,10 +1221,6 @@ public class GridTabCSVImporter implements IGridTabImporter
 				if(!field.isDisplayed(true)) 
 					continue;
 					
-//				if(!isInsertMode() && !field.isEditable(true) && value!=null){
-//				   logMsg = Msg.getMsg(Env.getCtx(), "FieldNotEditable", new Object[] {header.get(i)}) + "{" + value + "}";
-//				   break;
-//				}		
 				if("(null)".equals(value.toString().trim())){
 				   logMsg = gridTab.setValue(field,null);	
 				   if(logMsg.equals(""))
@@ -1342,6 +1394,10 @@ public class GridTabCSVImporter implements IGridTabImporter
 		return logMsg;
 	}
 	
+	/**
+	 * @param field
+	 * @return CellProcessor
+	 */
 	private CellProcessor getProccesorFromColumn(GridField field) {
 		// TODO: List columns can use RequireSubStr constraint
 		if (DisplayType.Date == field.getDisplayType()) {
@@ -1365,6 +1421,16 @@ public class GridTabCSVImporter implements IGridTabImporter
 		}
 	}
 	
+	/**
+	 * @param gridTab
+	 * @param map
+	 * @param header
+	 * @param startindx
+	 * @param endindx
+	 * @param masterRecord
+	 * @param trx
+	 * @return error message or null
+	 */
 	private String areValidKeysAndColumns(GridTab gridTab, Map<String, Object> map,List<String> header,int startindx,int endindx,PO masterRecord,Trx trx){
 		MQuery pquery = new MQuery(gridTab.getAD_Table_ID());
 		String logMsg= null;
@@ -1484,6 +1550,13 @@ public class GridTabCSVImporter implements IGridTabImporter
 	   return logMsg;
 	}
 	
+	/**
+	 * @param column
+	 * @param foreignColumn
+	 * @param value
+	 * @param trx
+	 * @return value from matching ad_ref_list record
+	 */
 	private String resolveForeignList(MColumn column, String foreignColumn, Object value ,Trx trx) {
 		String idS = null;
 		String trxName = (trx!=null?trx.getTrxName():null); 
@@ -1493,6 +1566,14 @@ public class GridTabCSVImporter implements IGridTabImporter
 		return idS;
 	}
 
+	/**
+	 * @param foreignTable
+	 * @param foreignColumn
+	 * @param value
+	 * @param field
+	 * @param trx
+	 * @return -3 for not found, -2 for more than 1 match and > 0 for foreign id
+	 */
 	private int resolveForeign(String foreignTable, String foreignColumn, Object value, GridField field, Trx trx) {
 		boolean systemAccess = false;
 		if (!"AD_Client".equals(foreignTable)) {
@@ -1594,7 +1675,10 @@ public class GridTabCSVImporter implements IGridTabImporter
 		return bChanged;	
 	}
 	
-	//Copy from GridTable
+	/**
+	 * @param value
+	 * @return true if value is not null and not an empty string
+	 */
 	private boolean isNotNullAndIsEmpty (Object value) {
 		if (value != null 
 				&& (value instanceof String) 

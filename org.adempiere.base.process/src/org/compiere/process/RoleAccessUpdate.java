@@ -21,8 +21,11 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.compiere.Adempiere;
+import org.compiere.model.MClient;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
+import org.compiere.model.SystemIDs;
 import org.compiere.util.CLogMgt;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -35,8 +38,9 @@ import org.compiere.util.Env;
  * 
  * @author Teo Sarca, teo.sarca@gmail.com
  * 		<li>BF [ 3018005 ] Role Access Update: updates all roles if I log in as System
- * 			https://sourceforge.net/tracker/?func=detail&aid=3018005&group_id=176962&atid=879332
+ * 			https://sourceforge.net/p/adempiere/bugs/2437/
  */
+@org.adempiere.base.annotation.Process
 public class RoleAccessUpdate extends SvrProcess
 {
 	/**	Static Logger	*/
@@ -44,12 +48,9 @@ public class RoleAccessUpdate extends SvrProcess
 	
 	/**	Update Role				*/
 	private int	p_AD_Role_ID = -1;
-	/**	Update Roles of Client	*/
-	private int	p_AD_Client_ID = -1;
 	/** Reset Existing Access */
 	private boolean p_IsReset = true;
-	
-	
+
 	/**
 	 * 	Prepare
 	 */
@@ -63,12 +64,10 @@ public class RoleAccessUpdate extends SvrProcess
 				;
 			else if (name.equals("AD_Role_ID"))
 				p_AD_Role_ID = para[i].getParameterAsInt();
-			else if (name.equals("AD_Client_ID"))
-				p_AD_Client_ID = para[i].getParameterAsInt();
 			else if (name.equals("ResetAccess"))
 				p_IsReset = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 
@@ -79,7 +78,7 @@ public class RoleAccessUpdate extends SvrProcess
 	 */
 	protected String doIt () throws Exception
 	{
-		if (log.isLoggable(Level.INFO)) log.info("AD_Client_ID=" + p_AD_Client_ID + ", AD_Role_ID=" + p_AD_Role_ID);
+		if (log.isLoggable(Level.INFO)) log.info("AD_Role_ID=" + p_AD_Role_ID);
 		//
 		if (p_AD_Role_ID > 0)
 			updateRole (new MRole (getCtx(), p_AD_Role_ID, get_TrxName()));
@@ -87,21 +86,16 @@ public class RoleAccessUpdate extends SvrProcess
 		{
 			List<Object> params = new ArrayList<Object>();
 			StringBuilder whereClause = new StringBuilder("1=1");
-			if (p_AD_Client_ID > 0)
-			{
-				whereClause.append(" AND AD_Client_ID=? ");
-				params.add(p_AD_Client_ID);
-			}
-			if (p_AD_Role_ID == 0) // System Role
+			if (p_AD_Role_ID == SystemIDs.ROLE_SYSTEM) // System Role
 			{
 				whereClause.append(" AND AD_Role_ID=?");
 				params.add(p_AD_Role_ID);
 			}
-			//sql += "ORDER BY AD_Client_ID, Name";
-			
+
 			List<MRole> roles = new Query(getCtx(), MRole.Table_Name, whereClause.toString(), get_TrxName())
 			.setOnlyActiveRecords(true)
 			.setParameters(params)
+			.setClient_ID(getAD_Client_ID() > 0) // to avoid Cross tenant PO reading if running from a client > 0 with no role
 			.setOrderBy("AD_Client_ID, Name")
 			.list();
 			
@@ -120,7 +114,7 @@ public class RoleAccessUpdate extends SvrProcess
 	 */
 	private void updateRole (MRole role)
 	{
-		StringBuilder msglog = new StringBuilder(role.getName()).append(": ") 
+		StringBuilder msglog = new StringBuilder(MClient.get(role.getAD_Client_ID()).getName()).append(" - ").append(role.getName()).append(": ") 
 				.append(role.updateAccessRecords(p_IsReset));
 		addLog(0, null, null, msglog.toString());
 	}	//	updateRole
@@ -134,7 +128,7 @@ public class RoleAccessUpdate extends SvrProcess
 		s_log.info("------------------");
 		ProcessInfo pi = new ProcessInfo("Role Access Update", 295);
 		pi.setAD_Client_ID(0);
-		pi.setAD_User_ID(100);
+		pi.setAD_User_ID(SystemIDs.USER_SUPERUSER);
 		
 		RoleAccessUpdate rau = new RoleAccessUpdate();
 		rau.startProcess(Env.getCtx(), pi, null);

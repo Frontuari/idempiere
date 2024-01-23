@@ -18,6 +18,7 @@ package org.adempiere.pipo2.handler;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -127,7 +128,7 @@ public class TabElementHandler extends AbstractElementHandler {
 
 		//Fields tags.
 		String sql = "SELECT AD_Field_ID FROM AD_FIELD WHERE AD_TAB_ID = " + AD_Tab_ID
-			+ "ORDER BY SEQNO asc";
+			+ " ORDER BY SEQNO asc";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
@@ -138,7 +139,7 @@ public class TabElementHandler extends AbstractElementHandler {
 				createField(ctx, document, rs.getInt("AD_Field_ID"));
 			}
 		}
-		catch (Exception e)
+		catch (SQLException e)
 		{
 			log.log(Level.SEVERE,e.getLocalizedMessage(), e);
 			throw new DatabaseAccessException("Failed to export window tab", e);

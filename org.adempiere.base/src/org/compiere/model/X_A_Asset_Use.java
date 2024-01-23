@@ -23,21 +23,64 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for A_Asset_Use
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="A_Asset_Use")
+public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_A_Asset_Use (Properties ctx, int A_Asset_Use_ID, String trxName)
     {
       super (ctx, A_Asset_Use_ID, trxName);
       /** if (A_Asset_Use_ID == 0)
+        {
+			setA_Asset_ID (0);
+// @A_Asset_ID@
+			setA_Asset_Use_ID (0);
+			setUseDate (new Timestamp( System.currentTimeMillis() ));
+			setUseUnits (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Asset_Use (Properties ctx, int A_Asset_Use_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, A_Asset_Use_ID, trxName, virtualColumns);
+      /** if (A_Asset_Use_ID == 0)
+        {
+			setA_Asset_ID (0);
+// @A_Asset_ID@
+			setA_Asset_Use_ID (0);
+			setUseDate (new Timestamp( System.currentTimeMillis() ));
+			setUseUnits (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Asset_Use (Properties ctx, String A_Asset_Use_UU, String trxName)
+    {
+      super (ctx, A_Asset_Use_UU, trxName);
+      /** if (A_Asset_Use_UU == null)
+        {
+			setA_Asset_ID (0);
+// @A_Asset_ID@
+			setA_Asset_Use_ID (0);
+			setUseDate (new Timestamp( System.currentTimeMillis() ));
+			setUseUnits (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Asset_Use (Properties ctx, String A_Asset_Use_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, A_Asset_Use_UU, trxName, virtualColumns);
+      /** if (A_Asset_Use_UU == null)
         {
 			setA_Asset_ID (0);
 // @A_Asset_ID@
@@ -54,7 +97,7 @@ public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent
     }
 
     /** AccessLevel
-      * @return 7 - System - Client - Org 
+      * @return 7 - System - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -76,26 +119,26 @@ public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent
     }
 
 	public org.compiere.model.I_A_Asset getA_Asset() throws RuntimeException
-    {
-		return (org.compiere.model.I_A_Asset)MTable.get(getCtx(), org.compiere.model.I_A_Asset.Table_Name)
-			.getPO(getA_Asset_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_A_Asset)MTable.get(getCtx(), org.compiere.model.I_A_Asset.Table_ID)
+			.getPO(getA_Asset_ID(), get_TrxName());
+	}
 
 	/** Set Asset.
-		@param A_Asset_ID 
-		Asset used internally or by customers
-	  */
+		@param A_Asset_ID Asset used internally or by customers
+	*/
 	public void setA_Asset_ID (int A_Asset_ID)
 	{
-		if (A_Asset_ID < 1) 
+		if (A_Asset_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_A_Asset_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_A_Asset_ID, Integer.valueOf(A_Asset_ID));
 	}
 
 	/** Get Asset.
 		@return Asset used internally or by customers
 	  */
-	public int getA_Asset_ID () 
+	public int getA_Asset_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_A_Asset_ID);
 		if (ii == null)
@@ -104,18 +147,19 @@ public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent
 	}
 
 	/** Set A_Asset_Use_ID.
-		@param A_Asset_Use_ID A_Asset_Use_ID	  */
+		@param A_Asset_Use_ID A_Asset_Use_ID
+	*/
 	public void setA_Asset_Use_ID (int A_Asset_Use_ID)
 	{
-		if (A_Asset_Use_ID < 1) 
+		if (A_Asset_Use_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_A_Asset_Use_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_A_Asset_Use_ID, Integer.valueOf(A_Asset_Use_ID));
 	}
 
 	/** Get A_Asset_Use_ID.
 		@return A_Asset_Use_ID	  */
-	public int getA_Asset_Use_ID () 
+	public int getA_Asset_Use_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_A_Asset_Use_ID);
 		if (ii == null)
@@ -126,13 +170,14 @@ public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), String.valueOf(getA_Asset_Use_ID()));
     }
 
 	/** Set A_Asset_Use_UU.
-		@param A_Asset_Use_UU A_Asset_Use_UU	  */
+		@param A_Asset_Use_UU A_Asset_Use_UU
+	*/
 	public void setA_Asset_Use_UU (String A_Asset_Use_UU)
 	{
 		set_Value (COLUMNNAME_A_Asset_Use_UU, A_Asset_Use_UU);
@@ -140,15 +185,14 @@ public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent
 
 	/** Get A_Asset_Use_UU.
 		@return A_Asset_Use_UU	  */
-	public String getA_Asset_Use_UU () 
+	public String getA_Asset_Use_UU()
 	{
 		return (String)get_Value(COLUMNNAME_A_Asset_Use_UU);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -157,29 +201,29 @@ public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
-	/** Set UseDate.
-		@param UseDate UseDate	  */
+	/** Set Use Date.
+		@param UseDate Use Date
+	*/
 	public void setUseDate (Timestamp UseDate)
 	{
 		set_Value (COLUMNNAME_UseDate, UseDate);
 	}
 
-	/** Get UseDate.
-		@return UseDate	  */
-	public Timestamp getUseDate () 
+	/** Get Use Date.
+		@return Use Date	  */
+	public Timestamp getUseDate()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_UseDate);
 	}
 
 	/** Set Use units.
-		@param UseUnits 
-		Currently used units of the assets
-	  */
+		@param UseUnits Currently used units of the assets
+	*/
 	public void setUseUnits (int UseUnits)
 	{
 		set_Value (COLUMNNAME_UseUnits, Integer.valueOf(UseUnits));
@@ -188,7 +232,7 @@ public class X_A_Asset_Use extends PO implements I_A_Asset_Use, I_Persistent
 	/** Get Use units.
 		@return Currently used units of the assets
 	  */
-	public int getUseUnits () 
+	public int getUseUnits()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_UseUnits);
 		if (ii == null)

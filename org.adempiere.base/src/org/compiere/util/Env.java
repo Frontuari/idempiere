@@ -16,7 +16,9 @@
  *****************************************************************************/
 package org.compiere.util;
 
+import java.beans.Expression;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,7 +31,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -46,14 +47,15 @@ import org.adempiere.util.ServerContext;
 import org.adempiere.util.ServerContextProvider;
 import org.compiere.Adempiere;
 import org.compiere.db.CConnection;
+import org.compiere.dbPort.Convert;
+import org.compiere.model.GridTab;
 import org.compiere.model.GridWindowVO;
-import org.compiere.model.I_AD_Window;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
-import org.compiere.model.MLookupCache;
 import org.compiere.model.MQuery;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
+import org.compiere.model.MSequence;
 import org.compiere.model.MSession;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
@@ -68,31 +70,83 @@ import org.compiere.process.SvrProcess;
  *  @author     Jorg Janke
  *  @version    $Id: Env.java,v 1.3 2006/07/30 00:54:36 jjanke Exp $
  *
- * @author Teo Sarca, www.arhipac.ro
+ *  @author Teo Sarca, www.arhipac.ro
  * 			<li>BF [ 1619390 ] Use default desktop browser as external browser
  * 			<li>BF [ 2017987 ] Env.getContext(TAB_INFO) should NOT use global context
  * 			<li>FR [ 2392044 ] Introduce Env.WINDOW_MAIN
  */
 public final class Env
 {
-	public static final String STANDARD_REPORT_FOOTER_TRADEMARK_TEXT = "#STANDARD_REPORT_FOOTER_TRADEMARK_TEXT";
-
-	public static final String AD_ROLE_ID = "#AD_Role_ID";
-
-	public static final String AD_USER_ID = "#AD_User_ID";
-
-	public static final String AD_ORG_ID = "#AD_Org_ID";
-
+	//Environments Constants
 	public static final String AD_CLIENT_ID = "#AD_Client_ID";
-	
-	public static final String AD_ORG_NAME = "#AD_Org_Name";
-	
-	public static final String M_WAREHOUSE_ID = "#M_Warehouse_ID";
-	
+	public static final String AD_CLIENT_NAME = "#AD_Client_Name";
+	public static final String AD_ORG_ID = "#AD_Org_ID";		
+	public static final String AD_ORG_NAME = "#AD_Org_Name";	
+	public static final String AD_PRINTCOLOR_ID = "#AD_PrintColor_ID";
+	public static final String AD_PRINTFONT_ID = "#AD_PrintFont_ID";
+	public static final String AD_PRINTPAPER_ID = "#AD_PrintPaper_ID";
+	public static final String AD_PRINTTABLEFORMAT_ID = "#AD_PrintTableFormat_ID";
+	public static final String AD_ROLE_ID = "#AD_Role_ID";
+	public static final String AD_ROLE_NAME = "#AD_Role_Name";
+	public static final String AD_ROLE_TYPE = "#AD_Role_Type";
+	public static final String AD_SESSION_ID = "#AD_Session_ID";
+	public static final String AD_USER_ID = "#AD_User_ID";
+	public static final String AD_USER_NAME = "#AD_User_Name";
+	public static final String C_ACCTSCHEMA_ID = "$C_AcctSchema_ID";
+	public static final String C_BANKACCOUNT_ID = "#C_BankAccount_ID";
+	public static final String C_BP_GROUP_ID = "#C_BP_Group_ID";
+	public static final String C_CASHBOOK_ID = "#C_CashBook_ID";
+	public static final String C_CONVERSIONTYPE_ID = "#C_ConversionType_ID";
+	public static final String C_COUNTRY_ID = "#C_Country_ID";
+	public static final String C_CURRENCY_ID = "$C_Currency_ID";
+	public static final String C_DOCTYPETARGET_ID = "#C_DocTypeTarget_ID";
+	public static final String C_DUNNING_ID = "#C_Dunning_ID";
+	public static final String C_PAYMENTTERM_ID = "#C_PaymentTerm_ID";
+	public static final String C_REGION_ID = "#C_Region_ID";
+	public static final String C_TAXCATEGORY_ID = "#C_TaxCategory_ID";
+	public static final String C_TAX_ID = "#C_Tax_ID";
+	public static final String C_UOM_ID = "#C_UOM_ID";
+	public static final String CLIENT_INFO_DESKTOP_HEIGHT = "#clientInfo_desktopHeight";
+	public static final String CLIENT_INFO_DESKTOP_WIDTH = "#clientInfo_desktopWidth";
+	public static final String CLIENT_INFO_MOBILE = "#clientInfo_mobile";
+	public static final String CLIENT_INFO_ORIENTATION = "#clientInfo_orientation";
+	public static final String CLIENT_INFO_TIME_ZONE = "#clientInfo_timeZone";
+	public static final String DATE	= "#Date";
+	public static final String DB_TYPE = "#DBType";
+	public static final String GL_CATEGORY_ID = "#GL_Category_ID";
+	public static final String HAS_ALIAS = "$HasAlias";
+	public static final String IS_CAN_APPROVE_OWN_DOC = "#IsCanApproveOwnDoc";
+	public static final String IS_CLIENT_ADMIN = "#IsClientAdmin";
+	public static final String DEVELOPER_MODE = "#DeveloperMode";
+	/** Context Language identifier */
+	public static final String LANGUAGE = "#AD_Language";
+	public static final String LANGUAGE_NAME = "#LanguageName";
+	public static final String LOCAL_HTTP_ADDRESS = "#LocalHttpAddr";
+	public static final String LOCALE = "#Locale";
+	public static final String M_PRICELIST_ID = "#M_PriceList_ID";
+	public static final String M_PRODUCT_CATEGORY_ID = "#M_Product_Category_ID";
+	public static final String M_WAREHOUSE_ID = "#M_Warehouse_ID";	
+	/** Context for multi factor authentication */
+	public static final String MFA_Registration_ID = "#MFA_Registration_ID";
+	/** Context for POS ID */
+	public static final String POS_ID = "#POS_ID";
+	public static final String R_STATUSCATEGORY_ID = "#R_StatusCategory_ID";
+	public static final String R_STATUS_ID = "#R_Status_ID";
 	public static final String RUNNING_UNIT_TESTING_TEST_CASE = "#RUNNING_UNIT_TESTING_TEST_CASE";
+	public static final String SALESREP_ID = "#SalesRep_ID";
+	public static final String SHOW_ACCOUNTING = "#ShowAcct";
+	public static final String SHOW_ADVANCED = "#ShowAdvanced";
+	public static final String SHOW_TRANSLATION = "#ShowTrl";
+	public static final String STANDARD_PRECISION = "#StdPrecision";
+	public static final String STANDARD_REPORT_FOOTER_TRADEMARK_TEXT = "#STANDARD_REPORT_FOOTER_TRADEMARK_TEXT";
+	public static final String SYSTEM_NAME = "#System_Name";
+	public static final String UI_CLIENT = "#UIClient";
+	public static final String USER_LEVEL = "#User_Level";
+
+	private static final String PREFIX_SYSTEM_VARIABLE = "$env.";
 
 	private final static ContextProvider clientContextProvider = new DefaultContextProvider();
-
+	
 	private static List<IEnvEventListener> eventListeners = new ArrayList<IEnvEventListener>();
 
 	public static int adWindowDummyID =200054; 
@@ -109,6 +163,7 @@ public final class Env
 	}
 
 	/**
+	 * Add environment event listener
 	 * @param listener
 	 */
 	public static void addEventListener(IEnvEventListener listener)
@@ -117,6 +172,7 @@ public final class Env
 	}
 
 	/**
+	 * Remove environment event listener
 	 * @param listener
 	 * @return boolean
 	 */
@@ -132,11 +188,13 @@ public final class Env
 	public static void exitEnv (int status)
 	{
 		//hengsin, avoid unncessary query of session when exit without log in
-		if (DB.isConnected(false)) {
+		if (DB.isConnected()) {
 			//	End Session
-			MSession session = MSession.get(Env.getCtx(), false);	//	finish
-			if (session != null)
+			MSession session = MSession.get(Env.getCtx());	//	finish
+			if (session != null) {
+				session = new MSession(getCtx(), session.getAD_Session_ID(), null);
 				session.logout();
+			}
 		}
 		//
 		reset(true);	// final cache reset
@@ -153,9 +211,11 @@ public final class Env
 	public static void logout()
 	{
 		//	End Session
-		MSession session = MSession.get(Env.getCtx(), false);	//	finish
-		if (session != null)
+		MSession session = MSession.get(Env.getCtx());	//	finish
+		if (session != null) {
+			session = new MSession(getCtx(), session.getAD_Session_ID(), null);
 			session.logout();
+		}
 		//
 		reset(true);	// final cache reset
 		//
@@ -163,7 +223,7 @@ public final class Env
 
 	/**
 	 * 	Reset Cache
-	 * 	@param finalCall everything otherwise login data remains
+	 * 	@param finalCall true to clear everything otherwise login data remains
 	 */
 	public static void reset (boolean finalCall)
 	{
@@ -205,14 +265,10 @@ public final class Env
 		}
 	}	//	resetAll
 
-
-	/**************************************************************************
-	 *  Application Context
-	 */
-	/** WindowNo for Main           */
+	/** Window No for Main           */
 	public static final int     WINDOW_MAIN = 0;
 
-	/** Tab for Info                */
+	/** Tab No for Info                */
 	public static final int     TAB_INFO = 1113;
 
 	/**
@@ -224,6 +280,10 @@ public final class Env
 		return getContextProvider().getContext();
 	}   //  getCtx
 
+	/**
+	 * Get context provider
+	 * @return context provider for current environment
+	 */
 	public static ContextProvider getContextProvider() {
 		if (Ini.isClient())
 			return clientContextProvider;
@@ -232,7 +292,7 @@ public final class Env
 	}
 
 	/**
-	 * Replace the contents of the current session/process context.
+	 * Replace the contents of the current session/process context.<br/>
 	 * Don't use this to setup a new session/process context, use ServerContext.setCurrentInstance instead.
 	 * @param ctx context
 	 */
@@ -391,6 +451,14 @@ public final class Env
 		ctx.setProperty(WindowNo+"|"+context, String.valueOf(value));
 	}	//	setContext
 
+	/**
+	 * Set context value for window and tab
+	 * @param ctx
+	 * @param WindowNo
+	 * @param TabNo
+	 * @param context context key
+	 * @param value context value
+	 */
 	public static void setContext (Properties ctx, int WindowNo, int TabNo, String context, int value)
 	{
 		if (ctx == null || context == null)
@@ -412,14 +480,20 @@ public final class Env
 		setContext (ctx, WindowNo, context, convert(value));
 	}	//	setContext
 
+	/**
+	 * Convert boolean value to Y or N
+	 * @param value
+	 * @return Y for true, N for false
+	 */
 	private static String convert(boolean value) {
 		return value ? "Y" : "N";
 	}
 
 	/**
-	 *	Set Context for Window to Y/N Value
+	 *	Set Context for Window and tab to Y/N Value
 	 *  @param ctx context
 	 *  @param WindowNo window no
+	 *  @param TabNo
 	 *  @param context context key
 	 *  @param value context value
 	 */
@@ -429,7 +503,7 @@ public final class Env
 	}	//	setContext
 	
 	/**
-	 *	Set Context for Window & Tab to Value
+	 *	Set Context for Window and Tab to Value
 	 *  @param ctx context
 	 *  @param WindowNo window no
 	 *  @param TabNo tab no
@@ -505,9 +579,8 @@ public final class Env
 		ctx.setProperty(WindowNo+"|AutoNew", convert(autoNew));
 	}	//	setAutoNew
 
-
 	/**
-	 *	Set SO Trx
+	 *	Set IsSOTrx Y/N flag
 	 *  @param ctx context
 	 *  @param isSOTrx SO Context
 	 */
@@ -528,6 +601,12 @@ public final class Env
 	{
 		if (ctx == null || context == null)
 			throw new IllegalArgumentException ("Require Context");
+		if (context.startsWith(PREFIX_SYSTEM_VARIABLE)) {
+			String retValue = System.getenv(context.substring(PREFIX_SYSTEM_VARIABLE.length()));
+			if (retValue == null)
+				retValue = "";
+			return retValue;
+		}
 		return ctx.getProperty(context, "");
 	}	//	getContext
 
@@ -560,8 +639,8 @@ public final class Env
 	}	//	getContext
 
 	/**
-	 *	Get Value of Context for Window.
-	 *	if not found global context if available
+	 *	Get Value of Context for Window.<br/>
+	 *	If not found, try global context.
 	 *  @param ctx context
 	 *  @param WindowNo window
 	 *  @param context context key
@@ -573,9 +652,9 @@ public final class Env
 	}	//	getContext
 
 	/**
-	 * Get Value of Context for Window & Tab,
-	 * if not found global context if available.
-	 * If TabNo is TAB_INFO only tab's context will be checked.
+	 * Get Value of Context for Window and Tab.<br/>
+	 * If not found, try global context. <br/>
+	 * If TabNo is TAB_INFO, only tab's context will be checked.
 	 * @param ctx context
 	 * @param WindowNo window no
 	 * @param TabNo tab no
@@ -597,9 +676,9 @@ public final class Env
 	}	//	getContext
 
 	/**
-	 * Get Value of Context for Window & Tab,
-	 * if not found global context if available.
-	 * If TabNo is TAB_INFO only tab's context will be checked.
+	 * Get Value of Context for Window and Tab.<br/>
+	 * If not found, try global context.<br/>
+	 * If TabNo is TAB_INFO, only tab's context will be checked.
 	 * @param ctx context
 	 * @param WindowNo window no
 	 * @param TabNo tab no
@@ -613,9 +692,9 @@ public final class Env
 	}
 
 	/**
-	 * Get Value of Context for Window & Tab,
-	 * if not found global context if available.
-	 * If TabNo is TAB_INFO only tab's context will be checked.
+	 * Get Value of Context for Window and Tab.<br/>
+	 * If not found, try global context. <br/>
+	 * If TabNo is TAB_INFO, only tab's context will be checked.
 	 * @param ctx context
 	 * @param WindowNo window no
 	 * @param TabNo tab no
@@ -629,9 +708,6 @@ public final class Env
 		if (ctx == null || context == null)
 			throw new IllegalArgumentException ("Require Context");
 		String s = ctx.getProperty(WindowNo+"|"+TabNo+"|"+context);
-		// If TAB_INFO, don't check Window and Global context - teo_sarca BF [ 2017987 ]
-		if (TAB_INFO == TabNo)
-			return s != null ? s : "";
 		//
 		if (Util.isEmpty(s) && ! onlyTab)
 			return getContext(ctx, WindowNo, context, onlyWindow);
@@ -694,7 +770,7 @@ public final class Env
 	 *  @param ctx context
 	 *  @param WindowNo window no
 	 *  @param context context key
-	 *  @param onlyWindow  if true, no defaults are used unless explicitly asked for
+	 *  @param onlyWindow  if true, do not try global context if context key not found with window
 	 *  @return value or 0
 	 */
 	public static int getContextAsInt(Properties ctx, int WindowNo, String context, boolean onlyWindow)
@@ -775,7 +851,6 @@ public final class Env
 		return isAutoCommit(ctx);
 	}	//	isAutoCommit
 
-
 	/**
 	 *	Is Auto New Record
 	 *  @param ctx context
@@ -812,7 +887,6 @@ public final class Env
 		return isAutoNew(ctx);
 	}	//	isAutoNew
 
-
 	/**
 	 *	Is Sales Order Trx
 	 *  @param ctx context
@@ -841,8 +915,8 @@ public final class Env
 	}	//	isSOTrx
 
 	/**
-	 *	Get Context and convert it to a Timestamp
-	 *	if error return today's date
+	 *	Get Context and convert it to Timestamp.<br/>
+	 *	If error return today's date.
 	 *  @param ctx context
 	 *  @param context context key
 	 *  @return Timestamp
@@ -853,8 +927,8 @@ public final class Env
 	}	//	getContextAsDate
 
 	/**
-	 *	Get Context and convert it to a Timestamp
-	 *	if error return today's date
+	 *	Get Context and convert it to Timestamp.<br/>
+	 *	If error return today's date.
 	 *  @param ctx context
 	 *  @param WindowNo window no
 	 *  @param context context key
@@ -933,7 +1007,7 @@ public final class Env
 		return Env.getContextAsInt(ctx, AD_ROLE_ID);
 	}	//	getAD_Role_ID
 
-	/**************************************************************************
+	/**
 	 *	Get Preference.
 	 *  <pre>
 	 *		0)	Current Setting
@@ -971,13 +1045,13 @@ public final class Env
 	}	//	getPreference
 
 	/**
-	 * get preference of process from env
+	 * Get preference of process from environment context
 	 * @param ctx
 	 * @param AD_Window_ID
 	 * @param AD_InfoWindow
 	 * @param AD_Process_ID_Of_Panel
 	 * @param context
-	 * @return
+	 * @return preference value
 	 */
 	public static String getPreference (Properties ctx, int AD_Window_ID, int AD_InfoWindow, int AD_Process_ID_Of_Panel, String context)
 	{
@@ -991,12 +1065,12 @@ public final class Env
 	}	//	getPreference
 	
 	/**
-	 * get preference of info window from env
+	 * Get preference of info window from environment context
 	 * @param ctx
 	 * @param AD_Window_ID
 	 * @param AD_InfoWindow
 	 * @param context
-	 * @return
+	 * @return preference value
 	 */
 	public static String getPreference (Properties ctx, int AD_Window_ID, int AD_InfoWindow, String context)
 	{
@@ -1009,67 +1083,36 @@ public final class Env
 		return (retValue == null ? "" : retValue);
 	}	//	getPreference
 	
-	/**************************************************************************
-	 *  Language issues
-	 */
-
-	/** Context Language identifier */
-	static public final String      LANGUAGE = "#AD_Language";
-
-	/** Context for POS ID */
-	static public final String		POS_ID = "#POS_ID";
-
 	/**
 	 *  Check Base Language
 	 *  @param ctx context
-	 * 	@param tableName table to be translated
-	 * 	@return true if base language and table not translated
+	 * 	@param tableName ignore
+	 * 	@return true if language value in ctx is base language
 	 */
 	public static boolean isBaseLanguage (Properties ctx, String tableName)
 	{
-		/**
-		if (isBaseTranslation(tableName))
-			return Language.isBaseLanguage (getAD_Language(ctx));
-		else	//	No AD Table
-			if (!isMultiLingualDocument(ctx))
-				return true;		//	access base table
-		**/
 		return Language.isBaseLanguage (getAD_Language(ctx));
 	}	//	isBaseLanguage
 
 	/**
 	 *	Check Base Language
 	 * 	@param AD_Language language
-	 * 	@param tableName table to be translated
-	 * 	@return true if base language and table not translated
+	 * 	@param tableName ignore
+	 * 	@return true if AD_Language is base language
 	 */
 	public static boolean isBaseLanguage (String AD_Language, String tableName)
 	{
-		/**
-		if (isBaseTranslation(tableName))
-			return Language.isBaseLanguage (AD_Language);
-		else	//	No AD Table
-			if (!isMultiLingualDocument(s_ctx))				//	Base Context
-				return true;		//	access base table
-		**/
 		return Language.isBaseLanguage (AD_Language);
 	}	//	isBaseLanguage
 
 	/**
 	 *	Check Base Language
 	 * 	@param language language
-	 * 	@param tableName table to be translated
-	 * 	@return true if base language and table not translated
+	 * 	@param tableName ignore
+	 * 	@return true if language is base language
 	 */
 	public static boolean isBaseLanguage (Language language, String tableName)
 	{
-		/**
-		if (isBaseTranslation(tableName))
-			return language.isBaseLanguage();
-		else	//	No AD Table
-			if (!isMultiLingualDocument(s_ctx))				//	Base Context
-				return true;		//	access base table
-		**/
 		return language.isBaseLanguage();
 	}	//	isBaseLanguage
 
@@ -1088,9 +1131,9 @@ public final class Env
 
 	/**
 	 * 	Do we have Multi-Lingual Documents.
-	 *  Set in DB.loadOrgs
+	 *  Set in DB.loadOrgs.
 	 * 	@param ctx context
-	 * 	@return true if multi lingual documents
+	 * 	@return true if tenant is using multi lingual documents
 	 */
 	public static boolean isMultiLingualDocument (Properties ctx)
 	{
@@ -1098,7 +1141,8 @@ public final class Env
 	}	//	isMultiLingualDocument
 
 	/**
-	 *  Get System AD_Language
+	 *  Get AD_Language value in context.<br/>
+	 *  Fall back to base language if there's no AD_Language value in context.
 	 *  @param ctx context
 	 *	@return AD_Language eg. en_US
 	 */
@@ -1114,7 +1158,8 @@ public final class Env
 	}	//	getAD_Language
 
 	/**
-	 *  Get System Language
+	 *  Get Language from context.<br/>
+	 *  Fall back to base language if there's no language value in context.
 	 *  @param ctx context
 	 *	@return Language
 	 */
@@ -1132,7 +1177,7 @@ public final class Env
 	/**
 	 *  Get Login Language
 	 *  @param ctx context
-	 *	@return Language
+	 *	@return Login Language
 	 */
 	public static Language getLoginLanguage (Properties ctx)
 	{
@@ -1140,7 +1185,8 @@ public final class Env
 	}	//	getLanguage
 
 	/**
-	 * @param ctx
+	 * Get language from locale value in context
+	 * @param ctx context
 	 * @return Language
 	 */
 	public static Language getLocaleLanguage(Properties ctx) {
@@ -1154,10 +1200,10 @@ public final class Env
 		}
 		return language;
 	}
-
-	public static final String LOCALE = "#Locale";
+	
 	/**
-	 * @param ctx
+	 * Get locale value in context
+	 * @param ctx context
 	 * @return Locale
 	 */
 	public static Locale getLocale(Properties ctx) {
@@ -1178,6 +1224,10 @@ public final class Env
         return locale;
 	}
 
+	/**
+	 * Get list of language from AD_Message_Trl.
+	 * @return list of supported language
+	 */
 	public static ArrayList<String> getSupportedLanguages()
 	{
 		ArrayList<String> AD_Languages = new ArrayList<String>();
@@ -1207,6 +1257,10 @@ public final class Env
 		return AD_Languages;
 	}
 
+	/**
+	 * Get list of active login languages  
+	 * @return list of active login languages
+	 */
 	public static ArrayList<String> getLoginLanguages()
 	{
 		ArrayList<String> AD_Languages = new ArrayList<String>();
@@ -1240,7 +1294,7 @@ public final class Env
 	
 	/**
 	 *  Verify Language.
-	 *  Check that language is supported by the system
+	 *  Check that language is supported by the system.
 	 *  @param ctx might be updated with new AD_Language
 	 *  @param language language
 	 */
@@ -1304,17 +1358,16 @@ public final class Env
 		}
 
 		//	We found same language
-	//	if (!"0".equals(Msg.getMsg(AD_Language, "0")))
 
 		log.warning ("Not System Language=" + language
 			+ " - Set to Base Language " + Language.getBaseAD_Language());
 		language.setAD_Language(Language.getBaseAD_Language());
 	}   //  verifyLanguage
 
-	/**************************************************************************
+	/**
 	 *	Get Context as String array with format: key == value
 	 *  @param ctx context
-	 *  @return context string
+	 *  @return context string array
 	 */
 	public static String[] getEntireContext(Properties ctx)
 	{
@@ -1333,7 +1386,7 @@ public final class Env
 	}	//	getEntireContext
 
 	/**
-	 *	Get Header info (connection, org, user)
+	 *	Get Header info (documentno, value, name, user name, tenant name and organization name)
 	 *  @param ctx context
 	 *  @param WindowNo window
 	 *  @return Header String
@@ -1356,9 +1409,9 @@ public final class Env
 				sb.append(name).append("  ");
 			}
 		}
-		sb.append(getContext(ctx, "#AD_User_Name")).append("@")
-			.append(getContext(ctx, "#AD_Client_Name")).append(".")
-			.append(getContext(ctx, "#AD_Org_Name"))
+		sb.append(getContext(ctx, Env.AD_USER_NAME)).append("@")
+			.append(getContext(ctx, Env.AD_CLIENT_NAME)).append(".")
+			.append(getContext(ctx, Env.AD_ORG_NAME))
 			.append(" [").append(CConnection.get().toString()).append("]");
 		return sb.toString();
 	}	//	getHeader
@@ -1380,9 +1433,6 @@ public final class Env
 			if (tag.startsWith(WindowNo+"|"))
 				ctx.remove(keys[i]);
 		}
-		//  Clear Lookup Cache
-		MLookupCache.cacheReset(WindowNo);
-	//	MLocator.cacheReset(WindowNo);
 		//
 		IEnvEventListener[] listeners = eventListeners.toArray(new IEnvEventListener[0]);
 		for(IEnvEventListener listener : listeners)
@@ -1435,8 +1485,10 @@ public final class Env
 	 *	@param WindowNo	Number of Window
 	 *	@param value Message to be parsed
 	 *  @param onlyWindow if true, no defaults are used
-	 * 	@param ignoreUnparsable if true, unsuccessful @return parsed String or "" if not successful and ignoreUnparsable
-	 *	@return parsed context
+	 * 	@param ignoreUnparsable 
+	 *  If true, just skip context variable that's not resolvable. 
+	 *  If false, return "" if there are context variable that's not resolvable.  
+	 *	@return parsed message
 	 */
 	public static String parseContext (Properties ctx, int WindowNo, String value,
 		boolean onlyWindow, boolean ignoreUnparsable)
@@ -1506,9 +1558,11 @@ public final class Env
 	 *	@param WindowNo	Number of Window
 	 *	@param tabNo	Number of Tab
 	 *	@param value Message to be parsed
-	 *  @param onlyTab if true, no defaults are used
-	 * 	@param ignoreUnparsable if true, unsuccessful @return parsed String or "" if not successful and ignoreUnparsable
-	 *	@return parsed context
+	 *  @param onlyTab if true, only value from tabNo are used
+	 * 	@param ignoreUnparsable 
+	 *  If true, just skip context variable that's not resolvable. 
+	 *  If false, return "" if there are context variable that's not resolvable.
+	 *	@return parsed message
 	 */
 	public static String parseContext (Properties ctx, int WindowNo, int tabNo, String value,
 		boolean onlyTab, boolean ignoreUnparsable)
@@ -1546,7 +1600,19 @@ public final class Env
 				token = token.substring(0, idx);
 			}
 
-			String ctxInfo = getContext(ctx, WindowNo, tabNo, token, onlyTab);	// get context
+			String ctxInfo = null;
+			
+			if (token.equalsIgnoreCase(GridTab.CTX_Record_ID))
+			{
+				String keycolumnName = Env.getContext(Env.getCtx(), WindowNo, tabNo, GridTab.CTX_KeyColumnName,
+						onlyTab);
+				ctxInfo = Env.getContext(Env.getCtx(), WindowNo, tabNo, keycolumnName, onlyTab);
+			}
+			else
+			{
+				ctxInfo = getContext(ctx, WindowNo, tabNo, token, onlyTab);	// get context
+			}
+
 			if (ctxInfo.length() == 0 && (token.startsWith("#") || token.startsWith("$")) )
 				ctxInfo = getContext(ctx, token);	// get global context
 
@@ -1590,15 +1656,15 @@ public final class Env
 	 *
 	 *  @param ctx context
 	 *	@param	WindowNo	Number of Window
-	 *	@param	TabNo   	Number of Tab
+	 *	@param	tabNo   	Number of Tab
 	 *	@param	value		Message to be parsed
-	 *  @param  onlyWindow  if true, no defaults are used
+	 *  @param  onlyTab  	if true, no value from tabNo are used
 	 *  @return parsed String or "" if not successful
 	 */
 	public static String parseContext (Properties ctx, int WindowNo, int tabNo, String value,
-		boolean onlyWindow)
+		boolean onlyTab)
 	{
-		return parseContext(ctx, WindowNo, tabNo, value, onlyWindow, false);
+		return parseContext(ctx, WindowNo, tabNo, value, onlyTab, false);
 	}	//	parseContext
 
 	/**
@@ -1606,9 +1672,25 @@ public final class Env
 	 * @param expression
 	 * @param po
 	 * @param trxName
+	 * @param keepUnparseable
 	 * @return String
 	 */
 	public static String parseVariable(String expression, PO po, String trxName, boolean keepUnparseable) {
+		return parseVariable(expression, po, trxName, false, false, keepUnparseable);
+	}
+	
+	/**
+	 * Parse expression, replaces global or PO properties @tag@ with actual value.
+	 * @param expression
+	 * @param po
+	 * @param useColumnDateFormat
+	 * @param useMsgForBoolean
+	 * @param trxName
+	 * @param keepUnparseable true to keep original context variable tag that can't be resolved
+	 * @return Parsed expression
+	 */
+	public static String parseVariable(String expression, PO po, String trxName, boolean useColumnDateFormat, 
+			boolean useMsgForBoolean, boolean keepUnparseable) {
 		if (expression == null || expression.length() == 0)
 			return "";
 
@@ -1631,6 +1713,13 @@ public final class Env
 
 			token = inStr.substring(0, j);
 
+			String defaultValue = "";
+			int idx = token.indexOf(":");
+			if (token.contains(":")) {
+				defaultValue = token.substring(token.indexOf(":") + 1, token.length());
+				token = token.substring(0, idx);
+			}
+
 			//format string
 			String format = "";
 			int f = token.indexOf('<');
@@ -1643,77 +1732,46 @@ public final class Env
 			if (token.startsWith("#") || token.startsWith("$")) {
 				//take from context
 				String v = Env.getContext(ctx, token);
-				if (v != null && v.length() > 0)
-					outStr.append(v);
-				else if (keepUnparseable) {
+				if (v != null && v.length() > 0) {
+					appendValue(ctx, po, trxName, useColumnDateFormat, useMsgForBoolean, token, format, null, v, outStr);
+				} else if (keepUnparseable) {
 					outStr.append("@").append(token);
 					if (!Util.isEmpty(format))
 						outStr.append("<").append(format).append(">");
 					outStr.append("@");
 				}
+			} else if (po != null && token.startsWith("=")) {
+				String property = token.substring(1);
+				char startChar = property.charAt(0);
+				if (startChar != Character.toUpperCase(startChar)) {
+					property = Character.toUpperCase(startChar) + property.substring(1);
+				}
+				String methodName = "get" + property;
+				Expression methodExpression = new Expression(po, methodName, null);
+				Object v = null;
+				try {
+					v = methodExpression.getValue();
+					if (v == null)
+						v = "";
+					appendValue(ctx, po, trxName, useColumnDateFormat, useMsgForBoolean, token, format, null, v, outStr);
+				} catch (Exception e) {
+					if (keepUnparseable) {
+						outStr.append("@").append(token);
+						if (!Util.isEmpty(format))
+							outStr.append("<").append(format).append(">");
+						outStr.append("@");
+					}
+				}
 			} else if (po != null) {
 				//take from po
 				if (po.get_ColumnIndex(token) >= 0) {
 					Object v = po.get_Value(token);
-					MColumn colToken = MColumn.get(ctx, po.get_TableName(), token);
-					String foreignTable = colToken.getReferenceTableName();
+					MColumn colToken = MColumn.get(ctx, po.get_TableName(), token);					
 					if (v != null) {
-						if (format != null && format.length() > 0) {
-							if (v instanceof Integer && (Integer) v >= 0 && (!Util.isEmpty(foreignTable) || token.equalsIgnoreCase(po.get_TableName()+"_ID"))){
-								int tblIndex = format.indexOf(".");
-								String tableName = null;
-								if (tblIndex > 0)
-									tableName = format.substring(0, tblIndex);
-								else
-									tableName = foreignTable;
-								MTable table = MTable.get(ctx, tableName);
-								String keyCol = tableName + "_ID";
-								boolean isSubTypeTable = false;
-								if (! Util.isEmpty(foreignTable) && ! tableName.equalsIgnoreCase(foreignTable)) {
-									// verify if is a subtype table
-									if (   table.getKeyColumns() != null
-										&& table.getKeyColumns().length == 1
-										&& table.getKeyColumns()[0].equals(foreignTable + "_ID")) {
-										isSubTypeTable = true;
-										keyCol = foreignTable + "_ID";
-									}
-								}
-								if (table != null && (isSubTypeTable || tableName.equalsIgnoreCase(foreignTable) || tableName.equalsIgnoreCase(po.get_TableName()))) {
-									String columnName = tblIndex > 0 ? format.substring(tblIndex + 1) : format;
-									MColumn column = table.getColumn(columnName);
-									if (column != null) {
-										if (column.isSecure()) {
-											outStr.append("********");
-										} else {
-											String value = DB.getSQLValueString(trxName,"SELECT " + columnName + " FROM " + tableName + " WHERE " + keyCol + "=?", (Integer)v);
-											if (value != null)
-												outStr.append(value);
-										}
-									}
-								}
-							} else if (v instanceof String && !Util.isEmpty((String) v) && !Util.isEmpty(foreignTable) && foreignTable.equals(MRefList.Table_Name) && !Util.isEmpty(format)) {
-								int refID = colToken.getAD_Reference_Value_ID();
-								if (format.equals("Name"))
-									outStr.append(MRefList.getListName(getCtx(), refID, (String) v));
-								else if (format.equals("Description"))
-									outStr.append(MRefList.getListDescription(getCtx(), DB.getSQLValueStringEx(null, "SELECT Name FROM AD_Reference WHERE AD_Reference_ID = ?", refID), (String) v));
-							} else if (v instanceof Date) {
-								SimpleDateFormat df = new SimpleDateFormat(format);
-								outStr.append(df.format((Date)v));
-							} else if (v instanceof Number) {
-								DecimalFormat df = new DecimalFormat(format);
-								outStr.append(df.format(((Number)v).doubleValue()));
-							} else {
-								MessageFormat mf = new MessageFormat(format);
-								outStr.append(mf.format(v));
-							}
-						} else {
-							if (colToken != null && colToken.isSecure()) {
-								v = "********";
-							}
-							outStr.append(v.toString());
-						}
+						appendValue(ctx, po, trxName, useColumnDateFormat, useMsgForBoolean, token, format, colToken, v, outStr);
 					}
+					else if (!Util.isEmpty(defaultValue))
+						outStr.append(defaultValue);
 				} else if (keepUnparseable) {
 					outStr.append("@").append(token);
 					if (!Util.isEmpty(format))
@@ -1737,7 +1795,104 @@ public final class Env
 		return outStr.toString();
 	}
 
-	/*************************************************************************/
+	/**
+	 * Append formatted value to outStr buffer
+	 * @param ctx
+	 * @param po
+	 * @param trxName
+	 * @param useColumnDateFormat
+	 * @param useMsgForBoolean
+	 * @param token
+	 * @param format
+	 * @param colToken
+	 * @param value
+	 * @param outStr
+	 */
+	private static void appendValue(Properties ctx, PO po, String trxName, boolean useColumnDateFormat, boolean useMsgForBoolean,
+			String token, String format, MColumn colToken, Object value, StringBuilder outStr) {
+		if (format != null && format.length() > 0) {
+			String foreignTable = colToken != null ? colToken.getReferenceTableName() : null;
+			if (value instanceof String && token.endsWith("_ID") && (token.startsWith("#") || token.startsWith("$"))) {
+				try {
+					int id = Integer.parseInt((String)value);
+					value = id;
+					foreignTable = token.substring(1);
+					foreignTable = foreignTable.substring(0, foreignTable.length()-3);
+					if (MTable.get(Env.getCtx(), foreignTable) == null)
+						foreignTable = null;
+				} catch (Exception ex) {}
+			}
+			if (value instanceof Integer && (Integer) value >= 0 && (!Util.isEmpty(foreignTable) || token.equalsIgnoreCase(po.get_TableName()+"_ID"))) {
+				int tblIndex = format.indexOf(".");
+				String tableName = null;
+				if (tblIndex > 0)
+					tableName = format.substring(0, tblIndex);
+				else
+					tableName = foreignTable;
+				MTable table = MTable.get(ctx, tableName);
+				String keyCol = tableName + "_ID";
+				boolean isSubTypeTable = false;
+				if (! Util.isEmpty(foreignTable) && ! tableName.equalsIgnoreCase(foreignTable)) {
+					// verify if is a subtype table
+					if (   table.getKeyColumns() != null
+						&& table.getKeyColumns().length == 1
+						&& table.getKeyColumns()[0].equals(foreignTable + "_ID")) {
+						isSubTypeTable = true;
+						keyCol = foreignTable + "_ID";
+					}
+				}
+				if (table != null && (isSubTypeTable || tableName.equalsIgnoreCase(foreignTable) || tableName.equalsIgnoreCase(po.get_TableName()))) {
+					String columnName = tblIndex > 0 ? format.substring(tblIndex + 1) : format;
+					MColumn column = table.getColumn(columnName);
+					if (column != null) {
+						if (column.isSecure()) {
+							outStr.append("********");
+						} else {
+							String strValue = DB.getSQLValueString(trxName,"SELECT " + columnName + " FROM " + tableName + " WHERE " + keyCol + "=?", (Integer)value);
+							if (strValue != null)
+								outStr.append(strValue);
+						}
+					}
+				}
+			} else if (value instanceof String && !Util.isEmpty((String) value) && !Util.isEmpty(foreignTable) && foreignTable.equals(MRefList.Table_Name) && !Util.isEmpty(format)) {
+				int refID = colToken.getAD_Reference_Value_ID();
+				if (format.equals("Name"))
+					outStr.append(MRefList.getListName(getCtx(), refID, (String) value));
+				else if (format.equals("Description"))
+					outStr.append(MRefList.getListDescription(getCtx(), DB.getSQLValueStringEx(null, "SELECT Name FROM AD_Reference WHERE AD_Reference_ID = ?", refID), (String) value));
+			} else if (value instanceof Date) {
+				SimpleDateFormat df = new SimpleDateFormat(format);
+				outStr.append(df.format((Date)value));
+			} else if (value instanceof Number) {
+				DecimalFormat df = new DecimalFormat(format);
+				outStr.append(df.format(((Number)value).doubleValue()));
+			} else {
+				MessageFormat mf = new MessageFormat(format);
+				outStr.append(mf.format(value));
+			}
+		} else {
+			if (colToken != null && colToken.isSecure()) {
+				value = "********";
+			} else if (colToken != null && colToken.getAD_Reference_ID() == DisplayType.YesNo && value instanceof Boolean) {
+				if (useMsgForBoolean) {
+					if (((Boolean)value).booleanValue())
+						value = Msg.getMsg(Env.getCtx(), "Yes");
+					else
+						value = Msg.getMsg(Env.getCtx(), "No");
+				} else {
+					value = ((Boolean)value).booleanValue() ? "Y" : "N";
+				}
+			} else if (colToken != null && DisplayType.isDate(colToken.getAD_Reference_ID()) && value instanceof Date && useColumnDateFormat) {
+				SimpleDateFormat sdf = DisplayType.getDateFormat(colToken.getAD_Reference_ID());
+				value = sdf.format (value);
+			} else if (value instanceof BigDecimal) {
+				int precision = MClient.get(Env.getCtx()).getAcctSchema().getStdPrecision();
+				value = ((BigDecimal)value).setScale(precision, RoundingMode.HALF_UP).toPlainString();
+			}
+			
+			outStr.append(value.toString());
+		}
+	}
 
 	/**
 	 *	Clean up context for Window (i.e. delete it)
@@ -1759,14 +1914,13 @@ public final class Env
 	/**
 	 *  Get ImageIcon.
 	 *
-	 *  @param fileNameInImageDir full file name in imgaes folder (e.g. Bean16.gif)
+	 *  @param fileNameInImageDir file name in images folder (e.g. Bean16.gif)
 	 *  @return image
 	 */
 	public static ImageIcon getImageIcon (String fileNameInImageDir)
 	{
 		IResourceFinder rf = Core.getResourceFinder();
 		URL url =  rf.getResource("images/" + fileNameInImageDir);
-//		URL url = Adempiere.class.getResource("images/" + fileNameInImageDir);
 		if (url == null)
 		{
 			if (log.isLoggable(Level.INFO)) log.log(Level.INFO, "Not found: " +  fileNameInImageDir);
@@ -1781,17 +1935,15 @@ public final class Env
 	 *  method will first try .gif and then .png if .gif does not
 	 *  exists.
 	 *
-	 *  @param fileName file name in imgaes folder without the extension(e.g. Bean16)
+	 *  @param fileName file name in images folder without the extension(e.g. Bean16)
 	 *  @return image
 	 */
 	public static ImageIcon getImageIcon2 (String fileName)
 	{
 		IResourceFinder rf = Core.getResourceFinder();
 		URL url =  rf.getResource("images/" + fileName+".gif");
-//		URL url = Adempiere.class.getResource("images/" + fileName+".gif");
 		if (url == null)
 			url = rf.getResource("images/" + fileName+".png");
-//			url = Adempiere.class.getResource("images/" + fileName+".png");
 		if (url == null)
 		{
 			if (log.isLoggable(Level.INFO)) log.log(Level.INFO, "GIF/PNG Not found: " + fileName);
@@ -1800,9 +1952,8 @@ public final class Env
 		return new ImageIcon(url);
 	}   //  getImageIcon2
 
-
-	/***************************************************************************
-	 *  Start Browser
+	/**
+	 *  Show url in Browser
 	 *  @param url url
 	 */
 	public static void startBrowser (String url)
@@ -1859,6 +2010,7 @@ public final class Env
 	 * @param ctx
 	 * @return Properties
 	 */
+	@Deprecated(forRemoval = true, since = "11")
 	public static Properties getRemoteCallCtx(Properties ctx)
 	{
 		Properties p = new Properties();
@@ -1878,76 +2030,46 @@ public final class Env
 		return p;
 	}
 
-	/**	Window Cache		*/
-	private static CCache<Integer,GridWindowVO>	s_windowsvo
-		= new CCache<Integer,GridWindowVO>(I_AD_Window.Table_Name, I_AD_Window.Table_Name+"|GridWindowVO", 10);
-
 	/**
-	 *  Get Window Model
+	 *  Get Window value object model
 	 *
 	 *  @param WindowNo  Window No
 	 *  @param AD_Window_ID window
 	 *  @param AD_Menu_ID menu
-	 *  @return Model Window Value Obkect
+	 *  @return Model Window Value Object
 	 */
 	public static GridWindowVO getMWindowVO (int WindowNo, int AD_Window_ID, int AD_Menu_ID)
 	{
 		if (log.isLoggable(Level.CONFIG)) log.config("Window=" + WindowNo + ", AD_Window_ID=" + AD_Window_ID);
-		GridWindowVO mWindowVO = null;
-		if (AD_Window_ID != 0 && Ini.isCacheWindow())	//	try cache
-		{
-			mWindowVO = s_windowsvo.get(AD_Window_ID);
-			if (mWindowVO != null)
-			{
-				mWindowVO = mWindowVO.clone(WindowNo);
-				if (log.isLoggable(Level.INFO)) log.info("Cached=" + mWindowVO);
-			}
-		}
-
-		//  Create Window Model on Client
-		if (mWindowVO == null)
-		{
-			if (log.isLoggable(Level.CONFIG)) log.config("create local");
-			mWindowVO = GridWindowVO.create (Env.getCtx(), WindowNo, AD_Window_ID, AD_Menu_ID);
-			if (mWindowVO != null)
-				s_windowsvo.put(AD_Window_ID, mWindowVO);
-		}	//	from Client
+		GridWindowVO mWindowVO = GridWindowVO.get(AD_Window_ID, WindowNo, AD_Menu_ID);
 		if (mWindowVO == null)
 			return null;
 
-		//  Check (remote) context
-		if (!mWindowVO.ctx.equals(Env.getCtx()))
-		{
-			//  Remote Context is called by value, not reference
-			//  Add Window properties to context
-			Enumeration<?> keyEnum = mWindowVO.ctx.keys();
-			while (keyEnum.hasMoreElements())
-			{
-				String key = (String)keyEnum.nextElement();
-				if (key.startsWith(WindowNo+"|"))
-				{
-					String value = mWindowVO.ctx.getProperty (key);
-					Env.setContext(Env.getCtx(), key, value);
-				}
-			}
-			//  Sync Context
-			mWindowVO.setCtx(Env.getCtx());
-		}
 		return mWindowVO;
 	}   //  getWindow
 
-	//Current Process
+	/**
+	 * Get IProcessUI instance
+	 * @param ctx
+	 * @return IProcessUI instance or null
+	 */
 	public static IProcessUI getProcessUI(Properties ctx)
 	{
 		return (IProcessUI) ctx.get(SvrProcess.PROCESS_UI_CTX_KEY);
 	}
 	
+	/**
+	 * Get process info instance
+	 * @param ctx
+	 * @return process info instance or null
+	 */
 	public static ProcessInfo getProcessInfo(Properties ctx)
 	{
 		return (ProcessInfo) ctx.get(SvrProcess.PROCESS_INFO_CTX_KEY);
 	}
 	
 	/**
+	 * Get footer trademark text for report
 	 * @return trademark text for standard report footer
 	 */
 	public static String getStandardReportFooterTrademarkText() {
@@ -1959,6 +2081,11 @@ public final class Env
 		return s;
 	}
 	
+	/**
+	 * Get zoom AD_Window_ID
+	 * @param query
+	 * @return zoom AD_Window_ID
+	 */
 	public static int getZoomWindowID(MQuery query)
 	{
 		int AD_Window_ID = MZoomCondition.findZoomWindow(query);
@@ -2008,43 +2135,92 @@ public final class Env
 		return AD_Window_ID;
 	}
 	
+	/**
+	 * Get zoom AD_Window_ID
+	 * @param AD_Table_ID
+	 * @param Record_UU
+	 * @return zoom AD_Window_ID
+	 */
+	public static int getZoomWindowUU(int AD_Table_ID, String Record_UU) {
+		return getZoomWindowUU(AD_Table_ID, Record_UU, 0);
+	}
+
+	/**
+	 * Get zoom AD_Window_ID
+	 * @param AD_Table_ID
+	 * @param Record_UU
+	 * @param windowNo
+	 * @return zoom AD_Window_ID
+	 */
+	public static int getZoomWindowUU(int AD_Table_ID, String Record_UU, int windowNo)
+	{
+		return getZoomWindowIDOrUU(AD_Table_ID, -1, Record_UU, windowNo);
+	}
+
+	/**
+	 * Get zoom AD_Window_ID
+	 * @param AD_Table_ID
+	 * @param Record_ID
+	 * @return zoom AD_Window_ID
+	 */
 	public static int getZoomWindowID(int AD_Table_ID, int Record_ID)
 	{
 		return getZoomWindowID(AD_Table_ID, Record_ID, 0);
 	}
 
+	/**
+	 * Get zoom AD_Window_ID
+	 * @param AD_Table_ID
+	 * @param Record_ID
+	 * @param windowNo
+	 * @return zoom AD_Window_ID
+	 */
 	public static int getZoomWindowID(int AD_Table_ID, int Record_ID, int windowNo)
 	{
-		int AD_Window_ID = MZoomCondition.findZoomWindowByTableId(AD_Table_ID, Record_ID, windowNo);
+		return getZoomWindowIDOrUU(AD_Table_ID, Record_ID, null, windowNo);
+	}
+
+	/**
+	 * Get zoom AD_Window_ID
+	 * @param AD_Table_ID
+	 * @param Record_ID
+	 * @param Record_UU
+	 * @param windowNo
+	 * @return zoom AD_Window_ID
+	 */
+	private static int getZoomWindowIDOrUU(int AD_Table_ID, int Record_ID, String Record_UU, int windowNo)
+	{
+		int AD_Window_ID = MZoomCondition.findZoomWindowByTableIdOrUU(AD_Table_ID, Record_ID, Record_UU, windowNo);
 		if (AD_Window_ID <= 0)
 		{
 			MTable table = MTable.get(Env.getCtx(), AD_Table_ID);
 			AD_Window_ID = table.getAD_Window_ID();
 			//  Nothing to Zoom to
-			if (AD_Window_ID == 0)
-				return AD_Window_ID;
+			if (AD_Window_ID == 0) 
+			{
+				AD_Window_ID = table.getWindowIDFromMenu();
+				return AD_Window_ID > 0 ? AD_Window_ID : 0;
+			}
 			
 			//	PO Zoom ?
 			boolean isSOTrx = true;
 			if (table.getPO_Window_ID() != 0)
 			{
-				String whereClause = table.getTableName() + "_ID=" + Record_ID;
+				String whereClause;
+				if (Record_UU != null)
+					whereClause = PO.getUUIDColumnName(table.getTableName()) + "=" + DB.TO_STRING(Record_UU);
+				else
+					whereClause = table.getTableName() + "_ID=" + Record_ID;
 				isSOTrx = DB.isSOTrx(table.getTableName(), whereClause, windowNo);
 				if (!isSOTrx)
 					AD_Window_ID = table.getPO_Window_ID();
 			}
 
-			if (log.isLoggable(Level.CONFIG)) log.config(table.getTableName() + " - Record_ID=" + Record_ID + " (IsSOTrx=" + isSOTrx + ")");
+			if (log.isLoggable(Level.CONFIG)) log.config(table.getTableName() + " - Record_ID=" + Record_ID + " - Record_UU=" + Record_UU + " (IsSOTrx=" + isSOTrx + ")");
 		}
 		return AD_Window_ID;
 	}
 	
-	
-	
-	/**************************************************************************
-	 *  Static Variables
-	 */
-
 	/**	Big Decimal 0	 */
 	static final public BigDecimal ZERO = BigDecimal.valueOf(0.0);
 	/**	Big Decimal 1	 */
@@ -2054,7 +2230,8 @@ public final class Env
 
 	/**	New Line 		 */
 	public static final String	NL = System.getProperty("line.separator");
-
+	/* Prefix for predefined context variables coming from menu, window or role definition */
+	public static final String PREFIX_PREDEFINED_VARIABLE = "+";
 
 	/**
 	 *  Static initializer
@@ -2064,5 +2241,92 @@ public final class Env
 		//  Set English as default Language
 		getCtx().put(LANGUAGE, Language.getBaseAD_Language());
 	}   //  static
+
+	/**
+	 * <pre>
+	 * Add in context predefined variables with prefix +, coming from menu, window or role definition.
+	 * Predefined variables must come separated by new lines in one of the formats:
+	 *   VAR=VALUE
+	 *   VAR="VALUE"
+	 *   VAR='VALUE'
+	 *  The + prefix is not required, is added here to the defined variables.
+	 * </pre>
+	 * @param ctx
+	 * @param windowNo window number or -1 to global level
+	 * @param predefinedVariables
+	 */
+	public static void setPredefinedVariables(Properties ctx, int windowNo, String predefinedVariables) {
+		if (predefinedVariables != null) {
+			String[] lines = predefinedVariables.split("\n");
+			for (String line : lines) {
+				int idxEq = line.indexOf("=");
+				if (idxEq > 0) {
+					String var = line.substring(0, idxEq).trim();
+					if (var.length() > 0) {
+						String value = line.substring(idxEq+1).trim();
+						if (   (value.startsWith("\"") && value.endsWith("\""))
+							|| (value.startsWith("'")  && value.endsWith("'") )
+							) {
+							value = value.substring(1, value.length()-1);
+						}
+						if (windowNo >= 0)
+							Env.setContext(ctx, windowNo, PREFIX_PREDEFINED_VARIABLE + var, value);
+						else
+							Env.setContext(ctx, PREFIX_PREDEFINED_VARIABLE + var, value);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Is log migration script for SQL statement
+	 * @param tableName
+	 * @return true if log migration script is turn on and should be used for tableName
+	 */
+	public static boolean isLogMigrationScript(String tableName) {
+		boolean logMigrationScript = false;
+		if (Ini.isClient()) {
+			logMigrationScript = Ini.isPropertyBool(Ini.P_LOGMIGRATIONSCRIPT);
+		} else {
+			String sysProperty = Env.getCtx().getProperty(Ini.P_LOGMIGRATIONSCRIPT, "N");
+			logMigrationScript = "y".equalsIgnoreCase(sysProperty) || "true".equalsIgnoreCase(sysProperty);
+		}
+		
+		return logMigrationScript ? !Convert.isDontLogTable(tableName) : false;
+	}
+	
+	/**
+	 * Is use centralized id from id server
+	 * @return true if centralized id is turn on and should be used for tableName
+	 */
+	public static boolean isUseCentralizedId(String tableName)
+	{
+		String sysProperty = Env.getCtx().getProperty(Ini.P_ADEMPIERESYS, "N");
+		boolean adempiereSys = "y".equalsIgnoreCase(sysProperty) || "true".equalsIgnoreCase(sysProperty);
+		if (adempiereSys && Env.getAD_Client_ID(Env.getCtx()) > 11)
+			adempiereSys = false;
+		
+		if (adempiereSys)
+		{
+			boolean b = MSysConfig.getBooleanValue(MSysConfig.DICTIONARY_ID_USE_CENTRALIZED_ID, true);
+			if (b)
+				return !MSequence.isExceptionCentralized(tableName);
+			else
+				return b;
+		}
+		else
+		{
+			boolean queryProjectServer = false;
+			if (MSequence.isTableWithEntityType(tableName))
+				queryProjectServer = true;
+			if (!queryProjectServer && MSequence.Table_Name.equalsIgnoreCase(tableName))
+				queryProjectServer = true;
+			if (queryProjectServer && !MSequence.isExceptionCentralized(tableName)) {
+				return MSysConfig.getBooleanValue(MSysConfig.PROJECT_ID_USE_CENTRALIZED_ID, false);
+			}
+		}
+		return false;
+	}
 
 }   //  Env

@@ -22,21 +22,61 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for C_RevenueRecognition
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_RevenueRecognition")
+public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_RevenueRecognition (Properties ctx, int C_RevenueRecognition_ID, String trxName)
     {
       super (ctx, C_RevenueRecognition_ID, trxName);
       /** if (C_RevenueRecognition_ID == 0)
+        {
+			setC_RevenueRecognition_ID (0);
+			setIsTimeBased (false);
+			setName (null);
+			setRecognitionFrequency (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RevenueRecognition (Properties ctx, int C_RevenueRecognition_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_RevenueRecognition_ID, trxName, virtualColumns);
+      /** if (C_RevenueRecognition_ID == 0)
+        {
+			setC_RevenueRecognition_ID (0);
+			setIsTimeBased (false);
+			setName (null);
+			setRecognitionFrequency (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RevenueRecognition (Properties ctx, String C_RevenueRecognition_UU, String trxName)
+    {
+      super (ctx, C_RevenueRecognition_UU, trxName);
+      /** if (C_RevenueRecognition_UU == null)
+        {
+			setC_RevenueRecognition_ID (0);
+			setIsTimeBased (false);
+			setName (null);
+			setRecognitionFrequency (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RevenueRecognition (Properties ctx, String C_RevenueRecognition_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_RevenueRecognition_UU, trxName, virtualColumns);
+      /** if (C_RevenueRecognition_UU == null)
         {
 			setC_RevenueRecognition_ID (0);
 			setIsTimeBased (false);
@@ -52,7 +92,7 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -74,21 +114,20 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
     }
 
 	/** Set Revenue Recognition.
-		@param C_RevenueRecognition_ID 
-		Method for recording revenue
-	  */
+		@param C_RevenueRecognition_ID Method for recording revenue
+	*/
 	public void setC_RevenueRecognition_ID (int C_RevenueRecognition_ID)
 	{
-		if (C_RevenueRecognition_ID < 1) 
+		if (C_RevenueRecognition_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_RevenueRecognition_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_RevenueRecognition_ID, Integer.valueOf(C_RevenueRecognition_ID));
 	}
 
 	/** Get Revenue Recognition.
 		@return Method for recording revenue
 	  */
-	public int getC_RevenueRecognition_ID () 
+	public int getC_RevenueRecognition_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_RevenueRecognition_ID);
 		if (ii == null)
@@ -97,7 +136,8 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 	}
 
 	/** Set C_RevenueRecognition_UU.
-		@param C_RevenueRecognition_UU C_RevenueRecognition_UU	  */
+		@param C_RevenueRecognition_UU C_RevenueRecognition_UU
+	*/
 	public void setC_RevenueRecognition_UU (String C_RevenueRecognition_UU)
 	{
 		set_Value (COLUMNNAME_C_RevenueRecognition_UU, C_RevenueRecognition_UU);
@@ -105,15 +145,14 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 
 	/** Get C_RevenueRecognition_UU.
 		@return C_RevenueRecognition_UU	  */
-	public String getC_RevenueRecognition_UU () 
+	public String getC_RevenueRecognition_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_RevenueRecognition_UU);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -122,15 +161,14 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Fixed recognition day.
-		@param FixedRecogDay 
-		Day of the period recognition occurs
-	  */
+		@param FixedRecogDay Day of the period recognition occurs
+	*/
 	public void setFixedRecogDay (int FixedRecogDay)
 	{
 		set_Value (COLUMNNAME_FixedRecogDay, Integer.valueOf(FixedRecogDay));
@@ -139,7 +177,7 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 	/** Get Fixed recognition day.
 		@return Day of the period recognition occurs
 	  */
-	public int getFixedRecogDay () 
+	public int getFixedRecogDay()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_FixedRecogDay);
 		if (ii == null)
@@ -148,9 +186,8 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 	}
 
 	/** Set Time based.
-		@param IsTimeBased 
-		Time based Revenue Recognition rather than Service Level based
-	  */
+		@param IsTimeBased Time based Revenue Recognition rather than Service Level based
+	*/
 	public void setIsTimeBased (boolean IsTimeBased)
 	{
 		set_Value (COLUMNNAME_IsTimeBased, Boolean.valueOf(IsTimeBased));
@@ -159,22 +196,21 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 	/** Get Time based.
 		@return Time based Revenue Recognition rather than Service Level based
 	  */
-	public boolean isTimeBased () 
+	public boolean isTimeBased()
 	{
 		Object oo = get_Value(COLUMNNAME_IsTimeBased);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -183,7 +219,7 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -191,13 +227,14 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Number of Months.
-		@param NoMonths Number of Months	  */
+		@param NoMonths Number of Months
+	*/
 	public void setNoMonths (int NoMonths)
 	{
 		set_Value (COLUMNNAME_NoMonths, Integer.valueOf(NoMonths));
@@ -205,7 +242,7 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 
 	/** Get Number of Months.
 		@return Number of Months	  */
-	public int getNoMonths () 
+	public int getNoMonths()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_NoMonths);
 		if (ii == null)
@@ -222,7 +259,8 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 	/** Year = Y */
 	public static final String RECOGNITIONFREQUENCY_Year = "Y";
 	/** Set Recognition frequency.
-		@param RecognitionFrequency Recognition frequency	  */
+		@param RecognitionFrequency Recognition frequency
+	*/
 	public void setRecognitionFrequency (String RecognitionFrequency)
 	{
 
@@ -231,7 +269,7 @@ public class X_C_RevenueRecognition extends PO implements I_C_RevenueRecognition
 
 	/** Get Recognition frequency.
 		@return Recognition frequency	  */
-	public String getRecognitionFrequency () 
+	public String getRecognitionFrequency()
 	{
 		return (String)get_Value(COLUMNNAME_RecognitionFrequency);
 	}

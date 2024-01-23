@@ -26,14 +26,14 @@ import java.util.logging.LogRecord;
 
 
 /**
- *	idempiere Log File Handler
+ *	Handler that publish log record to server log file
  *
  *  @author Jorg Janke
  *  @version $Id: CLogFile.java,v 1.3 2006/07/30 00:54:35 jjanke Exp $
  */
 public class CLogFile extends Handler
 {
-	/**************************************************************************
+	/**
 	 *	Constructor
 	 *	@param idempiereHome idempiere home
 	 *	@param createLogDir create log directory if missing
@@ -71,7 +71,6 @@ public class CLogFile extends Handler
 	 */
 	private void initialize(String idempiereHome, boolean createLogDir, boolean isClient)
 	{
-	//	System.out.println("CLogFile.initialize");
 		//	Close Old File
 		if (m_writer != null)
 			close();
@@ -90,7 +89,6 @@ public class CLogFile extends Handler
 			reportError ("writer", ex, ErrorManager.OPEN_FAILURE);
 			m_writer = null;
 		}
-	//	System.out.println(getFileName());
 
     	//	Formatting
 		setFormatter(CLogFormatter.get());
@@ -138,16 +136,16 @@ public class CLogFile extends Handler
 			//	Test/Create idempiereHome/log/file
 			if (fileName != null)
 			{
-				fileName += File.separator;
+				String dateFileName = fileName + File.separator;
 				if (isClient)
-					fileName += "client.";
+					dateFileName += "client.";
 				else
-					fileName += "idempiere.";
+					dateFileName += "idempiere.";
 				m_fileNameDate = getFileNameDate(System.currentTimeMillis());
-				fileName	+= m_fileNameDate + "_";
-				for (int i = 0; i < 100; i++)
+				dateFileName	+= m_fileNameDate + "_";
+				for (int i = 0; i < 100; i++) // max 100 files with date
 				{
-					String finalName = fileName + i + ".log";
+					String finalName = dateFileName + i + ".log";
 					File file = new File(finalName);
 					if (!file.exists())
 					{
@@ -156,7 +154,22 @@ public class CLogFile extends Handler
 					}
 				}
 			}
+			if (m_file == null)	{	//	Fallback to date+time filename
+				String timeFileName = fileName + File.separator;
+				if (isClient)
+					timeFileName += "client.";
+				else
+					timeFileName += "idempiere.";
+				String fileNameTime = getFileNameDateTime(System.currentTimeMillis());
+				String finalName = timeFileName + fileNameTime + ".log";
+				File file = new File(finalName);
+				if (!file.exists())
+				{
+					m_file = file;
+				}
+			}
 			if (m_file == null)	{	//	Fallback create temp file
+				// would be very weird to arrive here, but preserving anyways as an extra fallback measure
 				m_fileNameDate = getFileNameDate(System.currentTimeMillis());
 				m_file = File.createTempFile("idempiere"+m_fileNameDate + "_", ".log");
 			}
@@ -183,6 +196,19 @@ public class CLogFile extends Handler
 	}	//	getFileNameDate
 
 	/**
+	 * 	Get File Name DateTime portion
+	 * 	@param time time in ms
+	 *	@return DateTime String on Seconds
+	 */
+	public static String getFileNameDateTime (long time)
+	{
+		Timestamp ts = new Timestamp(time);
+		String s = ts.toString();
+		s = s.replaceAll("[ :]", "-");
+		return s.substring(0, 19); // seconds
+	}	//	getFileNameDate
+
+	/**
 	 * 	Rotate Log when day changes
 	 *	@param time time
 	 */
@@ -203,6 +229,9 @@ public class CLogFile extends Handler
 		initialize(m_idempiereHome, true, Ini.isClient());
 	}	//	rotateLog
 
+	/**
+	 * Re-use previous log file (if available).
+	 */
 	public void reopen()
 	{
 		if (m_previousFile != null && m_previousFile.exists() && m_file == null && m_writer == null) 
@@ -251,6 +280,7 @@ public class CLogFile extends Handler
 	 *	@param newLevel new Level
 	 *	@throws java.lang.SecurityException
 	 */
+	@Override
 	public synchronized void setLevel (Level newLevel)
 		throws SecurityException
 	{
@@ -260,10 +290,11 @@ public class CLogFile extends Handler
 	}	//	setLevel
 
 	/**
-	 * 	Publish
+	 * 	Publish log record
 	 *	@see java.util.logging.Handler#publish(java.util.logging.LogRecord)
 	 *	@param record log record
 	 */
+	@Override
 	public synchronized void publish (LogRecord record)
 	{
 		if (!isLoggable (record) || m_writer == null)
@@ -307,9 +338,10 @@ public class CLogFile extends Handler
 	}	//	publish
 
 	/**
-	 * 	Flush
+	 * 	Flush output
 	 *	@see java.util.logging.Handler#flush()
 	 */
+	@Override
 	public void flush ()
 	{
 		try
@@ -324,10 +356,11 @@ public class CLogFile extends Handler
 	}	//	flush
 
 	/**
-	 * 	Close
+	 * 	Close log file
 	 *	@see java.util.logging.Handler#close()
 	 *	@throws java.lang.SecurityException
 	 */
+	@Override	
 	public synchronized void close () throws SecurityException
 	{
 		if (m_writer == null)
@@ -373,6 +406,13 @@ public class CLogFile extends Handler
 		return sb.toString ();
 	}	//	toString
 
+	/**
+	 * Get or create CLogFile handler.
+	 * @param create
+	 * @param idempiereHome
+	 * @param isClient
+	 * @return CLogFile handler
+	 */
 	public static CLogFile get(boolean create, String idempiereHome, boolean isClient) {
 		Handler[] handlers = CLogMgt.getHandlers();
 		for (Handler handler : handlers)

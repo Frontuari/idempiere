@@ -22,21 +22,70 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for C_DocTypeCounter
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_DocTypeCounter")
+public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_DocTypeCounter (Properties ctx, int C_DocTypeCounter_ID, String trxName)
     {
       super (ctx, C_DocTypeCounter_ID, trxName);
       /** if (C_DocTypeCounter_ID == 0)
+        {
+			setC_DocTypeCounter_ID (0);
+			setC_DocType_ID (0);
+			setCounter_C_DocType_ID (0);
+			setIsCreateCounter (true);
+// Y
+			setIsValid (false);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_DocTypeCounter (Properties ctx, int C_DocTypeCounter_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_DocTypeCounter_ID, trxName, virtualColumns);
+      /** if (C_DocTypeCounter_ID == 0)
+        {
+			setC_DocTypeCounter_ID (0);
+			setC_DocType_ID (0);
+			setCounter_C_DocType_ID (0);
+			setIsCreateCounter (true);
+// Y
+			setIsValid (false);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_DocTypeCounter (Properties ctx, String C_DocTypeCounter_UU, String trxName)
+    {
+      super (ctx, C_DocTypeCounter_UU, trxName);
+      /** if (C_DocTypeCounter_UU == null)
+        {
+			setC_DocTypeCounter_ID (0);
+			setC_DocType_ID (0);
+			setCounter_C_DocType_ID (0);
+			setIsCreateCounter (true);
+// Y
+			setIsValid (false);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_DocTypeCounter (Properties ctx, String C_DocTypeCounter_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_DocTypeCounter_UU, trxName, virtualColumns);
+      /** if (C_DocTypeCounter_UU == null)
         {
 			setC_DocTypeCounter_ID (0);
 			setC_DocType_ID (0);
@@ -55,7 +104,7 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
     }
 
     /** AccessLevel
-      * @return 2 - Client 
+      * @return 2 - Client
       */
     protected int get_AccessLevel()
     {
@@ -77,21 +126,20 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
     }
 
 	/** Set Counter Document.
-		@param C_DocTypeCounter_ID 
-		Counter Document Relationship
-	  */
+		@param C_DocTypeCounter_ID Counter Document Relationship
+	*/
 	public void setC_DocTypeCounter_ID (int C_DocTypeCounter_ID)
 	{
-		if (C_DocTypeCounter_ID < 1) 
+		if (C_DocTypeCounter_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_DocTypeCounter_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_DocTypeCounter_ID, Integer.valueOf(C_DocTypeCounter_ID));
 	}
 
 	/** Get Counter Document.
 		@return Counter Document Relationship
 	  */
-	public int getC_DocTypeCounter_ID () 
+	public int getC_DocTypeCounter_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_DocTypeCounter_ID);
 		if (ii == null)
@@ -100,7 +148,8 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 	}
 
 	/** Set C_DocTypeCounter_UU.
-		@param C_DocTypeCounter_UU C_DocTypeCounter_UU	  */
+		@param C_DocTypeCounter_UU C_DocTypeCounter_UU
+	*/
 	public void setC_DocTypeCounter_UU (String C_DocTypeCounter_UU)
 	{
 		set_Value (COLUMNNAME_C_DocTypeCounter_UU, C_DocTypeCounter_UU);
@@ -108,32 +157,32 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 
 	/** Get C_DocTypeCounter_UU.
 		@return C_DocTypeCounter_UU	  */
-	public String getC_DocTypeCounter_UU () 
+	public String getC_DocTypeCounter_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_DocTypeCounter_UU);
 	}
 
 	public org.compiere.model.I_C_DocType getC_DocType() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_Name)
-			.getPO(getC_DocType_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_ID)
+			.getPO(getC_DocType_ID(), get_TrxName());
+	}
 
 	/** Set Document Type.
-		@param C_DocType_ID 
-		Document type or rules
-	  */
+		@param C_DocType_ID Document type or rules
+	*/
 	public void setC_DocType_ID (int C_DocType_ID)
 	{
-		if (C_DocType_ID < 0) 
+		if (C_DocType_ID < 0)
 			set_Value (COLUMNNAME_C_DocType_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_DocType_ID, Integer.valueOf(C_DocType_ID));
 	}
 
 	/** Get Document Type.
 		@return Document type or rules
 	  */
-	public int getC_DocType_ID () 
+	public int getC_DocType_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_DocType_ID);
 		if (ii == null)
@@ -142,26 +191,26 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 	}
 
 	public org.compiere.model.I_C_DocType getCounter_C_DocType() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_Name)
-			.getPO(getCounter_C_DocType_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_DocType)MTable.get(getCtx(), org.compiere.model.I_C_DocType.Table_ID)
+			.getPO(getCounter_C_DocType_ID(), get_TrxName());
+	}
 
 	/** Set Counter Document Type.
-		@param Counter_C_DocType_ID 
-		Generated Counter Document Type (To)
-	  */
+		@param Counter_C_DocType_ID Generated Counter Document Type (To)
+	*/
 	public void setCounter_C_DocType_ID (int Counter_C_DocType_ID)
 	{
-		if (Counter_C_DocType_ID < 1) 
+		if (Counter_C_DocType_ID < 1)
 			set_Value (COLUMNNAME_Counter_C_DocType_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_Counter_C_DocType_ID, Integer.valueOf(Counter_C_DocType_ID));
 	}
 
 	/** Get Counter Document Type.
 		@return Generated Counter Document Type (To)
 	  */
-	public int getCounter_C_DocType_ID () 
+	public int getCounter_C_DocType_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Counter_C_DocType_ID);
 		if (ii == null)
@@ -170,9 +219,8 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -181,45 +229,44 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** DocAction AD_Reference_ID=135 */
 	public static final int DOCACTION_AD_Reference_ID=135;
-	/** Complete = CO */
-	public static final String DOCACTION_Complete = "CO";
+	/** &lt;None&gt; = -- */
+	public static final String DOCACTION_None = "--";
 	/** Approve = AP */
 	public static final String DOCACTION_Approve = "AP";
-	/** Reject = RJ */
-	public static final String DOCACTION_Reject = "RJ";
-	/** Post = PO */
-	public static final String DOCACTION_Post = "PO";
-	/** Void = VO */
-	public static final String DOCACTION_Void = "VO";
 	/** Close = CL */
 	public static final String DOCACTION_Close = "CL";
-	/** Reverse - Correct = RC */
-	public static final String DOCACTION_Reverse_Correct = "RC";
-	/** Reverse - Accrual = RA */
-	public static final String DOCACTION_Reverse_Accrual = "RA";
+	/** Complete = CO */
+	public static final String DOCACTION_Complete = "CO";
 	/** Invalidate = IN */
 	public static final String DOCACTION_Invalidate = "IN";
-	/** Re-activate = RE */
-	public static final String DOCACTION_Re_Activate = "RE";
-	/** <None> = -- */
-	public static final String DOCACTION_None = "--";
+	/** Post = PO */
+	public static final String DOCACTION_Post = "PO";
 	/** Prepare = PR */
 	public static final String DOCACTION_Prepare = "PR";
-	/** Unlock = XL */
-	public static final String DOCACTION_Unlock = "XL";
+	/** Reverse - Accrual = RA */
+	public static final String DOCACTION_Reverse_Accrual = "RA";
+	/** Reverse - Correct = RC */
+	public static final String DOCACTION_Reverse_Correct = "RC";
+	/** Re-activate = RE */
+	public static final String DOCACTION_Re_Activate = "RE";
+	/** Reject = RJ */
+	public static final String DOCACTION_Reject = "RJ";
+	/** Void = VO */
+	public static final String DOCACTION_Void = "VO";
 	/** Wait Complete = WC */
 	public static final String DOCACTION_WaitComplete = "WC";
+	/** Unlock = XL */
+	public static final String DOCACTION_Unlock = "XL";
 	/** Set Document Action.
-		@param DocAction 
-		The targeted status of the document
-	  */
+		@param DocAction The targeted status of the document
+	*/
 	public void setDocAction (String DocAction)
 	{
 
@@ -229,15 +276,14 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 	/** Get Document Action.
 		@return The targeted status of the document
 	  */
-	public String getDocAction () 
+	public String getDocAction()
 	{
 		return (String)get_Value(COLUMNNAME_DocAction);
 	}
 
 	/** Set Create Counter Document.
-		@param IsCreateCounter 
-		Create Counter Document
-	  */
+		@param IsCreateCounter Create Counter Document
+	*/
 	public void setIsCreateCounter (boolean IsCreateCounter)
 	{
 		set_Value (COLUMNNAME_IsCreateCounter, Boolean.valueOf(IsCreateCounter));
@@ -246,22 +292,21 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 	/** Get Create Counter Document.
 		@return Create Counter Document
 	  */
-	public boolean isCreateCounter () 
+	public boolean isCreateCounter()
 	{
 		Object oo = get_Value(COLUMNNAME_IsCreateCounter);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Valid.
-		@param IsValid 
-		Element is valid
-	  */
+		@param IsValid Element is valid
+	*/
 	public void setIsValid (boolean IsValid)
 	{
 		set_Value (COLUMNNAME_IsValid, Boolean.valueOf(IsValid));
@@ -270,22 +315,21 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 	/** Get Valid.
 		@return Element is valid
 	  */
-	public boolean isValid () 
+	public boolean isValid()
 	{
 		Object oo = get_Value(COLUMNNAME_IsValid);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -294,7 +338,7 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -302,13 +346,14 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Process Now.
-		@param Processing Process Now	  */
+		@param Processing Process Now
+	*/
 	public void setProcessing (boolean Processing)
 	{
 		set_Value (COLUMNNAME_Processing, Boolean.valueOf(Processing));
@@ -316,13 +361,13 @@ public class X_C_DocTypeCounter extends PO implements I_C_DocTypeCounter, I_Pers
 
 	/** Get Process Now.
 		@return Process Now	  */
-	public boolean isProcessing () 
+	public boolean isProcessing()
 	{
 		Object oo = get_Value(COLUMNNAME_Processing);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;

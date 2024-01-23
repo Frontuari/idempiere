@@ -37,10 +37,21 @@ public class MPackageExpDetail extends X_AD_Package_Exp_Detail
 	private static final long serialVersionUID = 5110078103695767282L;
 
 
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_Package_Exp_Detail_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MPackageExpDetail(Properties ctx, String AD_Package_Exp_Detail_UU, String trxName) {
+        super(ctx, AD_Package_Exp_Detail_UU, trxName);
+    }
+
 	/**
 	 * 	MPackageExpDetail
-	 *	@param ctx
-	 *	@param int
+	 * @param ctx
+	 * @param AD_Package_Exp_ID
+	 * @param trxName
 	 */
 	public MPackageExpDetail (Properties ctx, int AD_Package_Exp_ID, String trxName)
 	{
@@ -87,12 +98,6 @@ public class MPackageExpDetail extends X_AD_Package_Exp_Detail
 		String type = getType();
 		if (TYPE_ApplicationOrModule.equals(type)) {
 			return getAD_Menu_ID();
-		} else if (TYPE_CodeSnipit.equals(type)) {
-			return 0;
-		} else if (TYPE_Data.equals(type)) {
-			return 0;
-		} else if (TYPE_DataSingle.equals(type)) {
-			return 0;
 		} else if (TYPE_DynamicValidationRule.equals(type)) {
 			return getAD_Val_Rule_ID();
 		} else if (TYPE_Form.equals(type)) {

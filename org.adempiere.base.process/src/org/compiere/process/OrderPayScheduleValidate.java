@@ -21,6 +21,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderPaySchedule;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 
@@ -29,6 +30,7 @@ import org.compiere.util.Msg;
  *	
  *  @author Carlos Ruiz - GlobalQSS
  */
+@org.adempiere.base.annotation.Process
 public class OrderPayScheduleValidate extends SvrProcess
 {
 	/**
@@ -39,11 +41,10 @@ public class OrderPayScheduleValidate extends SvrProcess
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
-			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

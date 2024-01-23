@@ -28,8 +28,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 /**
- *	Automatic Matching.
- *	Inv
+ *	Automatic Invoice-Receipt Matching.
  *
  * 	@author 	Jorg Janke
  * 	@version 	$Id: Matcher.java,v 1.2 2006/07/30 00:53:33 jjanke Exp $
@@ -57,7 +56,7 @@ public class Matcher
 	/**
 	 * 	Matching
 	 *  <pre>
-	 *  Derive Invoice-Receipt Match from PO-Invoice and PO-Receipt
+	 *  Derive Invoice-Receipt Matching from PO-Invoice and PO-Receipt
 	 * 	Purchase Order (20)
 	 *  - Invoice1 (10)
 	 *  - Invoice2 (10)
@@ -70,7 +69,7 @@ public class Matcher
 	 *
 	 *  (b) Creates Indirects
 	 * 		- Invoice1 - Receipt2 (5)
-	 *  (Not imlemented)
+	 *  (Not implemented)
 	 *
 	 *
 	 *  </pre>
@@ -154,7 +153,6 @@ public class Matcher
 	{
 		if (log.isLoggable(Level.FINE)) log.fine("InvLine=" + C_InvoiceLine_ID + ",Rec=" + M_InOutLine_ID + ", Qty=" + Qty + ", " + DateTrx);
 		
-	//	MMatchInv inv = new MMatchInv ();
 		int M_MatchInv_ID = DB.getNextID (AD_Client_ID, "M_MatchInv", m_trxName);
 		//
 		StringBuilder sql = new StringBuilder("INSERT INTO M_MatchInv (")

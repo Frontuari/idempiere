@@ -18,6 +18,7 @@ package org.compiere.process;
 
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRfQ;
 import org.compiere.model.MRfQResponse;
  
@@ -30,8 +31,9 @@ import org.compiere.model.MRfQResponse;
  *  
  *  @author Teo Sarca, teo.sarca@gmail.com
  *  	<li>BF [ 2892585 ] When closing an RfQ we need to mark the responses as process
- *  		https://sourceforge.net/tracker/?func=detail&aid=2892585&group_id=176962&atid=879332
+ *  		https://sourceforge.net/p/adempiere/bugs/2202/
  */
+@org.adempiere.base.annotation.Process
 public class RfQClose extends SvrProcess
 {
 	/**	RfQ 			*/
@@ -45,11 +47,10 @@ public class RfQClose extends SvrProcess
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
-			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_C_RfQ_ID = getRecord_ID();
 	}	//	prepare

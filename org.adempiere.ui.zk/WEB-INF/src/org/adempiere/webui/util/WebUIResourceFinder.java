@@ -28,6 +28,11 @@ import org.adempiere.webui.theme.ThemeManager;
  */
 public class WebUIResourceFinder implements IResourceFinder {
 
+	/**
+	 * Find entries from bundle
+	 * @param name
+	 * @return entries found
+	 */
 	private Enumeration<URL> find(String name) {
 		int pathIndex = name.lastIndexOf("/");
 		String path = "/";
@@ -42,6 +47,7 @@ public class WebUIResourceFinder implements IResourceFinder {
 	}
 	
 	protected Pattern patternOnlyName = Pattern.compile("\\w+\\.\\w+"); 
+	
 	@Override
 	public URL getResource(String name) {
 		if ("images/iDempiereHR.png".equals(name) || "images/iDempiere.png".equals(name)) {
@@ -54,37 +60,43 @@ public class WebUIResourceFinder implements IResourceFinder {
 		}
 		if (url == null && name.startsWith("org/compiere/images")) {
 			String t = name.substring("org/compiere/".length());
-			t = ThemeManager.getThemeResource(t);
-			e = find(t);
-			url = e != null && e.hasMoreElements() ? e.nextElement() : null;
-			if (url == null && t.endsWith(".gif")) {
-				t = t.replace(".gif", ".png");
-				e = find(t);
-				url = e != null && e.hasMoreElements() ? e.nextElement() : null;
-			}
+			url = findResource(t);
 		} else if (url == null && name.startsWith("/org/compiere/images")) {
 			String t = name.substring("/org/compiere/".length());
-			t = ThemeManager.getThemeResource(t);
-			e = find(t);
-			url = e != null && e.hasMoreElements() ? e.nextElement() : null;
-			if (url == null && t.endsWith(".gif")) {
-				t = t.replace(".gif", ".png");
-				e = find(t);
-				url = e != null && e.hasMoreElements() ? e.nextElement() : null;
-			}
+			url = findResource(t);
 		} else if (url == null && name.startsWith("images/")) {
-			String t = ThemeManager.getThemeResource(name);
-			e = find(t);
-			url = e != null && e.hasMoreElements() ? e.nextElement() : null;
-			if (url == null && t.endsWith(".gif")) {
-				t = t.replace(".gif", ".png");
-				e = find(t);
-				url = e != null && e.hasMoreElements() ? e.nextElement() : null;
-			}
+			url = findResource(name);
 		} else if (url == null && name.endsWith(".gif")) {
 			String t = name.replace(".gif", ".png");
 			e = find(t);
 			url = e != null && e.hasMoreElements() ? e.nextElement() : null;
+		}
+		return url;
+	}
+	
+	/**
+	 * Find resource from classpath (if prefix with "~./") or bundle
+	 * @param name
+	 * @return URL or null
+	 */
+	private URL findResource(String name) {
+		Enumeration<URL> e;
+		URL url;
+		String t = ThemeManager.getThemeResource(name);
+		if (t.startsWith(ThemeManager.ZK_URL_PREFIX_FOR_CLASSPATH_RESOURCE)) {
+			url = ThemeManager.class.getResource(ThemeManager.toClassPathResourcePath(t));
+		} else {
+			e = find(t);
+			url = e != null && e.hasMoreElements() ? e.nextElement() : null;
+		}
+		if (url == null && t.endsWith(".gif")) {
+			t = t.replace(".gif", ".png");
+			if (t.startsWith(ThemeManager.ZK_URL_PREFIX_FOR_CLASSPATH_RESOURCE)) {
+				url = ThemeManager.class.getResource(ThemeManager.toClassPathResourcePath(t));
+			} else {
+				e = find(t);
+				url = e != null && e.hasMoreElements() ? e.nextElement() : null;
+			}
 		}
 		return url;
 	}

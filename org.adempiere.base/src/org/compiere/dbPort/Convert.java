@@ -22,6 +22,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -29,6 +31,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
@@ -36,26 +39,30 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.Adempiere;
 import org.compiere.db.Database;
+import org.compiere.model.I_AD_UserPreference;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
+import org.compiere.util.Util;
 
 /**
- *  Convert SQL to Target DB
+ *  Convert SQL from Oracle syntax to Target DB syntax
  *
  *  @author     Jorg Janke, Victor Perez
  *  @version    $Id: Convert.java,v 1.3 2006/07/30 00:55:04 jjanke Exp $
  *  
  *  @author Teo Sarca, www.arhipac.ro
  *  		<li>BF [ 2782095 ] Do not log *Access records
- *  			https://sourceforge.net/tracker/?func=detail&aid=2782095&group_id=176962&atid=879332
+ *  			https://sourceforge.net/p/adempiere/bugs/1867/
  *  		<li>TODO: BF [ 2782611 ] Migration scripts are not UTF8
- *  			https://sourceforge.net/tracker/?func=detail&aid=2782611&group_id=176962&atid=879332
+ *  			https://sourceforge.net/p/adempiere/bugs/1869/
  *  @author Teo Sarca
  *  		<li>BF [ 3137355 ] PG query not valid when contains quotes and backslashes
- *  			https://sourceforge.net/tracker/?func=detail&aid=3137355&group_id=176962&atid=879332	
+ *  			https://sourceforge.net/p/adempiere/bugs/2560/	
  */
 public abstract class Convert
 {
@@ -76,9 +83,9 @@ public abstract class Convert
 	/**	Logger	*/
 	private static final CLogger	log	= CLogger.getCLogger (Convert.class);
 	
-    private static FileOutputStream tempFileOr = null;
+    private static FileOutputStream fosScriptOr = null;
     private static Writer writerOr;
-    private static FileOutputStream tempFilePg = null;
+    private static FileOutputStream fosScriptPg = null;
     private static Writer writerPg;
 
     /**
@@ -90,10 +97,10 @@ public abstract class Convert
 		m_verbose = verbose;
 	}   //  setVerbose
 
-	/**************************************************************************
-	 *  Execute SQL Statement (stops at first error).
-	 *  If an error occured hadError() returns true.
-	 *  You can get details via getConversionError() or getException()
+	/**
+	 *  Execute SQL Statements (stops at first error). <br/>
+	 *  If an error occur, hadError() returns true. <br/>
+	 *  You can get error details via getConversionError() or getException().
 	 *  @param sqlStatements
 	 *  @param conn connection
 	 *  @return true if success
@@ -187,9 +194,9 @@ public abstract class Convert
 	}   //  getException
 
 	/**
-	 *  Returns true if a conversion or execution error had occured.
-	 *  Get more details via getConversionError() or getException()
-	 *  @return true if error had occured
+	 *  Returns true if a conversion or execution error had occurred.
+	 *  Get more details via getConversionError() or getException().
+	 *  @return true if error had occurred
 	 */
 	public boolean hasError()
 	{
@@ -197,10 +204,10 @@ public abstract class Convert
 	}   //  hasError
 
 	/**
-	 *  Convert SQL Statement (stops at first error).
-	 *  Statements are delimited by /
-	 *  If an error occured hadError() returns true.
-	 *  You can get details via getConversionError()
+	 *  Convert SQL Statements (stops at first error). <br/>
+	 *  Statements are delimited by /. <br/>
+	 *  If an error occurred, hadError() returns true.
+	 *  You can get details via getConversionError().
 	 *  @param sqlStatements
 	 *  @return converted statement as a string
 	 */
@@ -219,9 +226,9 @@ public abstract class Convert
 	}   //  convertAll
 
 	/**
-	 *  Convert SQL Statement (stops at first error).
-	 *  If an error occured hadError() returns true.
-	 *  You can get details via getConversionError()
+	 *  Convert SQL Statements (stops at first error).<br/>
+	 *  If an error occurred, hadError() returns true.
+	 *  You can get details via getConversionError().
 	 *  @param sqlStatements
 	 *  @return Array of converted Statements
 	 */
@@ -240,15 +247,14 @@ public abstract class Convert
 
 	/**
 	 *  Return last conversion error or null.
-	 *  @return lst conversion error
+	 *  @return last conversion error
 	 */
 	public String getConversionError()
 	{
 		return m_conversionError;
 	}   //  getConversionError
-
 	
-	/**************************************************************************
+	/**
 	 *  Conversion routine (stops at first error).
 	 *  <pre>
 	 *  - convertStatement
@@ -271,7 +277,7 @@ public abstract class Convert
 	}   //  convertIt
 
 	/**
-	 * Clean up Statement. Remove trailing spaces, carrige return and tab 
+	 * Clean up Statement. Remove trailing spaces, carriage return and tab 
 	 * 
 	 * @param statement
 	 * @return sql statement
@@ -285,12 +291,13 @@ public abstract class Convert
 
 		clean = clean.trim();
 		return clean;
-	} // removeComments
+	} // cleanUpStatement
 	
 	/**
-	 * Utility method to replace quoted string with a predefined marker
-	 * @param retValue
+	 * Utility method to replace quoted string with a predefined marker.
+	 * @param inputValue
 	 * @param retVars
+	 * @param nonce
 	 * @return string
 	 */
 	protected String replaceQuotedStrings(String inputValue, Vector<String>retVars, String nonce) {
@@ -322,6 +329,7 @@ public abstract class Convert
 	 * Utility method to recover quoted string store in retVars
 	 * @param retValue
 	 * @param retVars
+	 * @param nonce
 	 * @return string
 	 */
 	protected String recoverQuotedStrings(String retValue, Vector<String>retVars, String nonce) {
@@ -345,7 +353,7 @@ public abstract class Convert
 	}
 	
 	/**
-	 * Convert simple SQL Statement. Based on ConvertMap
+	 * Convert simple SQL Statement. Based on ConvertMap.
 	 * 
 	 * @param sqlStatement
 	 * @return converted Statement
@@ -355,7 +363,8 @@ public abstract class Convert
 		if (sqlStatement.toUpperCase().indexOf("EXCEPTION WHEN") != -1) {
 			String error = "Exception clause needs to be converted: "
 					+ sqlStatement;
-			log.info(error);
+			if (log.isLoggable(Level.INFO))
+				log.info(error);
 			m_conversionError = error;
 			return sqlStatement;
 		}
@@ -395,7 +404,7 @@ public abstract class Convert
 	/**
 	 * do convert map base conversion
 	 * @param sqlStatement
-	 * @return string
+	 * @return converted sql statement
 	 */
 	protected String convertWithConvertMap(String sqlStatement) {
 		try 
@@ -434,6 +443,11 @@ public abstract class Convert
 	 */
 	public abstract boolean isOracle();
 
+	/**
+	 * Log oraStatement and pgStatement to SQL migration script file.
+	 * @param oraStatement
+	 * @param pgStatement
+	 */
 	public synchronized static void logMigrationScript(String oraStatement, String pgStatement) {
 		// Check AdempiereSys
 		// check property Log migration script
@@ -441,38 +455,88 @@ public abstract class Convert
 		if (logMigrationScript) {
 			if (dontLog(oraStatement))
 				return;
-			// Log oracle and postgres migration scripts in temp directory
-			// migration_script_oracle.sql and migration_script_postgresql.sql
+			// Log oracle and postgres migration scripts in migration/iD[version]/[oracle|postgresql] directory
+			// [timestamp]_[ticket].sql
+			String fileName = null;
+			String folderOr = null;
+			String folderPg = null;
+			String prm_COMMENT = null;
 			try {
-				if (tempFileOr == null) {
-		            File fileNameOr = File.createTempFile("migration_script_", "_oracle.sql");
-		            tempFileOr = new FileOutputStream(fileNameOr, true);
-		            writerOr = new BufferedWriter(new OutputStreamWriter(tempFileOr, "UTF8"));
-		            writerOr.append("SET SQLBLANKLINES ON\nSET DEFINE OFF\n\n");
+				if (fosScriptOr == null || fosScriptPg == null) {
+					prm_COMMENT = Env.getContext(Env.getCtx(), I_AD_UserPreference.COLUMNNAME_MigrationScriptComment);
+					fileName = getMigrationScriptFileName(prm_COMMENT);
+					folderOr = getMigrationScriptFolder("oracle");
+					folderPg = getMigrationScriptFolder("postgresql");
+					Files.createDirectories(Paths.get(folderOr));
+					Files.createDirectories(Paths.get(folderPg));
+				}
+				if (fosScriptOr == null) {
+					File fileOr = new File(folderOr + fileName);
+					fosScriptOr = new FileOutputStream(fileOr, true);
+					writerOr = new BufferedWriter(new OutputStreamWriter(fosScriptOr, "UTF8"));
+					writerOr.append("-- ");
+					writerOr.append(prm_COMMENT);
+					writerOr.append("\nSELECT register_migration_script('").append(fileName).append("') FROM dual;\n\n");
+					// adding these in prevention because some oracle scripts have multiline strings or @ that are misinterpreted by sqlplus
+					writerOr.append("SET SQLBLANKLINES ON\nSET DEFINE OFF\n\n");
 				}
 				writeLogMigrationScript(writerOr, oraStatement);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			try {
 				if (pgStatement == null) {
 					// if oracle call convert for postgres before logging
 					Convert convert = Database.getDatabase(Database.DB_POSTGRESQL).getConvert();
 					String[] r = convert.convert(oraStatement);
 					pgStatement = r[0];
 				}
-				if (tempFilePg == null) {
-		            File fileNamePg = File.createTempFile("migration_script_", "_postgresql.sql");
-		            tempFilePg = new FileOutputStream(fileNamePg, true);
-		            writerPg = new BufferedWriter(new OutputStreamWriter(tempFilePg, "UTF8"));
+				if (fosScriptPg == null) {
+					File filePg = new File(folderPg + fileName);
+					fosScriptPg = new FileOutputStream(filePg, true);
+					writerPg = new BufferedWriter(new OutputStreamWriter(fosScriptPg, "UTF8"));
+					writerPg.append("-- ");
+					writerPg.append(prm_COMMENT);
+					writerPg.append("\nSELECT register_migration_script('").append(fileName).append("') FROM dual;\n\n");
 				}
 				writeLogMigrationScript(writerPg, pgStatement);
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new AdempiereException(e);
 			}
 		}
 	}
 
+	/**
+	 * @param ticketComment
+	 * @return migration script file name
+	 */
+	public static String getMigrationScriptFileName(String ticketComment) {
+		// [timestamp]_[ticket].sql
+		String fileName;
+		String now = new SimpleDateFormat("yyyyMMddHHmm").format(new Date());					
+		String pattern = "(IDEMPIERE-[0-9]*)";
+		Pattern p = Pattern.compile(pattern);
+		Matcher m = p.matcher(ticketComment);
+		String ticket = null;
+		if (m.find())
+			ticket = m.group(1);
+		if (ticket == null)
+			ticket = "PlaceholderForTicket";
+		fileName = now + "_" + ticket + ".sql";
+		return fileName;
+	}
+
+	/**
+	 * @param dbtype oracle or postgresql
+	 * @return absolute migration script folder path for dbtype 
+	 */
+	public static String getMigrationScriptFolder(String dbtype) {
+		// migration/iD[version]/[oracle|postgresql] directory		
+		String version = Adempiere.MAIN_VERSION.substring(8);
+		String homeScript;
+		if (Util.isDeveloperMode())
+			homeScript = Adempiere.getAdempiereHome() + File.separator;
+		else
+			homeScript = System.getProperty("java.io.tmpdir") + File.separator;
+		return homeScript + "migration" + File.separator + "iD" + version + File.separator + dbtype + File.separator;
+	}
+	
 	/**
 	 * @return true if it is in log migration script mode
 	 */
@@ -481,13 +545,13 @@ public abstract class Convert
 		if (Ini.isClient()) {
 			logMigrationScript = Ini.isPropertyBool(Ini.P_LOGMIGRATIONSCRIPT);
 		} else {
-			String sysProperty = Env.getCtx().getProperty("LogMigrationScript", "N");
+			String sysProperty = Env.getCtx().getProperty(Ini.P_LOGMIGRATIONSCRIPT, "N");
 			logMigrationScript = "y".equalsIgnoreCase(sysProperty) || "true".equalsIgnoreCase(sysProperty);
 		}
 		return logMigrationScript;
 	}
 
-
+	/** List of tables to skip log migration script */
 	private static String [] dontLogTables = new String[] {
 			"AD_ACCESSLOG",
 			"AD_ALERTPROCESSORLOG",
@@ -512,6 +576,7 @@ public abstract class Convert
 			"AD_SCHEDULERLOG",
 			"AD_SESSION",
 			"AD_WINDOW_ACCESS",
+			"AD_WLISTBOX_CUSTOMIZATION",
 			"AD_WORKFLOW_ACCESS",
 			"AD_WORKFLOWPROCESSORLOG",
 			"AD_USERPREFERENCE",
@@ -533,6 +598,25 @@ public abstract class Convert
 			"T_TRANSACTION",
 			"T_TRIALBALANCE"
 		};
+	
+	/**
+	 * @param tableName
+	 * @return true if log migration script should ignore tableName
+	 */
+	public static boolean isDontLogTable(String tableName) {
+		if (Util.isEmpty(tableName))
+			return false;
+		
+		// Don't log trl - those will be created/maintained using synchronize terminology
+		if (tableName.endsWith("_TRL"))
+			return true;
+		
+		for (String t : dontLogTables) {
+			if (t.equalsIgnoreCase(tableName))
+				return true;
+		}
+		return false;
+	}
 	
 	private static boolean dontLog(String statement) {
 		// Do not log *Access records - teo_Sarca BF [ 2782095 ]
@@ -560,6 +644,8 @@ public abstract class Convert
 			return true;
 		if (uppStmt.matches("INSERT INTO .*_TRL .*"))
 			return true;
+		if (uppStmt.matches("DELETE FROM .*_TRL .*"))
+			return true;
 		// Don't log tree custom table statements (not present in core)
 		if (uppStmt.startsWith("INSERT INTO AD_TREENODE ") && uppStmt.contains(" AND T.TREETYPE='TL' AND T.AD_TABLE_ID="))
 			return true;
@@ -580,20 +666,14 @@ public abstract class Convert
 		return false;
 	}
 
-	private static String m_oldprm_COMMENT = "";
-
+	/**
+	 * Use writer to append SQL statement to an output media (usually file).
+	 * @param w {@link Writer}
+	 * @param statement SQL statement
+	 * @throws IOException
+	 */
 	private static void writeLogMigrationScript(Writer w, String statement) throws IOException
 	{
-		String prm_COMMENT;
-		prm_COMMENT = Env.getContext(Env.getCtx(), "MigrationScriptComment");
-		if (prm_COMMENT != null && ! m_oldprm_COMMENT.equals(prm_COMMENT)) {
-			// log sysconfig comment
-			w.append("-- ");
-			w.append(prm_COMMENT);
-			w.append("\n");
-			if (w == writerPg)
-				m_oldprm_COMMENT = prm_COMMENT;
-		}
 		// log time and date
 		SimpleDateFormat format = DisplayType.getDateFormat(DisplayType.DateTime);
 		String dateTimeText = format.format(new Timestamp(System.currentTimeMillis()));

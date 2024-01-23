@@ -17,21 +17,19 @@
 package org.compiere.process;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.FillMandatoryException;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MCost;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
-import org.compiere.model.MProductBOM;
-import org.compiere.model.Query;
 import org.compiere.model.X_T_BOM_Indented;
 import org.compiere.util.Env;
+import org.eevolution.model.MPPProductBOMLine;
 
 /**
- * Cost Multi-Level BOM & Formula Review
+ * Cost Multi-Level BOM and Formula Review
  * 
  * @author victor.perez@e-evolution.com
  * @author Teo Sarca, www.arhipac.ro
@@ -39,6 +37,7 @@ import org.compiere.util.Env;
  * @author pbowden@adaxa.com modified for manufacturing light
  * 
  */
+@org.adempiere.base.annotation.Process
 public class IndentedBOM extends SvrProcess
 {
 	//
@@ -70,7 +69,7 @@ public class IndentedBOM extends SvrProcess
 			else if (name.equals(MCost.COLUMNNAME_M_Product_ID))
 				p_M_Product_ID = para.getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para);
 		}
 	} // prepare
 
@@ -129,18 +128,18 @@ public class IndentedBOM extends SvrProcess
 
 		BigDecimal llCost = Env.ZERO;
 		BigDecimal llFutureCost = Env.ZERO;
-		List<MProductBOM> list = getBOMs(product);
-		for (MProductBOM bom : list)
+		MPPProductBOMLine[] list = getBOMs(product);
+		for (MPPProductBOMLine bom : list)
 		{
 			m_LevelNo++;
-			llCost ll = explodeProduct(bom.getM_ProductBOM_ID(), bom.getBOMQty(), accumQty.multiply(bom.getBOMQty()));
-			llCost = llCost.add(ll.currentCost.multiply(accumQty.multiply(bom.getBOMQty())));
-			llFutureCost = llFutureCost.add(ll.futureCost.multiply(accumQty.multiply(bom.getBOMQty())));
+			llCost ll = explodeProduct(bom.getM_Product_ID(), bom.getQtyBOM(), accumQty.multiply(bom.getQtyBOM()));
+			llCost = llCost.add(ll.currentCost.multiply(accumQty.multiply(bom.getQtyBOM())));
+			llFutureCost = llFutureCost.add(ll.futureCost.multiply(accumQty.multiply(bom.getQtyBOM())));
 			m_LevelNo--;
 		}
 
 		llCost retVal = new llCost();
-		if (list.size() == 0 )
+		if (list.length == 0 )
 		{
 			tboml.setCurrentCostPriceLL(cost.getCurrentCostPrice());
 			tboml.setFutureCostPriceLL(cost.getFutureCostPrice());
@@ -168,21 +167,14 @@ public class IndentedBOM extends SvrProcess
 	 * Get BOMs for given product
 	 * @param product
 	 * @param isComponent
-	 * @return list of MProductBOM
+	 * @return list of MPPProductBOMLine
 	 */
-	private List<MProductBOM> getBOMs(MProduct product)
+	private MPPProductBOMLine[] getBOMs(MProduct product)
 	{
-		ArrayList<Object> params = new ArrayList<Object>();
-		StringBuilder whereClause = new StringBuilder();
-		whereClause.append(MProductBOM.COLUMNNAME_M_Product_ID).append("=?");
-		params.add(product.get_ID());
 		
-		List<MProductBOM> list = new Query(getCtx(), MProductBOM.Table_Name, whereClause.toString(), get_TrxName())
-									.setParameters(params)
-									.setOnlyActiveRecords(true)
-									.setOrderBy(MProductBOM.COLUMNNAME_Line)
-									.list();
-		return list;
+		if (log.isLoggable(Level.FINE)) log.fine(" PRODUCT NAME = " + product.getName() ) ;
+		
+		return MPPProductBOMLine.getBOMLines(product);
 	}
 	
 	private static class llCost {

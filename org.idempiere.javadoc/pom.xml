@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.idempiere</groupId>
 		<artifactId>org.idempiere.parent</artifactId>
-		<version>8.1.0-SNAPSHOT</version>
+		<version>${revision}</version>
 		<relativePath>../org.idempiere.parent/pom.xml</relativePath>
 	</parent>
 
@@ -19,18 +19,18 @@
 	<build>
 		<plugins>
 			<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>build-helper-maven-plugin</artifactId>
-					<version>3.0.0</version>
-					<executions>
-					  <execution>
-						<id>parse-version</id>
-						<goals>
-						  <goal>parse-version</goal>
-						</goals>
-					  </execution>
-					</executions>
-				</plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+				  <execution>
+					<id>parse-version</id>
+					<goals>
+					  <goal>parse-version</goal>
+					</goals>
+				  </execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.eclipse.tycho.extras</groupId>
 				<artifactId>tycho-document-bundle-plugin</artifactId>
@@ -75,12 +75,18 @@
 									<exclude>metainfo.zk</exclude>
 									<exclude>web*</exclude>
 									<exclude>org.idempiere.adInterface.x10*</exclude>
+									<exclude>org.idempiere.webservices.resources*</exclude>
+									<exclude>schemas*</exclude>
 									<exclude>action.images*</exclude>
 									<exclude>google.*</exclude>
 									<exclude>jsinterop.*</exclude>
 									<exclude>org.checkerframework.*</exclude>
 									<exclude>org.codehaus.*</exclude>
 									<exclude>org.kohsuke.*</exclude>
+									<exclude>io.github.*</exclude>
+									<exclude>io.keikai.*</exclude>
+									<exclude>metainfo.tld</exclude>
+									<exclude>com.zaxxer.*</exclude>
 								</excludes>
 								<additionalArguments>
 									<!-- needed by Java 11 compatibility and compiling at doc generation
@@ -101,12 +107,13 @@
 										java.sql.rowset/com.sun.rowset=ALL-UNNAMED --add-exports
 										java.naming/com.sun.jndi.ldap=ALL-UNNAMED</additionalArgument>
 									<additionalArgument>-Xdoclint:none</additionalArgument>
+									<additionalArgument>-Xmaxwarns 0</additionalArgument>
 									<additionalArgument>-use</additionalArgument>
 									<additionalArgument>-author</additionalArgument>
 									<additionalArgument>-breakiterator</additionalArgument>
 									<additionalArgument>-version</additionalArgument>
 									<additionalArgument>-link
-										https://docs.oracle.com/en/java/javase/11/docs/api/</additionalArgument>
+										https://docs.oracle.com/en/java/javase/17/docs/api/</additionalArgument>
 									<additionalArgument>-splitindex</additionalArgument>
 									<additionalArgument>-overview
 										${project.basedir}/doc/overview.html</additionalArgument>
@@ -114,7 +121,6 @@
 									<additionalArgument>-doctitle "iDempiere ${parsedVersion.majorVersion}.${parsedVersion.minorVersion} API Documentation"</additionalArgument>
 									<additionalArgument>-header "iDempiere ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}"</additionalArgument>
 									<additionalArgument>-bottom "iDempiere ${parsedVersion.majorVersion}.${parsedVersion.minorVersion}"</additionalArgument>
-									<additionalArgument>--no-module-directories</additionalArgument>
 								</additionalArguments>
 							</javadocOptions>
 						</configuration>

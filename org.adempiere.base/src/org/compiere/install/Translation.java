@@ -40,25 +40,25 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.adempiere.base.Core;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.Adempiere;
 import org.compiere.model.MLanguage;
 import org.compiere.model.MPInstance;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.process.ProcessCall;
 import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
-import org.compiere.util.Login;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
 
 /**
  *	Translation Table Import + Export
@@ -81,7 +81,7 @@ public class Translation implements IApplication
 	 * Do not use this Constructor in normal calls. It is used e.g. by the
 	 * headless call for an only-translation batch script call.
 	 * 
-	 * @author tbayen - IDEMPIERE-1554
+	 * author tbayen - IDEMPIERE-1554
 	 */
 	public Translation(){
 		m_ctx=Env.getCtx();
@@ -121,20 +121,35 @@ public class Translation implements IApplication
 	/** Properties					*/
 	private Properties		m_ctx = null;
 
-	
 	/**
 	 * 	Import Translation.
 	 * 	Uses TranslationHandler to update translation
 	 *	@param directory file directory
-	 * 	@param AD_Client_ID only certain client if id >= 0
+	 * 	@param AD_Client_ID only certain client if id &gt;= 0
 	 * 	@param AD_Language language
 	 * 	@param Trl_Table table
 	 * 	@return status message
 	 */
 	public String importTrl (String directory, int AD_Client_ID, String AD_Language, String Trl_Table)
 	{
+		return importTrl(directory, AD_Client_ID, AD_Language, Trl_Table, null);
+	}
+
+	/**
+	 * 	Import Translation.
+	 * 	Uses TranslationHandler to update translation
+	 *	@param directory file directory
+	 * 	@param AD_Client_ID only certain client if id &gt;= 0
+	 * 	@param AD_Language language
+	 * 	@param Trl_Table table
+	 *  @param trxName Transaction
+	 * 	@return status message
+	 */
+	public String importTrl (String directory, int AD_Client_ID, String AD_Language, String Trl_Table, String trxName)
+	{
 		String fileName = directory + File.separator + Trl_Table + "_" + AD_Language + ".xml";
-		log.info(fileName);
+		if (log.isLoggable(Level.INFO))
+			log.info(fileName);
 		File in = new File (fileName);
 		if (!in.exists())
 		{
@@ -145,13 +160,13 @@ public class Translation implements IApplication
 
 		try
 		{
-			TranslationHandler handler = new TranslationHandler(AD_Client_ID);
+			TranslationHandler handler = new TranslationHandler(AD_Client_ID, trxName);
 			SAXParserFactory factory = SAXParserFactory.newInstance();
-		//	factory.setValidating(true);
 			SAXParser parser = factory.newSAXParser();
 			parser.parse(in, handler);
 			if (log.isLoggable(Level.INFO)) log.info("Updated=" + handler.getUpdateCount());
-			MLanguage lang = MLanguage.get(m_ctx, AD_Language);
+			MLanguage langCached = MLanguage.get(m_ctx, AD_Language);
+			MLanguage lang = new MLanguage(m_ctx, langCached.getAD_Language_ID(), null);
 			if (! lang.isLoginLocale()) {
 				lang.setIsLoginLocale(true);
 				lang.saveEx();
@@ -160,24 +175,24 @@ public class Translation implements IApplication
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "importTrl", e);
-			return e.toString();
+			throw new AdempiereException(e);
 		}
 	}	//	importTrl
-
 	
-	/**************************************************************************
-	 * 	Import Translation
+	/**
+	 * 	Export Translation
 	 *	@param directory file directory
-	 * 	@param AD_Client_ID only certain client if id >= 0
+	 * 	@param AD_Client_ID only certain client if id &gt;= 0
 	 * 	@param AD_Language language
 	 * 	@param Trl_Table translation table _Trl
+	 *  @param onlyCentralized
 	 * 	@return status message
 	 */
 	public String exportTrl (String directory, int AD_Client_ID, String AD_Language, String Trl_Table, boolean onlyCentralized)
 	{
 		String fileName = directory + File.separator + Trl_Table + "_" + AD_Language + ".xml";
-		log.info(fileName);
+		if (log.isLoggable(Level.INFO))
+			log.info(fileName);
 		File out = new File(fileName);
 
 		boolean isBaseLanguage = Language.isBaseLanguage(AD_Language);
@@ -192,8 +207,9 @@ public class Translation implements IApplication
 				return "";
 		}
 
-		String keyColumn = Base_Table + "_ID";
-		String uuidColumn = MTable.getUUIDColumnName(Base_Table);
+		MTable baseTable = MTable.get(Env.getCtx(), Base_Table);
+		String keyColumn = baseTable.getKeyColumns()[0];
+		String uuidColumn = PO.getUUIDColumnName(Base_Table);
 		String[] trlColumns = getTrlColumns (Base_Table);
 		//
 		StringBuilder sql = null;
@@ -202,7 +218,6 @@ public class Translation implements IApplication
 		try
 		{
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			//	System.out.println(factory.getClass().getName());
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			//	<!DOCTYPE idempiereTrl SYSTEM "http://www.idempiere.org/dtd/idempiereTrl.dtd">
 			//	<!DOCTYPE idempiereTrl PUBLIC "-//ComPiere, Inc.//DTD iDempiere Translation 1.0//EN" "http://www.idempiere.com/dtd/idempiereTrl.dtd">
@@ -258,9 +273,11 @@ public class Translation implements IApplication
 			while (rs.next())
 			{
 				Element row = document.createElement (XML_ROW_TAG);
-				int keyid = rs.getInt(2);
+				int keyid = -1;
+				if (! baseTable.isUUIDKeyTable())
+					keyid = rs.getInt(2);
 				String uuid = rs.getString(3);
-				if (keyid <= MTable.MAX_OFFICIAL_ID || Util.isEmpty(uuid)) {
+				if ((keyid >= 0 && keyid <= MTable.MAX_OFFICIAL_ID) || Util.isEmpty(uuid)) {
 					row.setAttribute(XML_ROW_ATTRIBUTE_ID, String.valueOf(keyid));	//	KeyColumn
 				} else {
 					row.setAttribute(XML_ROW_ATTRIBUTE_UUID, String.valueOf(uuid));	//	UUIDColumn
@@ -325,10 +342,9 @@ public class Translation implements IApplication
 
 		return "";
 	}	//	exportTrl
-
 	
 	/**
-	 * 	Get Columns for Table
+	 * 	Get Columns for translation Table (*_trl)
 	 * 	@param Base_Table table
 	 * 	@return array of translated columns
 	 */
@@ -376,7 +392,6 @@ public class Translation implements IApplication
 			while (rs.next())
 			{
 				String s = rs.getString(1);
-			//	System.out.println(s); 
 				list.add(s);
 			}
 		}
@@ -397,41 +412,34 @@ public class Translation implements IApplication
 		return retValue;
 	}	//	getTrlColumns
 
-	
-	/**************************************************************************
-	 * 	Validate Language.
+	/**
+	 * <pre>
+	 * Validate Language.
 	 *  - Check if AD_Language record exists
 	 *  - Check Trl table records
-	 * 	@param AD_Language language
+	 *  </pre>
+	 * 	@param p_AD_Language language
 	 * 	@return "" if validated - or error message
 	 */
-	public String validateLanguage (String AD_Language)
+	public String validateLanguage(String p_AD_Language) {
+		return validateLanguage(p_AD_Language, null);
+	}
+
+	/**
+	 *  <pre>
+	 *  Validate Language.
+	 *  - Check if AD_Language record exists
+	 *  - Check Trl table records
+	 *  </pre>
+	 * 	@param AD_Language language
+	 *  @param trxName transaction
+	 * 	@return "" if validated - or error message
+	 */
+	public String validateLanguage (String AD_Language, String trxName)
 	{
-		String sql = "SELECT * "
-			+ "FROM AD_Language "
-			+ "WHERE AD_Language=?";
-		MLanguage language = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setString(1, AD_Language);
-			rs = pstmt.executeQuery();
-			if (rs.next())
-				language = new MLanguage (m_ctx, rs, null);
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, sql, e);
-			return e.toString();
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
+		MLanguage language = new Query(m_ctx, MLanguage.Table_Name, "AD_Language=?", trxName)
+				.setParameters(AD_Language)
+				.first();
 
 		//	No AD_Language Record
 		if (language == null)
@@ -518,7 +526,7 @@ public class Translation implements IApplication
 		}
 	}	//	process
 
-	/**************************************************************************
+	/**
 	 * OSGi Batch Interface
 	 * 
 	 * @author tbayen - IDEMPIERE-1554
@@ -557,7 +565,7 @@ public class Translation implements IApplication
 			ProcessInfo pi = new ProcessInfo("Synchronize Terminology", 172);
 			pi.setAD_Client_ID(0);
 			pi.setAD_User_ID(100);
-			MPInstance instance = new MPInstance(Env.getCtx(), 172, 0);
+			MPInstance instance = new MPInstance(Env.getCtx(), 172, -1, 0, null);
 			instance.saveEx();
 			pi.setAD_PInstance_ID(instance.getAD_PInstance_ID());
 			/*
@@ -583,34 +591,5 @@ public class Translation implements IApplication
 	public void stop() {
 		// IApplication implementation method - (only start method used)
 	}
-
-	/**************************************************************************
-	 * 	Batch Interface
-	 * 	@param args directory AD_Language import/export
-	 */
-	public static void main (String[] args)
-	{
-		if (args.length != 3)
-		{
-			System.out.println("format : java Translation directory AD_Language import|export");
-			System.out.println("example: java Translation /Adempiere/data/de_DE de_DE import");
-			System.out.println("example: java Translation /Adempiere/data/fr_FR fr_FR export");
-			System.exit(1);
-		}
-		//
-		Login.initTest (false);
-		String directory = args[0];
-		String AD_Language = args[1];
-		String mode = args[2];
-
-		Translation trl = new Translation(Env.getCtx());
-		String msg = trl.validateLanguage (AD_Language);
-		if (msg.length() > 0)
-			System.err.println(msg);
-		else
-			trl.process (directory, AD_Language, mode);
-
-		System.exit(0);
-	}	//	main
 
 }	//	Translation

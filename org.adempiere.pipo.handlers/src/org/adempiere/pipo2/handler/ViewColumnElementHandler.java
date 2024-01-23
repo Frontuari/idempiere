@@ -54,11 +54,11 @@ public class ViewColumnElementHandler extends AbstractElementHandler {
 			MViewColumn mViewColumn = findPO(ctx, element);
 			if (mViewColumn == null) {
 				int parentId = 0;
-				if (getParentId(element, MViewComponent.Table_Name) > 0) {
-					parentId = getParentId(element, MViewComponent.Table_Name);
+				if ((Integer)getParentId(element, MViewComponent.Table_Name) > 0) {
+					parentId = (Integer)getParentId(element, MViewComponent.Table_Name);
 				} else {
 					Element pfElement = element.properties.get(MViewColumn.COLUMNNAME_AD_ViewComponent_ID);
-					parentId = ReferenceUtils.resolveReference(ctx.ctx, pfElement, getTrxName(ctx));
+					parentId = ReferenceUtils.resolveReferenceAsInt(ctx.ctx, pfElement, getTrxName(ctx));
 				}
 				if (parentId <= 0) {
 					element.defer = true;
@@ -113,11 +113,8 @@ public class ViewColumnElementHandler extends AbstractElementHandler {
 		int AD_ViewColumn_ID = Env.getContextAsInt(ctx.ctx, MViewColumn.COLUMNNAME_AD_ViewColumn_ID);
 		MViewColumn m_ViewColumn = new MViewColumn(ctx.ctx, AD_ViewColumn_ID, getTrxName(ctx));
 
-		if (ctx.packOut.getFromDate() != null) {
-			if (m_ViewColumn.getUpdated().compareTo(ctx.packOut.getFromDate()) < 0) {
-				return;
-			}
-		}
+		if (!isPackOutElement(ctx, m_ViewColumn))
+			return;
 
 		AttributesImpl atts = new AttributesImpl();
 		addTypeName(atts, "table");

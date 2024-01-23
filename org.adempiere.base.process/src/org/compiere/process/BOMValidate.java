@@ -23,6 +23,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MBOM;
 import org.compiere.model.MBOMProduct;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductBOM;
 import org.compiere.util.DB;
@@ -31,9 +32,12 @@ import org.compiere.util.Env;
 /**
  * 	Validate BOM
  *	
+ *  Never leave beta and drop
+ *  @deprecated
  *  @author Jorg Janke
  *  @version $Id: BOMValidate.java,v 1.3 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class BOMValidate extends SvrProcess
 {
 	/**	The Product			*/
@@ -64,7 +68,7 @@ public class BOMValidate extends SvrProcess
 			else if (name.equals("IsReValidate"))
 				p_IsReValidate = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_M_Product_ID = getRecord_ID();
 	}	//	prepare

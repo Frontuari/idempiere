@@ -33,7 +33,9 @@ import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.apps.wf.WFGraphLayout;
 import org.compiere.apps.wf.WFNodeWidget;
+import org.compiere.model.MEntityType;
 import org.compiere.model.MRole;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
@@ -64,26 +66,32 @@ import org.zkoss.zul.Toolbarbutton;
 import org.zkoss.zul.Vbox;
 
 /**
- *
+ * Workflow editor form
  * @author Low Heng Sin
- *
  */
+@org.idempiere.ui.zk.annotation.Form(name = "org.compiere.apps.wf.WFPanel")
 public class WFEditor extends ADForm {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 4293422396394778274L;
 
+	/** Workflows dropdown list */
 	private Listbox workflowList;
 	private int m_workflowId = 0;
 	private Toolbarbutton zoomButton;
 	private Toolbarbutton refreshButton;
 	private Toolbarbutton newButton;
+	/** Content of {@link #center} */
 	private Table table;
+	/** Center of form */
 	private Center center;
 	private MWorkflow m_wf;
 	private WFNodeContainer nodeContainer;
 
+	/**
+	 * Layout form
+	 */
 	@Override
 	protected void initForm() {
 		ZKUpdateUtil.setHeight(this, "100%");
@@ -156,6 +164,9 @@ public class WFEditor extends ADForm {
 		ZKUpdateUtil.setHeight(south, "36px");
 	}
 
+	/**
+	 * Create {@link #table}
+	 */
 	private void createTable() {
 		table = new Table();
 		table.setDynamicProperty("cellpadding", "0");
@@ -166,6 +177,8 @@ public class WFEditor extends ADForm {
 
 	@Override
 	public void onEvent(Event event) throws Exception {
+		super.onEvent(event);
+
 		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 			this.detach();
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_OK))
@@ -204,15 +217,21 @@ public class WFEditor extends ADForm {
 			if (AD_WF_Node_ID != null) {
 				WFNodeWidget widget = (WFNodeWidget) nodeContainer.getGraphScene().findWidget(AD_WF_Node_ID);
 				if (widget != null) {
-					widget.getModel().setXPosition(xPosition);
-					widget.getModel().setYPosition(yPosition);
-					widget.getModel().saveEx();
-					reload(m_workflowId, true);
+					MWFNode node = widget.getModel();
+					if (node.getAD_Client_ID() == Env.getAD_Client_ID(Env.getCtx())) {
+						node.setXPosition(xPosition);
+						node.setYPosition(yPosition);
+						node.saveEx();
+						reload(m_workflowId, true);
+					}
 				}
 			}
 		}
 	}
 
+	/**
+	 * Create new workflow node
+	 */
 	private void createNewNode() {
 		String nameLabel = Msg.getElement(Env.getCtx(), MWFNode.COLUMNNAME_Name);
 		String title = Msg.getMsg(Env.getCtx(), "CreateNewNode");
@@ -240,7 +259,6 @@ public class WFEditor extends ADForm {
 			}
 		});
 		
-		ZKUpdateUtil.setWidth(w, "250px");
 		w.setBorder("normal");
 		w.setPage(this.getPage());
 		w.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
@@ -253,6 +271,8 @@ public class WFEditor extends ADForm {
 					int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
 					MWFNode node = new MWFNode(m_wf, name, name);
 					node.setClientOrg(AD_Client_ID, 0);
+					if (AD_Client_ID > 11)
+						node.setEntityType(MSysConfig.getValue(MSysConfig.DEFAULT_ENTITYTYPE, MEntityType.ENTITYTYPE_UserMaintained));
 					node.saveEx();
 					reload(m_wf.getAD_Workflow_ID(), true);
 				}
@@ -261,6 +281,11 @@ public class WFEditor extends ADForm {
 		w.doHighlighted();				
 	}
 
+	/**
+	 * reload and re-render workflow nodes
+	 * @param workflowId
+	 * @param reread
+	 */
 	protected void reload(int workflowId, boolean reread) {
 		center.removeChild(table);
 		createTable();
@@ -268,6 +293,11 @@ public class WFEditor extends ADForm {
 		load(workflowId, reread);
 	}
 
+	/**
+	 * Load and render workflow nodes
+	 * @param workflowId
+	 * @param reread
+	 */
 	private void load(int workflowId, boolean reread) {
 		//	Get Workflow
 		m_wf = MWorkflow.getCopy(Env.getCtx(), workflowId, (String)null);
@@ -375,6 +405,10 @@ public class WFEditor extends ADForm {
 
 	}
 
+	/**
+	 * Show popup menu for workflow node
+	 * @param target
+	 */
 	protected void showNodeMenu(Component target) {
 		Integer AD_WF_Node_ID = (Integer) target.getAttribute("AD_WF_Node_ID");
 		if (AD_WF_Node_ID != null) {
@@ -382,10 +416,10 @@ public class WFEditor extends ADForm {
 			if (widget != null) {
 				MWFNode node = widget.getModel();
 				Menupopup popupMenu = new Menupopup();
+				// Zoom
+				addMenuItem(popupMenu, Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Zoom")), node, WFPopupItem.WFPOPUPITEM_ZOOM);
 				if (node.getAD_Client_ID() == Env.getAD_Client_ID(Env.getCtx()))
 				{
-					// Zoom
-					addMenuItem(popupMenu, Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Zoom")), node, WFPopupItem.WFPOPUPITEM_ZOOM);
 					// Properties
 					addMenuItem(popupMenu, Msg.getMsg(Env.getCtx(), "Properties"), node, WFPopupItem.WFPOPUPITEM_PROPERTIES);
 					// Delete node
@@ -446,7 +480,7 @@ public class WFEditor extends ADForm {
 	}
 
 	/**
-	 * 	Zoom to WorkFlow
+	 * 	Zoom to WorkFlow window
 	 */
 	private void zoom()
 	{
@@ -456,9 +490,11 @@ public class WFEditor extends ADForm {
 	}	//	zoom
 
 	/**
-	 * 	Add Menu Item to - add new line to node
-	 *	@param menu base menu
-	 *	@param title title
+	 * Menu item to add line to next node or to apply actions (delete, properties or zoom) to source workflow node.
+	 * @param menu popup  menu
+	 * @param title title
+	 * @param node source workflow node
+	 * @param AD_WF_NodeTo_ID if > 0, next workflow node id. if < 0, actions to apply to node
 	 */
 	private void addMenuItem (Menupopup menu, String title, MWFNode node, int AD_WF_NodeTo_ID)
 	{
@@ -468,9 +504,10 @@ public class WFEditor extends ADForm {
 	}	//	addMenuItem
 
 	/**
-	 * 	Add Menu Item to - delete line
-	 *	@param menu base menu
-	 *	@param title title
+	 * Add Menu Item to - delete line
+	 * @param menu popup menu
+	 * @param title title
+	 * @param line
 	 */
 	private void addMenuItem (Menupopup menu, String title, MWFNodeNext line)
 	{

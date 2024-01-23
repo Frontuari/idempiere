@@ -41,7 +41,7 @@ public class M_Element extends X_AD_Element
 {
 
     /**
-     * 
+     * generated serial id
      */
     private static final long serialVersionUID = -6644398794862560030L;
 
@@ -76,7 +76,7 @@ public class M_Element extends X_AD_Element
 	 * 	Get Element
 	 * 	@param ctx context
 	 *	@param columnName case insensitive column name
-	 *	@return case sensitive column name
+	 *	@return M_Element
 	 */
 	public static M_Element get (Properties ctx, String columnName) 
 	{
@@ -88,7 +88,7 @@ public class M_Element extends X_AD_Element
 	 * 	@param ctx context
 	 *	@param columnName case insensitive column name
 	 *  @param trxName optional transaction name
-	 *	@return case sensitive column name
+	 *	@return M_Element
 	 */
 	public static M_Element get (Properties ctx, String columnName, String trxName)
 	{
@@ -106,9 +106,9 @@ public class M_Element extends X_AD_Element
 	/**
 	 * 	Get Element
 	 * 	@param ctx context
-	 *	@param columnName case insensitive column name
+	 *  @param AD_Column_ID
  	 *	@param trxName trx
-	 *	@return case sensitive column name
+	 *	@return M_Element
 	 */
 	public static M_Element getOfColumn (Properties ctx, int AD_Column_ID, String trxName)
 	{
@@ -125,15 +125,25 @@ public class M_Element extends X_AD_Element
 	/**
 	 * 	Get Element
 	 * 	@param ctx context
-	 *	@param columnName case insentitive column name
-	 *	@return case sensitive column name
+	 *  @param AD_Column_ID
+	 *	@return M_Element
 	 */
 	public static M_Element getOfColumn (Properties ctx, int AD_Column_ID)
 	{
 		return getOfColumn(ctx, AD_Column_ID, null);
 	}	//	get
 	
-	/**************************************************************************
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_Element_UU  UUID key
+     * @param trxName Transaction
+     */
+    public M_Element(Properties ctx, String AD_Element_UU, String trxName) {
+        super(ctx, AD_Element_UU, trxName);
+    }
+
+	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
 	 *	@param AD_Element_ID element
@@ -142,13 +152,6 @@ public class M_Element extends X_AD_Element
 	public M_Element (Properties ctx, int AD_Element_ID, String trxName)
 	{
 		super (ctx, AD_Element_ID, trxName);
-		if (AD_Element_ID == 0)
-		{
-		//	setColumnName (null);
-		//	setEntityType (null);	// U
-		//	setName (null);
-		//	setPrintName (null);
-		}	
 	}	//	M_Element
 
 	/**
@@ -179,7 +182,6 @@ public class M_Element extends X_AD_Element
 		//
 		setEntityType (EntityType);	// U
 	}	//	M_Element
-
 	
 	/* (non-Javadoc)
 	 * @see org.compiere.model.PO#beforeSave(boolean)
@@ -296,9 +298,6 @@ public class M_Element extends X_AD_Element
 				no = DB.executeUpdate(sql.toString(), get_TrxName());
 				if (log.isLoggable(Level.FINE)) log.fine("Fields updated #" + no);
 				
-				// Info Column - update Name, Description, Help - doesn't have IsCentrallyMaintained currently
-				// no = DB.executeUpdate(sql.toString(), get_TrxName());
-				// log.fine("InfoColumn updated #" + no);
 			}
 			
 			if (   is_ValueChanged(M_Element.COLUMNNAME_PrintName)
@@ -331,6 +330,11 @@ public class M_Element extends X_AD_Element
 		return sb.toString ();
 	}	//	toString
 
+	/**
+	 * Change DB column name (i.e Alter Column)
+	 * @param newColumnName
+	 * @param pi
+	 */
 	public void renameDBColumn(String newColumnName, ProcessInfo pi) {
 		List<MColumn> columns = new Query(getCtx(), MColumn.Table_Name, "AD_Element_ID=?", get_TrxName())
 				.setParameters(getAD_Element_ID())

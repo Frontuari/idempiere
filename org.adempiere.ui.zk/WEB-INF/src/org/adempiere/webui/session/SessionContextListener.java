@@ -47,7 +47,7 @@ import org.zkoss.zk.ui.util.ExecutionCleanup;
 import org.zkoss.zk.ui.util.ExecutionInit;
 
 /**
- *
+ * Zk listener to manage environment context for execution and session
  * @author <a href="mailto:agramdass@gmail.com">Ashley G Ramdass</a>
  * @date Feb 25, 2007
  * @version $Revision: 0.10 $
@@ -59,9 +59,8 @@ public class SessionContextListener implements ExecutionInit,
     public static final String SESSION_CTX = "WebUISessionContext";
 
     /**
-     * get servlet thread local context from session
+     * Get environment context from session cache or create a new one (no cache context or cache context is invalid)
      * @param exec
-     * @param createNew
      */
     public static void setupExecutionContextFromSession(Execution exec) {
     	Session session = exec.getDesktop().getSession();
@@ -184,6 +183,9 @@ public class SessionContextListener implements ExecutionInit,
 		return true;
     }
 
+    /**
+     * @return true if session context is valid
+     */
 	public static boolean isContextValid() {
 		Execution exec = Executions.getCurrent();
 		Properties ctx = ServerContext.getCurrentInstance();
@@ -248,8 +250,12 @@ public class SessionContextListener implements ExecutionInit,
 			if (Env.getCtx().getProperty(SERVLET_SESSION_ID) == null)
 				return;
     	}
-		int AD_Session_ID = Env.getContextAsInt(Env.getCtx(), "#AD_Session_ID");
+		int AD_Session_ID = Env.getContextAsInt(Env.getCtx(), Env.AD_SESSION_ID);
 		if (AD_Session_ID > 0) {
+			
+			//sleep 1s to avoid timing issue with login and logout (both uses redirect call)
+			Thread.sleep(1000);
+			
 			String key = getSessionDesktopListKey(AD_Session_ID);
 			@SuppressWarnings("unchecked")
 			List<String> list = (List<String>) Env.getCtx().get(key);
@@ -262,9 +268,9 @@ public class SessionContextListener implements ExecutionInit,
 				}
 			}
 		
-			MSession mSession = MSession.get(Env.getCtx(), false);
+			MSession mSession = MSession.get(Env.getCtx());
 			if(mSession!=null && !mSession.isProcessed()) {
-				
+				mSession = new MSession(Env.getCtx(), mSession.getAD_Session_ID(), null);
 		        mSession.setProcessed(true);
 		        mSession.saveEx();
 			}
@@ -272,6 +278,11 @@ public class SessionContextListener implements ExecutionInit,
 		}
 	}
 
+	/**
+	 * @param list
+	 * @param session
+	 * @return true if session has no active desktop
+	 */
 	private boolean isEmpty(List<String> list, Session session) {
 		if (list.isEmpty())
 			return true;
@@ -315,9 +326,10 @@ public class SessionContextListener implements ExecutionInit,
     	{
 			setupExecutionContextFromSession(Executions.getCurrent());
     	}
-		MSession mSession = MSession.get(Env.getCtx(), false);
+		MSession mSession = MSession.get(Env.getCtx());
 		if(mSession!=null){
 			if (mSession.isProcessed()) {
+				mSession = new MSession(Env.getCtx(), mSession.getAD_Session_ID(), null);
 				mSession.setProcessed(false);
 				mSession.saveEx();
 			}
@@ -325,6 +337,11 @@ public class SessionContextListener implements ExecutionInit,
 		} 
 	}
 	
+	/**
+	 * Add dtid to session context
+	 * @param AD_Session_ID
+	 * @param dtid desktop id
+	 */
 	public static synchronized void addDesktopId(int AD_Session_ID, String dtid)
 	{
 		String key = getSessionDesktopListKey(AD_Session_ID);

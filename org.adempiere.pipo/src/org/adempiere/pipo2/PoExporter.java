@@ -1,12 +1,21 @@
 package org.adempiere.pipo2;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.util.List;
 
 import javax.xml.transform.sax.TransformerHandler;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_AD_Org;
+import org.compiere.model.MArchive;
+import org.compiere.model.MAttachment;
+import org.compiere.model.MClientInfo;
+import org.compiere.model.MColumn;
+import org.compiere.model.MImage;
+import org.compiere.model.MStorageProvider;
 import org.compiere.model.MTable;
 import org.compiere.model.MTree;
 import org.compiere.model.PO;
@@ -15,6 +24,7 @@ import org.compiere.model.X_AD_Client;
 import org.compiere.model.X_AD_Image;
 import org.compiere.model.X_AD_Org;
 import org.compiere.model.X_C_Location;
+import org.compiere.model.X_M_AttributeSetInstance;
 import org.compiere.model.X_M_Locator;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
@@ -30,6 +40,9 @@ public class PoExporter {
 	private PIPOContext ctx;
 
 	private TransformerHandler transformerHandler;
+
+	public static final String POEXPORTER_BLOB_TYPE_STRING = "string";
+	public static final String POEXPORTER_BLOB_TYPE_BYTEARRAY = "byte[]";
 
 	private void addTextElement(String qName, String text, AttributesImpl atts) {
 		try {
@@ -97,19 +110,17 @@ public class PoExporter {
 
 
 	/**
-	 *
-	 * @param name
 	 * @param columnName
+	 * @param atts
 	 */
 	public void add(String columnName, AttributesImpl atts) {
 		add(columnName, "", atts);
 	}
 
 	/**
-	 *
-	 * @param name
 	 * @param columnName
 	 * @param defaultValue
+	 * @param atts
 	 */
 	public void add(String columnName, String defaultValue, AttributesImpl atts) {
 		Object value = po.get_Value(columnName);
@@ -163,13 +174,38 @@ public class PoExporter {
 	}
 
 	public void addTableReference(String columnName, String tableName, AttributesImpl atts) {
-		int id = po.get_Value(columnName) != null ? (Integer)po.get_Value(columnName) : -1;
-		addTableReference(columnName, tableName, id, atts);
+		if (tableName != null) {
+			MTable table = MTable.get(po.getCtx(), tableName, po.get_TrxName());
+			if (table.isUUIDKeyTable()) {
+				String uuid = (String)po.get_Value(columnName);
+				addTableReferenceUUID(columnName, tableName, uuid, atts);
+			} else {
+				int id = po.get_Value(columnName) != null ? (Integer)po.get_Value(columnName) : -1;
+				addTableReference(columnName, tableName, id, atts);
+			}
+		}
+	}
+
+	public void addTableReferenceMulti(String columnName, String tableName, AttributesImpl atts) {
+		if (tableName != null) {
+			String values = (String)po.get_Value(columnName);
+			addTableReferenceMulti(columnName, tableName, values, atts);
+		}
 	}
 
 	public void addTableReference(String columnName, String tableName, int id, AttributesImpl atts) {
-		String value = ReferenceUtils.getTableReference(tableName, id, atts);
+		String value = ReferenceUtils.getTableReference(tableName, id, atts, po.get_TrxName());
 		addString(columnName, value, atts);
+	}
+
+	public void addTableReferenceUUID(String columnName, String tableName, String uuid, AttributesImpl atts) {
+		String value = ReferenceUtils.getTableReferenceUUID(tableName, uuid, atts);
+		addString(columnName, value, atts);
+	}
+
+	public void addTableReferenceMulti(String columnName, String tableName, String values, AttributesImpl atts) {
+		String target_values = ReferenceUtils.getTableReferenceMulti(tableName, values, atts, po.get_TrxName());
+		addString(columnName, target_values, atts);
 	}
 
 	public void export(List<String> excludes) {
@@ -225,6 +261,10 @@ public class PoExporter {
 					continue;
 			}
 			
+			// Skip AD_Org_ID except Table AD_Org
+			if (columnName.equals("AD_Org_ID") && !(I_AD_Org.Table_Name.equals(po.get_TableName())))
+				continue;
+			
 			//only export official id
 			if (columnName.equalsIgnoreCase(info.getTableName()+"_ID")) {
 				int id = po.get_ID();
@@ -235,39 +275,46 @@ public class PoExporter {
 			}
 
 			int displayType = info.getColumnDisplayType(i);
+			String trxName = ctx.trx == null ? null : ctx.trx.getTrxName();
 			if (DisplayType.YesNo == displayType) {
 				add(columnName, false, new AttributesImpl());
 			} else if (DisplayType.TableDir == displayType || DisplayType.ID == displayType) {
 				String tableName = null;
-				if ("Record_ID".equalsIgnoreCase(columnName) && po.get_ColumnIndex("AD_Table_ID") >= 0) {
-					int AD_Table_ID = po.get_Value(po.get_ColumnIndex("AD_Table_ID")) != null
-							? (Integer)po.get_Value(po.get_ColumnIndex("AD_Table_ID")) : 0;
-					tableName = MTable.getTableName(ctx.ctx, AD_Table_ID);
+				if (("Record_ID".equalsIgnoreCase(columnName) || "Record_UU".equalsIgnoreCase(columnName)) && po.get_ColumnIndex("AD_Table_ID") >= 0) {
+					int AD_Table_ID = po.get_ValueAsInt("AD_Table_ID");
+					if (AD_Table_ID > 0)
+						tableName = MTable.get(ctx.ctx, AD_Table_ID, trxName).getTableName();
 				} else if (po.get_TableName().equals("AD_TreeNode") && columnName.equals("Parent_ID")) {
 					int AD_Tree_ID = po.get_ValueAsInt("AD_Tree_ID");
-					MTree tree = new MTree(ctx.ctx, AD_Tree_ID, ctx.trx.getTrxName());
+					MTree tree = new MTree(ctx.ctx, AD_Tree_ID, trxName);
 					tableName = tree.getSourceTableName(true);
 				} else if (po.get_TableName().equals("AD_TreeNode") && columnName.equals("Node_ID")) {
 					int AD_Tree_ID = po.get_ValueAsInt("AD_Tree_ID");
-					MTree tree = new MTree(ctx.ctx, AD_Tree_ID, ctx.trx.getTrxName());
+					MTree tree = new MTree(ctx.ctx, AD_Tree_ID, trxName);
 					tableName = tree.getSourceTableName(true);
 				} else {
-					tableName = columnName.substring(0, columnName.length() - 3);
+					MColumn column = MColumn.get(ctx.ctx, info.getTableName(), columnName, trxName);
+					tableName = column.getReferenceTableName();
 				}
 				addTableReference(columnName, tableName, new AttributesImpl());
-			} else if (DisplayType.List == displayType) {
+			} else if (DisplayType.isList(displayType)) {
 				add(columnName, "", new AttributesImpl());
-			} else if (DisplayType.isLookup(displayType)) {
+			} else if (DisplayType.isLookup(displayType) || DisplayType.isMultiID(displayType)) {
 				String tableName = null;
-				if ("Record_ID".equalsIgnoreCase(columnName) && po.get_ColumnIndex("AD_Table_ID") >= 0) {
-					int AD_Table_ID = po.get_Value(po.get_ColumnIndex("AD_Table_ID")) != null
-						? (Integer)po.get_Value(po.get_ColumnIndex("AD_Table_ID")) : 0;
-					tableName = MTable.getTableName(ctx.ctx, AD_Table_ID);
+				if (("Record_ID".equalsIgnoreCase(columnName) || "Record_UU".equalsIgnoreCase(columnName)) && po.get_ColumnIndex("AD_Table_ID") >= 0) {
+					int AD_Table_ID = po.get_ValueAsInt("AD_Table_ID");
+					if (AD_Table_ID > 0)
+						tableName = MTable.get(ctx.ctx, AD_Table_ID, trxName).getTableName();
 				} else if (info.getColumnLookup(i) != null){
 					String lookupColumn = info.getColumnLookup(i).getColumnName();
 					tableName = lookupColumn.substring(0, lookupColumn.indexOf("."));
-				} 
-				addTableReference(columnName, tableName, new AttributesImpl());
+				}
+				if (   info.getColumnDisplayType(i) == DisplayType.ChosenMultipleSelectionList
+					|| DisplayType.isMultiID(info.getColumnDisplayType(i))) {
+					addTableReferenceMulti(columnName, tableName, new AttributesImpl());
+				} else {
+					addTableReference(columnName, tableName, new AttributesImpl());
+				}
 			} else if (DisplayType.Account == displayType) {
 				String tableName = "C_ValidCombination";
 				addTableReference(columnName, tableName, new AttributesImpl());
@@ -281,6 +328,8 @@ public class PoExporter {
 			    addTableReference(columnName, X_C_Location.Table_Name, new AttributesImpl());
 			} else if (DisplayType.Image == displayType) {
 				addTableReference(columnName, X_AD_Image.Table_Name, new AttributesImpl());
+			} else if (DisplayType.PAttribute == displayType) {
+			    addTableReference(columnName, X_M_AttributeSetInstance.Table_Name, new AttributesImpl());
 			} else {
 				add(columnName, "", new AttributesImpl());
 			}
@@ -294,17 +343,50 @@ public class PoExporter {
 			return;
 		}
 
+		if ("BinaryData".equals(columnName)) {
+			MClientInfo ci = MClientInfo.get(po.getAD_Client_ID());
+			if (po.get_Table_ID() == MAttachment.Table_ID && ci.getAD_StorageProvider_ID() > 0) {
+				MStorageProvider sp = MStorageProvider.get(po.getCtx(), ci.getAD_StorageProvider_ID());
+				if (! MStorageProvider.METHOD_Database.equals(sp.getMethod())) {
+					MAttachment att = new MAttachment(po.getCtx(), po.get_ID(), po.get_TrxName());
+					File tmpfile = att.saveAsZip();
+					try {
+						value = Files.readAllBytes(tmpfile.toPath());
+					} catch (IOException e) {
+						throw new AdempiereException(e);
+					}
+				}
+			} else if (po.get_Table_ID() == MImage.Table_ID && ci.getStorageImage_ID() > 0) {
+				MStorageProvider sp = MStorageProvider.get(po.getCtx(), ci.getStorageImage_ID());
+				if (! MStorageProvider.METHOD_Database.equals(sp.getMethod())) {
+					MImage image = new MImage(po.getCtx(), po.get_ID(), po.get_TrxName());
+					value = image.getBinaryData();
+				}
+			} else if (po.get_Table_ID() == MArchive.Table_ID && ci.getStorageArchive_ID() > 0) {
+				MStorageProvider sp = MStorageProvider.get(po.getCtx(), ci.getStorageArchive_ID());
+				if (! MStorageProvider.METHOD_Database.equals(sp.getMethod())) {
+					MArchive archive = new MArchive(po.getCtx(), po.get_ID(), po.get_TrxName());
+					File tmpfile = archive.saveAsZip();
+					try {
+						value = Files.readAllBytes(tmpfile.toPath());
+					} catch (IOException e) {
+						throw new AdempiereException(e);
+					}
+				}
+			}
+		}
+		
 		PackOut packOut = ctx.packOut;
 		byte[] data = null;
-		String dataType = null;
+		String dataType = null; // see PoFiller.isBlobOnPackinFile
 		String fileName = null;
 		try {
 			if (value instanceof String) {
 				data = ((String)value).getBytes("UTF-8");
-				dataType = "string";
+				dataType = POEXPORTER_BLOB_TYPE_STRING;
 			} else {
 				data = (byte[]) value;
-				dataType = "byte[]";
+				dataType = POEXPORTER_BLOB_TYPE_BYTEARRAY;
 			}
 
 			fileName = packOut.writeBlob(data);

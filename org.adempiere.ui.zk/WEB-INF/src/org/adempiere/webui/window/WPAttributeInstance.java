@@ -27,10 +27,12 @@ import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.WListbox;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.minigrid.ColumnInfo;
 import org.compiere.minigrid.IDColumn;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -47,7 +49,7 @@ import org.zkoss.zul.Hbox;
 
 
 /**
- *	Display Product Attribute Instance Info
+ *	Product Attribute Set Instance (for instance attributes) view and selection dialog
  *
  *  @author     Jorg Janke
  *  @version    $Id: PAttributeInstance.java,v 1.3 2006/07/30 00:51:27 jjanke Exp $
@@ -55,7 +57,7 @@ import org.zkoss.zul.Hbox;
 public class WPAttributeInstance extends Window implements EventListener<Event> 
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -4052029122256207113L;
 
@@ -91,7 +93,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		
 		init (M_Warehouse_ID, M_Locator_ID, M_Product_ID, C_BPartner_ID);
 		AEnv.showCenterScreen(this);
-	}	//	PAttributeInstance
+	}	//	WPAttributeInstance
 	
 	/**
 	 * 	Initialization
@@ -133,11 +135,13 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	private int					m_M_AttributeSetInstance_ID = -1;
 	private String				m_M_AttributeSetInstanceName = null;
 	private String				m_sql;
+	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
+	private boolean isUseEscForTabClosing = MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
 	/**	Logger			*/
 	private static final CLogger log = CLogger.getCLogger(WPAttributeInstance.class);
 
 	/**
-	 * 	Static Init
+	 * 	Layout dialog
 	 * 	@throws Exception
 	 */
 	private void init() throws Exception
@@ -169,9 +173,10 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		south.setParent(mainLayout);
 		south.appendChild(confirmPanel);
 		confirmPanel.addActionListener(this);
+		addEventListener(Events.ON_CANCEL, e -> onCancel());
 	}	//	jbInit
 
-	/**	Table Column Layout Info			*/
+	/**	Column Layout Info	for {@link #m_table}		*/
 	private static ColumnInfo[] s_layout = new ColumnInfo[] 
 	{
 		new ColumnInfo(" ", "s.M_AttributeSetInstance_ID", IDColumn.class),
@@ -180,9 +185,10 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		new ColumnInfo(Msg.translate(Env.getCtx(), "SerNo"), "asi.SerNo", String.class), 
 		new ColumnInfo(Msg.translate(Env.getCtx(), "GuaranteeDate"), "asi.GuaranteeDate", Timestamp.class),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "M_Locator_ID"), "l.Value", KeyNamePair.class, "s.M_Locator_ID"),
-		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOnHand"), "s.QtyOnHand", Double.class),
-		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyReserved"), "s.QtyReserved", Double.class),
-		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOrdered"), "s.QtyOrdered", Double.class),
+		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyAvailable"), "SUM(s.QtyOnHand - s.QtyReserved)", Double.class),
+		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOnHand"), "SUM(s.QtyOnHand)", Double.class),
+		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyReserved"), "SUM(s.QtyReserved)", Double.class),
+		new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOrdered"), "SUM(s.QtyOrdered)", Double.class),
 		//	See RV_Storage
 		new ColumnInfo(Msg.translate(Env.getCtx(), "GoodForDays"), "(daysbetween(asi.GuaranteeDate, getDate()))-p.GuaranteeDaysMin", Integer.class, true, true, null),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "ShelfLifeDays"), "daysbetween(asi.GuaranteeDate, getDate())", Integer.class),
@@ -201,7 +207,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	private String	m_sqlMinLife = "";
 
 	/**
-	 * 	Dynamic Init
+	 * 	Init components and variables
 	 * 	@param C_BPartner_ID BP
 	 */
 	private void dynInit(int C_BPartner_ID)
@@ -255,7 +261,8 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 
 		m_sql = m_table.prepareTable (s_layout, s_sqlFrom, 
 					m_M_Warehouse_ID == 0 ? s_sqlWhereWithoutWarehouse : s_sqlWhere, false, "s")
-				+ " ORDER BY asi.GuaranteeDate, s.QtyOnHand";	//	oldest, smallest first
+				+ " GROUP BY s.M_AttributeSetInstance_ID,asi.Description,asi.Lot,asi.SerNo,asi.GuaranteeDate,l.Value,s.M_Locator_ID,p.GuaranteeDaysMin,p.GuaranteeDays"
+				+ " ORDER BY asi.GuaranteeDate, SUM(s.QtyOnHand)";	//	oldest, smallest first
 		//
 		m_table.addEventListener(Events.ON_SELECT, this);
 		//
@@ -268,7 +275,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	private void refresh()
 	{
 		String sql = m_sql;
-		int pos = m_sql.lastIndexOf(" ORDER BY ");
+		int pos = m_sql.lastIndexOf(" GROUP BY ");
 		if (!showAll.isChecked())
 		{
 			sql = m_sql.substring(0, pos) 
@@ -301,15 +308,14 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		enableButtons();
 	}	//	refresh
 
+	@Override
 	public void onEvent(Event e) throws Exception 
 	{
 		if (e.getTarget().getId().equals("Ok"))
 			detach();
 		else if (e.getTarget().getId().equals("Cancel"))
 		{
-			detach();
-			m_M_AttributeSetInstance_ID = -1;
-			m_M_AttributeSetInstanceName = null;
+			onCancel();
 		}
 		else if (e.getTarget() == showAll)
 		{
@@ -320,6 +326,19 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 			enableButtons();
 		}
 	}	//	actionPerformed
+
+	/**
+	 * Handle onCancel event
+	 */
+	private void onCancel() {
+		// do not allow to close tab for Events.ON_CTRL_KEY event
+		if(isUseEscForTabClosing)
+			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
+
+		m_M_AttributeSetInstance_ID = -1;
+		m_M_AttributeSetInstanceName = null;
+		detach();
+	}
  
 	/**
 	 * 	Enable/Set Buttons and set ID
@@ -353,23 +372,6 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 			+ "; M_Locator_ID=" + m_M_Locator_ID);
 	}	//	enableButtons
 
-	//TODO: double click support for WListbox
-	/**
-	 *  Mouse Clicked
-	 *  @param e event
-	 */
-	/*
-	public void mouseClicked(MouseEvent e)
-	{
-		//  Double click with selected row => exit
-		if (e.getClickCount() > 1 && m_table.getSelectedRow() != -1)
-		{
-			enableButtons();
-			dispose();
-		}
-	}*/   //  mouseClicked
-
-
 	/**
 	 * 	Get Attribute Set Instance
 	 *	@return M_AttributeSetInstance_ID or -1
@@ -397,4 +399,4 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		return m_M_Locator_ID;
 	}	//	getM_Locator_ID
 
-}	//	PAttributeInstance
+}	//	WPAttributeInstance

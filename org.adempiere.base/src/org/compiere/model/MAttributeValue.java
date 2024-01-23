@@ -30,9 +30,19 @@ import org.compiere.util.Env;
 public class MAttributeValue extends X_M_AttributeValue
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 4105427429027399512L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param M_AttributeValue_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MAttributeValue(Properties ctx, String M_AttributeValue_UU, String trxName) {
+        super(ctx, M_AttributeValue_UU, trxName);
+    }
 
 	/**
 	 * 	Constructor
@@ -43,14 +53,6 @@ public class MAttributeValue extends X_M_AttributeValue
 	public MAttributeValue (Properties ctx, int M_AttributeValue_ID, String trxName)
 	{
 		super (ctx, M_AttributeValue_ID, trxName);
-		/** if (M_AttributeValue_ID == 0)
-		{
-		setM_AttributeValue_ID (0);
-		setM_Attribute_ID (0);
-		setName (null);
-		setValue (null);
-		}
-		**/
 	}	//	MAttributeValue
 
 	/**
@@ -65,7 +67,7 @@ public class MAttributeValue extends X_M_AttributeValue
 	}	//	MAttributeValue
 
 	/**
-	 * 
+	 * Copy constructor 
 	 * @param copy
 	 */
 	public MAttributeValue(MAttributeValue copy) 
@@ -74,7 +76,7 @@ public class MAttributeValue extends X_M_AttributeValue
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -84,7 +86,7 @@ public class MAttributeValue extends X_M_AttributeValue
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -94,10 +96,12 @@ public class MAttributeValue extends X_M_AttributeValue
 		this(ctx, 0, trxName);
 		copyPO(copy);
 	}
+	
 	/**
 	 *	String Representation
 	 * 	@return info
 	 */
+	@Override
 	public String toString()
 	{
 		return getName();

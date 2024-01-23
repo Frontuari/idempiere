@@ -22,15 +22,16 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for AD_ToolBarButton
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_ToolBarButton")
+public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_ToolBarButton (Properties ctx, int AD_ToolBarButton_ID, String trxName)
@@ -43,7 +44,73 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 			setAD_ToolBarButton_ID (0);
 			setComponentName (null);
 			setEntityType (null);
-// @SQL=select get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) from dual
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setIsAddSeparator (false);
+// N
+			setIsAdvancedButton (false);
+// N
+			setIsCustomization (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_ToolBarButton (Properties ctx, int AD_ToolBarButton_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_ToolBarButton_ID, trxName, virtualColumns);
+      /** if (AD_ToolBarButton_ID == 0)
+        {
+			setAction (null);
+// W
+			setAD_ToolBarButton_ID (0);
+			setComponentName (null);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setIsAddSeparator (false);
+// N
+			setIsAdvancedButton (false);
+// N
+			setIsCustomization (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_ToolBarButton (Properties ctx, String AD_ToolBarButton_UU, String trxName)
+    {
+      super (ctx, AD_ToolBarButton_UU, trxName);
+      /** if (AD_ToolBarButton_UU == null)
+        {
+			setAction (null);
+// W
+			setAD_ToolBarButton_ID (0);
+			setComponentName (null);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setIsAddSeparator (false);
+// N
+			setIsAdvancedButton (false);
+// N
+			setIsCustomization (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_ToolBarButton (Properties ctx, String AD_ToolBarButton_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_ToolBarButton_UU, trxName, virtualColumns);
+      /** if (AD_ToolBarButton_UU == null)
+        {
+			setAction (null);
+// W
+			setAD_ToolBarButton_ID (0);
+			setComponentName (null);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
 			setIsAddSeparator (false);
 // N
 			setIsAdvancedButton (false);
@@ -61,7 +128,7 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
     }
 
     /** AccessLevel
-      * @return 4 - System 
+      * @return 4 - System
       */
     protected int get_AccessLevel()
     {
@@ -84,28 +151,27 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 
 	/** Action AD_Reference_ID=104 */
 	public static final int ACTION_AD_Reference_ID=104;
-	/** Window = W */
-	public static final String ACTION_Window = "W";
-	/** Task = T */
-	public static final String ACTION_Task = "T";
+	/** Workbench = B */
+	public static final String ACTION_Workbench = "B";
+	/** Detail = D */
+	public static final String ACTION_Detail = "D";
 	/** WorkFlow = F */
 	public static final String ACTION_WorkFlow = "F";
+	/** Info = I */
+	public static final String ACTION_Info = "I";
 	/** Process = P */
 	public static final String ACTION_Process = "P";
 	/** Report = R */
 	public static final String ACTION_Report = "R";
+	/** Task = T */
+	public static final String ACTION_Task = "T";
+	/** Window = W */
+	public static final String ACTION_Window = "W";
 	/** Form = X */
 	public static final String ACTION_Form = "X";
-	/** Workbench = B */
-	public static final String ACTION_Workbench = "B";
-	/** Info = I */
-	public static final String ACTION_Info = "I";
-	/** Detail = D */
-	public static final String ACTION_Detail = "D";
 	/** Set Action.
-		@param Action 
-		Indicates the Action to be performed
-	  */
+		@param Action Indicates the Action to be performed
+	*/
 	public void setAction (String Action)
 	{
 
@@ -115,15 +181,14 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Action.
 		@return Indicates the Action to be performed
 	  */
-	public String getAction () 
+	public String getAction()
 	{
 		return (String)get_Value(COLUMNNAME_Action);
 	}
 
 	/** Set Service Component Name.
-		@param ActionClassName 
-		The service component name that implements the interface for toolbar actions
-	  */
+		@param ActionClassName The service component name that implements the interface for toolbar actions
+	*/
 	public void setActionClassName (String ActionClassName)
 	{
 		set_Value (COLUMNNAME_ActionClassName, ActionClassName);
@@ -132,15 +197,14 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Service Component Name.
 		@return The service component name that implements the interface for toolbar actions
 	  */
-	public String getActionClassName () 
+	public String getActionClassName()
 	{
 		return (String)get_Value(COLUMNNAME_ActionClassName);
 	}
 
 	/** Set Action Name.
-		@param ActionName 
-		Action name on the toolbar
-	  */
+		@param ActionName Action name on the toolbar
+	*/
 	public void setActionName (String ActionName)
 	{
 		set_Value (COLUMNNAME_ActionName, ActionName);
@@ -149,32 +213,32 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Action Name.
 		@return Action name on the toolbar
 	  */
-	public String getActionName () 
+	public String getActionName()
 	{
 		return (String)get_Value(COLUMNNAME_ActionName);
 	}
 
 	public org.compiere.model.I_AD_Process getAD_Process() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_Process)MTable.get(getCtx(), org.compiere.model.I_AD_Process.Table_Name)
-			.getPO(getAD_Process_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_Process)MTable.get(getCtx(), org.compiere.model.I_AD_Process.Table_ID)
+			.getPO(getAD_Process_ID(), get_TrxName());
+	}
 
 	/** Set Process.
-		@param AD_Process_ID 
-		Process or Report
-	  */
+		@param AD_Process_ID Process or Report
+	*/
 	public void setAD_Process_ID (int AD_Process_ID)
 	{
-		if (AD_Process_ID < 1) 
+		if (AD_Process_ID < 1)
 			set_Value (COLUMNNAME_AD_Process_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_Process_ID, Integer.valueOf(AD_Process_ID));
 	}
 
 	/** Get Process.
 		@return Process or Report
 	  */
-	public int getAD_Process_ID () 
+	public int getAD_Process_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Process_ID);
 		if (ii == null)
@@ -183,26 +247,26 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	}
 
 	public org.compiere.model.I_AD_Tab getAD_Tab() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_Tab)MTable.get(getCtx(), org.compiere.model.I_AD_Tab.Table_Name)
-			.getPO(getAD_Tab_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_Tab)MTable.get(getCtx(), org.compiere.model.I_AD_Tab.Table_ID)
+			.getPO(getAD_Tab_ID(), get_TrxName());
+	}
 
 	/** Set Tab.
-		@param AD_Tab_ID 
-		Tab within a Window
-	  */
+		@param AD_Tab_ID Tab within a Window
+	*/
 	public void setAD_Tab_ID (int AD_Tab_ID)
 	{
-		if (AD_Tab_ID < 1) 
+		if (AD_Tab_ID < 1)
 			set_Value (COLUMNNAME_AD_Tab_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_Tab_ID, Integer.valueOf(AD_Tab_ID));
 	}
 
 	/** Get Tab.
 		@return Tab within a Window
 	  */
-	public int getAD_Tab_ID () 
+	public int getAD_Tab_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Tab_ID);
 		if (ii == null)
@@ -211,18 +275,19 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	}
 
 	/** Set ToolBar Button.
-		@param AD_ToolBarButton_ID ToolBar Button	  */
+		@param AD_ToolBarButton_ID ToolBar Button
+	*/
 	public void setAD_ToolBarButton_ID (int AD_ToolBarButton_ID)
 	{
-		if (AD_ToolBarButton_ID < 1) 
+		if (AD_ToolBarButton_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_ToolBarButton_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_ToolBarButton_ID, Integer.valueOf(AD_ToolBarButton_ID));
 	}
 
 	/** Get ToolBar Button.
 		@return ToolBar Button	  */
-	public int getAD_ToolBarButton_ID () 
+	public int getAD_ToolBarButton_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_ToolBarButton_ID);
 		if (ii == null)
@@ -231,7 +296,8 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	}
 
 	/** Set AD_ToolBarButton_UU.
-		@param AD_ToolBarButton_UU AD_ToolBarButton_UU	  */
+		@param AD_ToolBarButton_UU AD_ToolBarButton_UU
+	*/
 	public void setAD_ToolBarButton_UU (String AD_ToolBarButton_UU)
 	{
 		set_Value (COLUMNNAME_AD_ToolBarButton_UU, AD_ToolBarButton_UU);
@@ -239,13 +305,14 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 
 	/** Get AD_ToolBarButton_UU.
 		@return AD_ToolBarButton_UU	  */
-	public String getAD_ToolBarButton_UU () 
+	public String getAD_ToolBarButton_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_ToolBarButton_UU);
 	}
 
 	/** Set Component Name.
-		@param ComponentName Component Name	  */
+		@param ComponentName Component Name
+	*/
 	public void setComponentName (String ComponentName)
 	{
 		set_Value (COLUMNNAME_ComponentName, ComponentName);
@@ -253,15 +320,14 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 
 	/** Get Component Name.
 		@return Component Name	  */
-	public String getComponentName () 
+	public String getComponentName()
 	{
 		return (String)get_Value(COLUMNNAME_ComponentName);
 	}
 
 	/** Set Display Logic.
-		@param DisplayLogic 
-		If the Field is displayed, the result determines if the field is actually displayed
-	  */
+		@param DisplayLogic If the Field is displayed, the result determines if the field is actually displayed
+	*/
 	public void setDisplayLogic (String DisplayLogic)
 	{
 		set_Value (COLUMNNAME_DisplayLogic, DisplayLogic);
@@ -270,7 +336,7 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Display Logic.
 		@return If the Field is displayed, the result determines if the field is actually displayed
 	  */
-	public String getDisplayLogic () 
+	public String getDisplayLogic()
 	{
 		return (String)get_Value(COLUMNNAME_DisplayLogic);
 	}
@@ -278,9 +344,8 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** EntityType AD_Reference_ID=389 */
 	public static final int ENTITYTYPE_AD_Reference_ID=389;
 	/** Set Entity Type.
-		@param EntityType 
-		Dictionary Entity Type; Determines ownership and synchronization
-	  */
+		@param EntityType Dictionary Entity Type; Determines ownership and synchronization
+	*/
 	public void setEntityType (String EntityType)
 	{
 
@@ -290,13 +355,14 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Entity Type.
 		@return Dictionary Entity Type; Determines ownership and synchronization
 	  */
-	public String getEntityType () 
+	public String getEntityType()
 	{
 		return (String)get_Value(COLUMNNAME_EntityType);
 	}
 
 	/** Set Add Separator.
-		@param IsAddSeparator Add Separator	  */
+		@param IsAddSeparator Add Separator
+	*/
 	public void setIsAddSeparator (boolean IsAddSeparator)
 	{
 		set_Value (COLUMNNAME_IsAddSeparator, Boolean.valueOf(IsAddSeparator));
@@ -304,22 +370,21 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 
 	/** Get Add Separator.
 		@return Add Separator	  */
-	public boolean isAddSeparator () 
+	public boolean isAddSeparator()
 	{
 		Object oo = get_Value(COLUMNNAME_IsAddSeparator);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Advanced Button.
-		@param IsAdvancedButton 
-		This Button contains advanced Functionality
-	  */
+		@param IsAdvancedButton This Button contains advanced Functionality
+	*/
 	public void setIsAdvancedButton (boolean IsAdvancedButton)
 	{
 		set_Value (COLUMNNAME_IsAdvancedButton, Boolean.valueOf(IsAdvancedButton));
@@ -328,22 +393,21 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Advanced Button.
 		@return This Button contains advanced Functionality
 	  */
-	public boolean isAdvancedButton () 
+	public boolean isAdvancedButton()
 	{
 		Object oo = get_Value(COLUMNNAME_IsAdvancedButton);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Customization.
-		@param IsCustomization 
-		The change is a customization of the data dictionary and can be applied after Migration
-	  */
+		@param IsCustomization The change is a customization of the data dictionary and can be applied after Migration
+	*/
 	public void setIsCustomization (boolean IsCustomization)
 	{
 		set_Value (COLUMNNAME_IsCustomization, Boolean.valueOf(IsCustomization));
@@ -352,20 +416,21 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Customization.
 		@return The change is a customization of the data dictionary and can be applied after Migration
 	  */
-	public boolean isCustomization () 
+	public boolean isCustomization()
 	{
 		Object oo = get_Value(COLUMNNAME_IsCustomization);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Group in show more.
-		@param IsShowMore Group in show more	  */
+		@param IsShowMore Group in show more
+	*/
 	public void setIsShowMore (boolean IsShowMore)
 	{
 		set_Value (COLUMNNAME_IsShowMore, Boolean.valueOf(IsShowMore));
@@ -373,31 +438,30 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 
 	/** Get Group in show more.
 		@return Group in show more	  */
-	public boolean isShowMore () 
+	public boolean isShowMore()
 	{
 		Object oo = get_Value(COLUMNNAME_IsShowMore);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
-	/** Set KeyCode.
-		@param KeyStroke_KeyCode 
-		KeyCode for shortcuts
-	  */
+	/** Set Key Code.
+		@param KeyStroke_KeyCode Key Code for shortcuts
+	*/
 	public void setKeyStroke_KeyCode (int KeyStroke_KeyCode)
 	{
 		set_Value (COLUMNNAME_KeyStroke_KeyCode, Integer.valueOf(KeyStroke_KeyCode));
 	}
 
-	/** Get KeyCode.
-		@return KeyCode for shortcuts
+	/** Get Key Code.
+		@return Key Code for shortcuts
 	  */
-	public int getKeyStroke_KeyCode () 
+	public int getKeyStroke_KeyCode()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_KeyStroke_KeyCode);
 		if (ii == null)
@@ -406,9 +470,8 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	}
 
 	/** Set Keystroke Modifiers.
-		@param KeyStroke_Modifiers 
-		Keystroke Modifiers for shortcuts
-	  */
+		@param KeyStroke_Modifiers Keystroke Modifiers for shortcuts
+	*/
 	public void setKeyStroke_Modifiers (int KeyStroke_Modifiers)
 	{
 		set_Value (COLUMNNAME_KeyStroke_Modifiers, Integer.valueOf(KeyStroke_Modifiers));
@@ -417,7 +480,7 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Keystroke Modifiers.
 		@return Keystroke Modifiers for shortcuts
 	  */
-	public int getKeyStroke_Modifiers () 
+	public int getKeyStroke_Modifiers()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_KeyStroke_Modifiers);
 		if (ii == null)
@@ -426,9 +489,8 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -437,7 +499,7 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -445,15 +507,45 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
-	/** Set Sequence.
-		@param SeqNo 
-		Method of ordering records; lowest number comes first
+	/** Set Pressed Logic.
+		@param PressedLogic Pressed Logic
+	*/
+	public void setPressedLogic (String PressedLogic)
+	{
+		set_Value (COLUMNNAME_PressedLogic, PressedLogic);
+	}
+
+	/** Get Pressed Logic.
+		@return Pressed Logic	  */
+	public String getPressedLogic()
+	{
+		return (String)get_Value(COLUMNNAME_PressedLogic);
+	}
+
+	/** Set Read Only Logic.
+		@param ReadOnlyLogic Logic to determine if field is read only (applies only when field is read-write)
+	*/
+	public void setReadOnlyLogic (String ReadOnlyLogic)
+	{
+		set_Value (COLUMNNAME_ReadOnlyLogic, ReadOnlyLogic);
+	}
+
+	/** Get Read Only Logic.
+		@return Logic to determine if field is read only (applies only when field is read-write)
 	  */
+	public String getReadOnlyLogic()
+	{
+		return (String)get_Value(COLUMNNAME_ReadOnlyLogic);
+	}
+
+	/** Set Sequence.
+		@param SeqNo Method of ordering records; lowest number comes first
+	*/
 	public void setSeqNo (int SeqNo)
 	{
 		set_Value (COLUMNNAME_SeqNo, Integer.valueOf(SeqNo));
@@ -462,7 +554,7 @@ public class X_AD_ToolBarButton extends PO implements I_AD_ToolBarButton, I_Pers
 	/** Get Sequence.
 		@return Method of ordering records; lowest number comes first
 	  */
-	public int getSeqNo () 
+	public int getSeqNo()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_SeqNo);
 		if (ii == null)

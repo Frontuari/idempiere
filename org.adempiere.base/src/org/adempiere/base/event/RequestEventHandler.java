@@ -46,7 +46,7 @@ import org.osgi.service.cm.ManagedService;
 import org.osgi.service.event.Event;
 
 /**
- * Request event handler
+ * Event handler for R_Request table and REQUEST_SEND_EMAIL event topic.
  * @author Nur Yasmin
  *
  */
@@ -100,6 +100,12 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 		registerTableEvent(IEventTopics.PO_AFTER_CHANGE, I_R_Request.Table_Name);
 	}
 	
+	/**
+	 * Handle before update of R_Request record
+	 * @param r
+	 * @param newRecord
+	 * @return error message or null
+	 */
 	private String beforeSaveRequest(MRequest r, boolean newRecord)
 	{
 		//	New
@@ -125,7 +131,7 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 		if (checkChange(r, ra, "SalesRep_ID"))
 		{
 			//	Sender
-			int AD_User_ID = Env.getContextAsInt(r.getCtx(), "#AD_User_ID");
+			int AD_User_ID = Env.getContextAsInt(r.getCtx(), Env.AD_USER_ID);
 			if (AD_User_ID == 0)
 				AD_User_ID = r.getUpdatedBy();
 			//	Old
@@ -135,7 +141,7 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 				oldSalesRep_ID = ((Integer)oo).intValue();
 			if (oldSalesRep_ID != 0)
 			{
-				//  RequestActionTransfer - Request {0} was transfered by {1} from {2} to {3}
+				//  RequestActionTransfer - Request {0} was transferred by {1} from {2} to {3}
 				Object[] args = new Object[] {r.getDocumentNo(), 
 					MUser.getNameOfUser(AD_User_ID), 
 					MUser.getNameOfUser(oldSalesRep_ID),
@@ -167,8 +173,6 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 		checkChange(r, ra, "C_Payment_ID");
 		checkChange(r, ra, "M_InOut_ID");
 		checkChange(r, ra, "M_RMA_ID");
-	//	checkChange(ra, "C_Campaign_ID");
-	//	checkChange(ra, "RequestAmt");
 		checkChange(r, ra, "IsInvoiced");
 		checkChange(r, ra, "C_Activity_ID");
 		checkChange(r, ra, "DateNextAction");
@@ -204,20 +208,22 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 			r.setLastResult(r.getResult());
 			//	Reset
 			r.setConfidentialTypeEntry (r.getConfidentialType());
-			// r.setStartDate(null);  //red1 - bug [ 1743159 ] Requests - Start Date is not retained.
+
 			r.setEndTime(null);
 			r.setR_StandardResponse_ID(0);
 			r.setR_MailText_ID(0);
 			r.setResult(null);
-			// globalqss - these fields must be cleared (waiting to open bug in sf)
-		//	r.setM_ProductSpent_ID(0);
-		//	r.setQtySpent(null);
-		//	r.setQtyInvoiced(null);
 		}
 		
 		return null;
 	}
 	
+	/**
+	 * Handle after save of R_Request record
+	 * @param r
+	 * @param newRecord
+	 * @return error message or null
+	 */
 	private String afterSaveRequest(MRequest r, boolean newRecord)
 	{
 		//	Initial Mail
@@ -228,10 +234,10 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 	}
 	
 	/**
-	 * 	Check for changes
+	 * 	Process changes
 	 *	@param ra request action
 	 *	@param columnName column
-	 *	@return true if changes
+	 *	@return true if columnName has changes
 	 */
 	public boolean checkChange (MRequest r, MRequestAction ra, String columnName)
 	{
@@ -333,10 +339,6 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 				if (rs.wasNull())
 					AD_Role_ID = -1;
 				
-				//	Don't send mail to oneself
-		//		if (AD_User_ID == UpdatedBy)
-		//			continue;
-				
 				//	No confidential to externals
 				if (AD_Role_ID == -1 
 					&& (r.getConfidentialTypeEntry().equals(MRequest.CONFIDENTIALTYPE_Internal)
@@ -379,7 +381,7 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 					|| X_AD_User.NOTIFICATIONTYPE_EMailPlusNotice.equals(NotificationType))
 				{
 					RequestSendEMailEventData eventData = new RequestSendEMailEventData(client, from, to, subject, message.toString(), pdf, r.getR_Request_ID());
-					Event event = EventManager.newEvent(IEventTopics.REQUEST_SEND_EMAIL, eventData);
+					Event event = EventManager.newEvent(IEventTopics.REQUEST_SEND_EMAIL, eventData, true);
 					EventManager.getInstance().postEvent(event);
 				}
 				//	Send Note
@@ -405,10 +407,10 @@ public class RequestEventHandler extends AbstractEventHandler implements Managed
 		}
 	}	//	sendNotice
 	
-	/**************************************************************************
-	 * 	Get MailID
+	/**
+	 * 	Get mail trailer text
 	 * 	@param serverAddress server address
-	 *	@return Mail Trailer
+	 *	@return Mail trailer text
 	 */
 	private String getMailTrailer(MRequest r, String serverAddress)
 	{

@@ -366,7 +366,6 @@ public class Scriptlet
 	{
 		if (key != null && key.length() > 0)
 		{
-		//	log.fine( "Scriptlet.setEnvironment " + key, value);
 			if (value == null)
 				m_ctx.remove(key);
 			else
@@ -430,7 +429,7 @@ public class Scriptlet
 
 	/**
 	 *  String Representation incl. Result
-	 *  @return Scipt
+	 *  @return Script
 	 */
 	public String toString()
 	{

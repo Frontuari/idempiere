@@ -27,6 +27,8 @@ import java.util.logging.Level;
 import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MElementValue;
 import org.compiere.model.MPeriod;
+import org.compiere.model.MProcessPara;
+
 import static org.compiere.model.SystemIDs.*;
 import org.compiere.print.MPrintFormat;
 import org.compiere.process.ProcessInfoParameter;
@@ -48,11 +50,12 @@ import org.compiere.util.Msg;
  *
  *  @author victor.perez@e-evolution.com, e-Evolution http://www.e-evolution.com
  * 			<li> FR [ 2520591 ] Support multiples calendar for Org 
- *			@see http://sourceforge.net/tracker2/?func=detail&atid=879335&aid=2520591&group_id=176962
+ *			@see https://sourceforge.net/p/adempiere/feature-requests/631/
  *	@author Armen Rizal, Goodwill Consulting
- *			<li>FR [2857076] User Element 1 and 2 completion - https://sourceforge.net/tracker/?func=detail&aid=2857076&group_id=176962&atid=879335
+ *			<li>FR [2857076] User Element 1 and 2 completion - https://sourceforge.net/p/adempiere/feature-requests/817/
  *   
  */
+@org.adempiere.base.annotation.Process
 public class FinStatement extends SvrProcess
 {
 	/** AcctSchame Parameter			*/
@@ -150,7 +153,7 @@ public class FinStatement extends SvrProcess
 			else if (name.equals("UserElement2_ID"))
 				p_UserElement2_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		//	Mandatory C_AcctSchema_ID, PostingType
 		m_parameterWhere.append("C_AcctSchema_ID=").append(p_C_AcctSchema_ID)

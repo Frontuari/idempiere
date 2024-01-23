@@ -19,6 +19,7 @@ package org.compiere.process;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MYear;
 import org.compiere.util.AdempiereUserError;
 
@@ -28,6 +29,7 @@ import org.compiere.util.AdempiereUserError;
  *  @author Jorg Janke
  *  @version $Id: YearCreatePeriods.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class YearCreatePeriods extends SvrProcess
 {
 	private int	p_C_Year_ID = 0;
@@ -51,7 +53,7 @@ public class YearCreatePeriods extends SvrProcess
 			else if (name.equals("DateFormat"))
 				p_DateFormat = (String) para[i].getParameter();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}			
 		p_C_Year_ID = getRecord_ID();
 	}	//	prepare

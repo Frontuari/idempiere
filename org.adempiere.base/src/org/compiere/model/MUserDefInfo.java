@@ -26,7 +26,9 @@ package org.compiere.model;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.compiere.util.CCache;
@@ -45,8 +47,18 @@ public class MUserDefInfo extends X_AD_UserDef_Info {
 	 */
 	private static final long serialVersionUID = 5611033457579880793L;
 
-	private volatile static List<MUserDefInfo> m_fullList = null;
+	private static final Map<Integer, List<MUserDefInfo>> m_fullMap = new HashMap<Integer, List<MUserDefInfo>>();
 	
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_UserDef_Info_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MUserDefInfo(Properties ctx, String AD_UserDef_Info_UU, String trxName) {
+        super(ctx, AD_UserDef_Info_UU, trxName);
+    }
+
 	/**
 	 * 	Standard constructor.
 	 * 	You must implement this constructor for Adempiere Persistency
@@ -80,17 +92,25 @@ public class MUserDefInfo extends X_AD_UserDef_Info {
 	 */
 	private static MUserDefInfo[] getAll (Properties ctx, int infowindow_ID )
 	{
-		if (m_fullList == null) {
-			m_fullList = new Query(ctx, MUserDefInfo.Table_Name, "IsActive='Y'", null).list();
+		List<MUserDefInfo> fullList = null;
+		synchronized (m_fullMap) {
+			fullList = m_fullMap.get(Env.getAD_Client_ID(ctx));
+			if (fullList == null) {
+				fullList = new Query(ctx, MUserDefInfo.Table_Name, null, null)
+						.setOnlyActiveRecords(true)
+						.setClient_ID()
+						.list();
+				m_fullMap.put(Env.getAD_Client_ID(ctx), fullList);
+			}
 		}
-		
-		if (m_fullList.size() == 0) {
+				
+		if (fullList.size() == 0) {
 			return null;
 		}
 
 		List<MUserDefInfo> list = new ArrayList<MUserDefInfo>();
 		
-		for (MUserDefInfo udw : m_fullList) {
+		for (MUserDefInfo udw : fullList) {
 			if (udw.getAD_InfoWindow_ID() == infowindow_ID
 				&& udw.getAD_Client_ID() == Env.getAD_Client_ID(ctx)
 				&& (udw.getAD_Language() == null || udw.getAD_Language().equals(Env.getAD_Language(ctx)))
@@ -209,13 +229,17 @@ public class MUserDefInfo extends X_AD_UserDef_Info {
 
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
-		m_fullList = null;
+		synchronized (m_fullMap) {
+			m_fullMap.remove(getAD_Client_ID());
+		}
 		return true;
 	}
 	
 	@Override
 	protected boolean beforeDelete() {
-		m_fullList = null;
+		synchronized (m_fullMap) {
+			m_fullMap.remove(getAD_Client_ID());
+		}
 		return true;
 	}
 

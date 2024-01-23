@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for M_ProductionLine
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_M_ProductionLine 
 {
@@ -44,8 +44,8 @@ public interface I_M_ProductionLine
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +53,12 @@ public interface I_M_ProductionLine
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -265,32 +265,6 @@ public interface I_M_ProductionLine
 	  * The document has been processed
 	  */
 	public boolean isProcessed();
-
-    /** Column name ProductType */
-    public static final String COLUMNNAME_ProductType = "ProductType";
-
-	/** Set Product Type.
-	  * Type of product
-	  */
-	public void setProductType (String ProductType);
-
-	/** Get Product Type.
-	  * Type of product
-	  */
-	public String getProductType();
-
-    /** Column name QtyAvailable */
-    public static final String COLUMNNAME_QtyAvailable = "QtyAvailable";
-
-	/** Set Available Quantity.
-	  * Available Quantity (On Hand - Reserved)
-	  */
-	public void setQtyAvailable (BigDecimal QtyAvailable);
-
-	/** Get Available Quantity.
-	  * Available Quantity (On Hand - Reserved)
-	  */
-	public BigDecimal getQtyAvailable();
 
     /** Column name QtyUsed */
     public static final String COLUMNNAME_QtyUsed = "QtyUsed";

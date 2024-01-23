@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 /**
  * 	Project Phase Task Model
@@ -31,9 +32,21 @@ import org.compiere.util.Env;
 public class MProjectTask extends X_C_ProjectTask
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 6714520156233475723L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_ProjectTask_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MProjectTask(Properties ctx, String C_ProjectTask_UU, String trxName) {
+        super(ctx, C_ProjectTask_UU, trxName);
+		if (Util.isEmpty(C_ProjectTask_UU))
+			setInitialDefaults();
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -43,17 +56,28 @@ public class MProjectTask extends X_C_ProjectTask
 	 */
 	public MProjectTask (Properties ctx, int C_ProjectTask_ID, String trxName)
 	{
-		super (ctx, C_ProjectTask_ID, trxName);
-		if (C_ProjectTask_ID == 0)
-		{
-		//	setC_ProjectTask_ID (0);	//	PK
-		//	setC_ProjectPhase_ID (0);	//	Parent
-		//	setC_Task_ID (0);			//	FK
-			setSeqNo (0);
-		//	setName (null);
-			setQty (Env.ZERO);
-		}
+		this (ctx, C_ProjectTask_ID, trxName, (String[]) null);
 	}	//	MProjectTask
+
+	/**
+	 * @param ctx
+	 * @param C_ProjectTask_ID
+	 * @param trxName
+	 * @param virtualColumns
+	 */
+	public MProjectTask(Properties ctx, int C_ProjectTask_ID, String trxName, String... virtualColumns) {
+		super(ctx, C_ProjectTask_ID, trxName, virtualColumns);
+		if (C_ProjectTask_ID == 0)
+			setInitialDefaults();
+	}
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setSeqNo (0);
+		setQty (Env.ZERO);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -96,16 +120,15 @@ public class MProjectTask extends X_C_ProjectTask
 		setQty(task.getStandardQty());
 	}	//	MProjectTask
 	
-	/**************************************************************************
+	/**
 	 * 	Get Project Lines
-	 * 	BF 3067850 - monhate
-	 *	@return Array of lines
+	 *	@return Array of project lines
 	 */	public MProjectLine[] getLines()
 	{
 		final String whereClause = "C_ProjectPhase_ID=? and C_ProjectTask_ID=? ";
 		List <MProjectLine> list = new Query(getCtx(), I_C_ProjectLine.Table_Name, whereClause, get_TrxName())
 			.setParameters(getC_ProjectPhase_ID(), getC_ProjectTask_ID())
-			.setOrderBy("Line")
+			.setOrderBy("Line,C_ProjectLine_ID")
 			.list();		
 		//
 		MProjectLine[] retValue = new MProjectLine[list.size()];
@@ -114,10 +137,9 @@ public class MProjectTask extends X_C_ProjectTask
 	}
 	 
 	/**
-	 * 	Copy Lines from other Task
-	 * 	BF 3067850 - monhate
-	 *	@param fromTask from Task
-	 *	@return number of lines copied
+	 * 	Copy project lines from other Task
+	 *	@param fromTask Project Task to copy from
+	 *	@return number of project lines copied
 	 */
 	public int copyLinesFrom (MProjectTask fromTask)
 	{
@@ -145,16 +167,21 @@ public class MProjectTask extends X_C_ProjectTask
 
 	private int C_Project_ID = 0;
 
+	/**
+	 * @param reQuery true to re-query from DB
+	 * @return C_Project_ID
+	 */
 	private int getC_Project_ID(boolean reQuery) {
-			if (C_Project_ID==0 || reQuery)
-				C_Project_ID = getC_ProjectPhase().getC_Project_ID();
-			return C_Project_ID;
+		if (C_Project_ID==0 || reQuery)
+			C_Project_ID = getC_ProjectPhase().getC_Project_ID();
+		return C_Project_ID;
 	}
 
 	/**
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder ("MProjectTask[");

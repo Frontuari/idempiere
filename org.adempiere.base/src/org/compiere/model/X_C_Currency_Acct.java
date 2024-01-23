@@ -21,21 +21,55 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for C_Currency_Acct
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_Currency_Acct extends PO implements I_C_Currency_Acct, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_Currency_Acct")
+public class X_C_Currency_Acct extends PO implements I_C_Currency_Acct, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_Currency_Acct (Properties ctx, int C_Currency_Acct_ID, String trxName)
     {
       super (ctx, C_Currency_Acct_ID, trxName);
       /** if (C_Currency_Acct_ID == 0)
+        {
+			setC_AcctSchema_ID (0);
+			setC_Currency_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_Currency_Acct (Properties ctx, int C_Currency_Acct_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_Currency_Acct_ID, trxName, virtualColumns);
+      /** if (C_Currency_Acct_ID == 0)
+        {
+			setC_AcctSchema_ID (0);
+			setC_Currency_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_Currency_Acct (Properties ctx, String C_Currency_Acct_UU, String trxName)
+    {
+      super (ctx, C_Currency_Acct_UU, trxName);
+      /** if (C_Currency_Acct_UU == null)
+        {
+			setC_AcctSchema_ID (0);
+			setC_Currency_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_Currency_Acct (Properties ctx, String C_Currency_Acct_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_Currency_Acct_UU, trxName, virtualColumns);
+      /** if (C_Currency_Acct_UU == null)
         {
 			setC_AcctSchema_ID (0);
 			setC_Currency_ID (0);
@@ -49,7 +83,7 @@ public class X_C_Currency_Acct extends PO implements I_C_Currency_Acct, I_Persis
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -66,31 +100,31 @@ public class X_C_Currency_Acct extends PO implements I_C_Currency_Acct, I_Persis
     public String toString()
     {
       StringBuilder sb = new StringBuilder ("X_C_Currency_Acct[")
-        .append(get_ID()).append("]");
+        .append(get_UUID()).append("]");
       return sb.toString();
     }
 
 	public org.compiere.model.I_C_AcctSchema getC_AcctSchema() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_AcctSchema)MTable.get(getCtx(), org.compiere.model.I_C_AcctSchema.Table_Name)
-			.getPO(getC_AcctSchema_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_AcctSchema)MTable.get(getCtx(), org.compiere.model.I_C_AcctSchema.Table_ID)
+			.getPO(getC_AcctSchema_ID(), get_TrxName());
+	}
 
 	/** Set Accounting Schema.
-		@param C_AcctSchema_ID 
-		Rules for accounting
-	  */
+		@param C_AcctSchema_ID Rules for accounting
+	*/
 	public void setC_AcctSchema_ID (int C_AcctSchema_ID)
 	{
-		if (C_AcctSchema_ID < 1) 
+		if (C_AcctSchema_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_AcctSchema_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_AcctSchema_ID, Integer.valueOf(C_AcctSchema_ID));
 	}
 
 	/** Get Accounting Schema.
 		@return Rules for accounting
 	  */
-	public int getC_AcctSchema_ID () 
+	public int getC_AcctSchema_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_AcctSchema_ID);
 		if (ii == null)
@@ -99,7 +133,8 @@ public class X_C_Currency_Acct extends PO implements I_C_Currency_Acct, I_Persis
 	}
 
 	/** Set C_Currency_Acct_UU.
-		@param C_Currency_Acct_UU C_Currency_Acct_UU	  */
+		@param C_Currency_Acct_UU C_Currency_Acct_UU
+	*/
 	public void setC_Currency_Acct_UU (String C_Currency_Acct_UU)
 	{
 		set_Value (COLUMNNAME_C_Currency_Acct_UU, C_Currency_Acct_UU);
@@ -107,32 +142,32 @@ public class X_C_Currency_Acct extends PO implements I_C_Currency_Acct, I_Persis
 
 	/** Get C_Currency_Acct_UU.
 		@return C_Currency_Acct_UU	  */
-	public String getC_Currency_Acct_UU () 
+	public String getC_Currency_Acct_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_Currency_Acct_UU);
 	}
 
 	public org.compiere.model.I_C_Currency getC_Currency() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_Currency)MTable.get(getCtx(), org.compiere.model.I_C_Currency.Table_Name)
-			.getPO(getC_Currency_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_Currency)MTable.get(getCtx(), org.compiere.model.I_C_Currency.Table_ID)
+			.getPO(getC_Currency_ID(), get_TrxName());
+	}
 
 	/** Set Currency.
-		@param C_Currency_ID 
-		The Currency for this record
-	  */
+		@param C_Currency_ID The Currency for this record
+	*/
 	public void setC_Currency_ID (int C_Currency_ID)
 	{
-		if (C_Currency_ID < 1) 
+		if (C_Currency_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_Currency_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_Currency_ID, Integer.valueOf(C_Currency_ID));
 	}
 
 	/** Get Currency.
 		@return The Currency for this record
 	  */
-	public int getC_Currency_ID () 
+	public int getC_Currency_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_Currency_ID);
 		if (ii == null)

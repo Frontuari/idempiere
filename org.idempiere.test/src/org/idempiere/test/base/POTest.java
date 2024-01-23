@@ -32,16 +32,29 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Properties;
 
 import org.adempiere.exceptions.DBException;
+import org.compiere.dbPort.Convert;
+import org.compiere.model.I_AD_UserPreference;
+import org.compiere.model.MAcctSchema;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MClient;
+import org.compiere.model.MMessage;
+import org.compiere.model.MProduct;
+import org.compiere.model.MProductCategory;
+import org.compiere.model.MProductCategoryAcct;
 import org.compiere.model.MTest;
 import org.compiere.model.POInfo;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Ini;
 import org.compiere.util.Trx;
 import org.idempiere.test.AbstractTestCase;
+import org.idempiere.test.DictionaryIDs;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -77,8 +90,7 @@ public class POTest extends AbstractTestCase
 
 		public MyTestPO(Properties ctx, boolean failOnSave, String trxName)
 		{
-			super(ctx, "Test_"+System.currentTimeMillis(), 10);
-			this.set_TrxName(trxName);
+			super(ctx, "Test_"+System.currentTimeMillis(), 10, trxName);
 			this.setDescription(""+getClass());
 			this.failOnSave = failOnSave;
 		}
@@ -127,8 +139,7 @@ public class POTest extends AbstractTestCase
 				"test",
 		};
 		// Create the test PO and save
-		MTest testPO = new MTest(Env.getCtx(), getClass().getName(), 1);
-		testPO.set_TrxName(getTrxName());
+		MTest testPO = new MTest(Env.getCtx(), getClass().getName(), 1, getTrxName());
 
 		for (String str : testStrings)
 		{
@@ -173,8 +184,7 @@ public class POTest extends AbstractTestCase
 		String bigString = sb.toString();
 		//
 		// Create the test PO:
-		MTest testPO = new MTest(Env.getCtx(), getClass().getName(), 1);
-		testPO.set_TrxName(getTrxName());
+		MTest testPO = new MTest(Env.getCtx(), getClass().getName(), 1, getTrxName());
 		//
 		// Getting Max Length:
 		POInfo info = POInfo.getPOInfo(Env.getCtx(), MTest.Table_ID);
@@ -227,8 +237,10 @@ public class POTest extends AbstractTestCase
 		}
 		//
 		// Test for old objects
+		MyTestPO test = null;
+		try
 		{
-			MyTestPO test = new MyTestPO(Env.getCtx(), false, null);
+			test = new MyTestPO(Env.getCtx(), false, null);
 			assertTrue(test.save(), "Object *should* be saved -- "+test);
 			//
 			MyTestPO test2 = new MyTestPO(Env.getCtx(), test.get_ID(), null);
@@ -240,12 +252,25 @@ public class POTest extends AbstractTestCase
 			String name = MyTestPO.getName(test2.get_ID(), null);
 			assertEquals(test.getName(), name, "Object should not be modified(2) -- id="+test2);
 		}
+		finally
+		{
+			// cleanup
+			if (test != null)
+			{
+				if (test.getDependent_ID() > 0)
+				{
+					MyTestPO testDependent = new MyTestPO(Env.getCtx(), test.getDependent_ID(), null);
+					testDependent.deleteEx(true);
+				}
+				test.deleteEx(true);
+			}
+		}
 	}
 
 	/**
 	 * If one object fails on after save we should not revert all transaction.
 	 * BF [ 2849122 ] PO.AfterSave is not rollback on error
-	 * https://sourceforge.net/tracker/index.php?func=detail&aid=2849122&group_id=176962&atid=879332#
+	 * https://sourceforge.net/p/adempiere/bugs/2073/
 	 */
 	@Test
 	public void testAfterSaveError_BF2849122() 
@@ -318,5 +343,214 @@ public class POTest extends AbstractTestCase
 		} finally {
 			trx3.close();
 		}
+	}
+	
+	@Test
+	public void testOptimisticLocking() 
+	{
+		int joeBlock = 118;
+		MBPartner bp1 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		MBPartner bp2 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		
+		//normal update without optimistic locking
+		bp1.setDescription("bp1");
+		boolean updated = bp1.save();
+		assertTrue(updated);
+		
+		bp2.setDescription("bp2");
+		updated = bp2.save();
+		assertTrue(updated);
+		
+		//last update ok, description=bp2
+		bp1 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		bp2 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		assertEquals("bp2", bp1.getDescription());
+		assertEquals("bp2", bp2.getDescription());
+		
+		//test update with default optimistic locking using updated timestamp
+		bp1.set_UseOptimisticLocking(true);
+		bp1.setDescription("bp1");
+		if (DB.isOracle()) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+			}
+		}
+		updated = bp1.save();
+		assertTrue(updated);
+		
+		bp2.set_UseOptimisticLocking(true);
+		bp2.setDescription("bp2.1");
+		updated = bp2.save();
+		assertFalse(updated);
+		
+		//last update fail, description=bp1
+		bp1 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		bp2 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		assertEquals("bp1", bp1.getDescription());
+		assertEquals("bp1", bp2.getDescription());
+		
+		//test update with custom optimistic locking columns
+		bp1.set_UseOptimisticLocking(true);
+		bp1.setDescription("bp1.1");
+		updated = bp1.save();
+		assertTrue(updated);
+		
+		bp2.set_UseOptimisticLocking(true);
+		bp2.set_OptimisticLockingColumns(new String[] {"Name"});
+		bp2.setDescription("bp2");
+		updated = bp2.save();
+		assertTrue(updated);
+		
+		//last update ok, description=bp2
+		bp1 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		bp2 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		assertEquals("bp2", bp1.getDescription());
+		assertEquals("bp2", bp2.getDescription());
+		
+		//test update with custom multiple column optimistic locking
+		bp1.set_UseOptimisticLocking(true);
+		bp1.setDescription("bp1");
+		updated = bp1.save();
+		assertTrue(updated);
+		
+		bp2.set_UseOptimisticLocking(true);
+		bp2.set_OptimisticLockingColumns(new String[] {"Name","Description"});
+		bp2.setDescription("bp2.1");
+		updated = bp2.save();
+		assertFalse(updated);
+		
+		//last update fail, description=bp1
+		bp1 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		bp2 = new MBPartner(Env.getCtx(), joeBlock, getTrxName());
+		assertEquals("bp1", bp1.getDescription());
+		assertEquals("bp1", bp2.getDescription());
+		
+		MMessage msg1 = new MMessage(Env.getCtx(), 0, getTrxName());
+		msg1.setValue("msg1 test");
+		msg1.setMsgText("msg1 test");
+		msg1.setMsgType(MMessage.MSGTYPE_Information);
+		msg1.saveEx();
+		
+		//test normal delete
+		updated = msg1.delete(true);
+		assertTrue(updated);
+		
+		msg1 = new MMessage(Env.getCtx(), 0, getTrxName());
+		msg1.setValue("msg1 test");
+		msg1.setMsgText("msg1 test");
+		msg1.setMsgType(MMessage.MSGTYPE_Information);
+		msg1.saveEx();
+		
+		//test delete with default optimistic locking
+		MMessage msg2 = new MMessage(Env.getCtx(), msg1.getAD_Message_ID(), getTrxName());				
+		msg1.setMsgText("msg 1.1 test");
+		if (DB.isOracle()) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+			}
+		}
+		msg1.saveEx();
+		
+		msg2.set_UseOptimisticLocking(true);
+		updated = msg2.delete(true);
+		assertFalse(updated);
+		
+		//test delete with custom optimistic locking columns
+		msg2 = new MMessage(Env.getCtx(), msg1.getAD_Message_ID(), getTrxName());
+		assertEquals(msg1.getMsgText(), msg2.getMsgText());		
+		msg1.setMsgText("msg1 test");
+		msg1.saveEx();
+		msg2.set_UseOptimisticLocking(true);
+		msg2.set_OptimisticLockingColumns(new String[] {"Value"});
+		updated = msg2.delete(true);
+		assertTrue(updated);
+		
+		//test delete with multiple custom optimistic locking columns
+		msg1 = new MMessage(Env.getCtx(), 0, getTrxName());
+		msg1.setValue("msg1 test");
+		msg1.setMsgText("msg1 test");
+		msg1.setMsgType(MMessage.MSGTYPE_Information);
+		msg1.saveEx();
+		msg2 = new MMessage(Env.getCtx(), msg1.getAD_Message_ID(), getTrxName());
+		msg1.setMsgText("msg 1.1 test");
+		msg1.saveEx();
+		msg2.set_UseOptimisticLocking(true);
+		msg2.set_OptimisticLockingColumns(new String[] {"Value", "MsgText"});
+		updated = msg2.delete(true);
+		assertFalse(updated);
+		
+		msg2 = new MMessage(Env.getCtx(), msg1.getAD_Message_ID(), getTrxName());
+		assertEquals(msg1.getMsgText(), msg2.getMsgText());
+	}
+
+	@Test
+	public void testVirtualColumnLoad() {
+		MTest testPo = new MTest(Env.getCtx(), getClass().getName(), 1, getTrxName());
+		testPo.save();
+
+		// asynchronous (default) virtual column loading
+		assertTrue(null == testPo.get_ValueOld(MTest.COLUMNNAME_TestVirtualQty));
+		BigDecimal expected = new BigDecimal("123.45");
+		assertEquals(expected, testPo.getTestVirtualQty().setScale(2, RoundingMode.HALF_UP), "Wrong value returned");
+
+		// synchronous virtual column loading
+		testPo = new MTest(Env.getCtx(), testPo.get_ID(), getTrxName(), MTest.COLUMNNAME_TestVirtualQty);
+		assertTrue(null != testPo.get_ValueOld(MTest.COLUMNNAME_TestVirtualQty));
+		assertEquals(expected, testPo.getTestVirtualQty().setScale(2, RoundingMode.HALF_UP), "Wrong value returned");
+	}
+
+	@Test
+	public void testLogMigrationScript() {
+		MClient client = MClient.get(Env.getCtx());
+		MAcctSchema as = client.getAcctSchema();
+		
+		assertFalse(Env.isLogMigrationScript(MProduct.Table_Name), "Unexpected Log Migration Script default for MProduct");
+		Env.getCtx().setProperty(Ini.P_LOGMIGRATIONSCRIPT, "Y");
+		Env.setContext(Env.getCtx(), I_AD_UserPreference.COLUMNNAME_MigrationScriptComment, "testLogMigrationScript");
+		assertTrue(Env.isLogMigrationScript(MProduct.Table_Name), "Unexpected Log Migration Script Y/N value for MProduct");
+		String fileName = Convert.getMigrationScriptFileName("testLogMigrationScript");
+		String folderPg = Convert.getMigrationScriptFolder("postgresql");
+		String folderOr = Convert.getMigrationScriptFolder("oracle");
+		
+		MProductCategory lotLevel = new MProductCategory(Env.getCtx(), 0, null);
+		lotLevel.setName("testLogMigrationScript");
+		lotLevel.saveEx();
+		MProduct product = null;
+		try {
+			MProductCategoryAcct lotLevelAcct = MProductCategoryAcct.get(lotLevel.get_ID(), as.get_ID());
+			lotLevelAcct = new MProductCategoryAcct(Env.getCtx(), lotLevelAcct);
+			lotLevelAcct.setCostingLevel(MAcctSchema.COSTINGLEVEL_BatchLot);
+			lotLevelAcct.saveEx();
+			
+			product = new MProduct(Env.getCtx(), 0, null);
+			product.setM_Product_Category_ID(lotLevel.get_ID());
+			product.setName("testLogMigrationScript");
+			product.setProductType(MProduct.PRODUCTTYPE_Item);
+			product.setIsStocked(true);
+			product.setIsSold(true);
+			product.setIsPurchased(true);
+			product.setC_UOM_ID(DictionaryIDs.C_UOM.EACH.id);
+			product.setC_TaxCategory_ID(DictionaryIDs.C_TaxCategory.STANDARD.id);
+			product.setM_AttributeSet_ID(DictionaryIDs.M_AttributeSet.FERTILIZER_LOT.id);
+			product.saveEx();
+		} finally {
+			rollback();
+			
+			if (product != null) {
+				product.set_TrxName(null);
+				product.deleteEx(true);
+			}
+			
+			lotLevel.deleteEx(true);
+		}
+		
+		File file = new File(folderPg + fileName);
+		assertTrue(file.exists(), "Not found: " + folderPg + fileName);
+		file.delete();
+		file = new File(folderOr + fileName);
+		assertTrue(file.exists(), "Not found: " + folderOr + fileName);
+		file.delete();
 	}
 }

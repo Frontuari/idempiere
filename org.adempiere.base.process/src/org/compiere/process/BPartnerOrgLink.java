@@ -23,6 +23,7 @@ import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MLocator;
 import org.compiere.model.MOrg;
 import org.compiere.model.MOrgInfo;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRole;
 import org.compiere.model.MRoleOrgAccess;
 import org.compiere.model.MWarehouse;
@@ -36,6 +37,7 @@ import org.compiere.util.Msg;
  *  @author Jorg Janke
  *  @version $Id: BPartnerOrgLink.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class BPartnerOrgLink extends SvrProcess
 {
 	/**	Existing Org			*/
@@ -66,7 +68,7 @@ public class BPartnerOrgLink extends SvrProcess
 			else if (name.equals("AD_Role_ID"))
 				p_AD_Role_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_C_BPartner_ID = getRecord_ID();
 	}	//	prepare

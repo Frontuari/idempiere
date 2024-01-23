@@ -483,6 +483,9 @@ public class PackInHandler extends DefaultHandler {
 				if (!entry.startElement)
 				{
 					Element e = entry.element;
+					if (e.unresolved == null || e.unresolved.length() == 0)
+						continue;
+					
 					StringBuilder s = new StringBuilder(e.qName);
 					s.append(" [");
 					Set<String> keys = e.properties.keySet();
@@ -498,8 +501,7 @@ public class PackInHandler extends DefaultHandler {
 						i++;
 					}
 					s.append("]");
-					if (e.unresolved != null && e.unresolved.length() > 0)
-						s.append(" unresolved ").append(e.unresolved);
+					s.append(" unresolved ").append(e.unresolved);
 					log.warning(s.toString());
 					packIn.getNotifier().addFailureLine(s.toString());
 				}
@@ -521,9 +523,12 @@ public class PackInHandler extends DefaultHandler {
     	if (!isUpdateRoleAccess)
     		return;
 
-    	List<MRole> roles = new Query(m_ctx.ctx, MRole.Table_Name, "IsManual='N'", m_ctx.trx.getTrxName())
+    	int AD_Client_ID=Env.getAD_Client_ID(Env.getCtx());
+    	
+    	List<MRole> roles = new Query(m_ctx.ctx, MRole.Table_Name, "IsManual='N' AND (?=0 OR AD_Client_ID=?)", m_ctx.trx.getTrxName())
 			.setOnlyActiveRecords(true)
 			.setOrderBy("AD_Client_ID, Name")
+			.setParameters(AD_Client_ID, AD_Client_ID)
 			.list();
     	for (MRole role : roles) {
         	role.updateAccessRecords(false);

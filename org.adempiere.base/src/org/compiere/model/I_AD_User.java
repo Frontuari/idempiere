@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for AD_User
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_AD_User 
 {
@@ -44,8 +44,8 @@ public interface I_AD_User
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -66,12 +66,12 @@ public interface I_AD_User
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -119,6 +119,15 @@ public interface I_AD_User
 	/** Get Answer	  */
 	public String getAnswer();
 
+    /** Column name AuthenticationType */
+    public static final String COLUMNNAME_AuthenticationType = "AuthenticationType";
+
+	/** Set Authentication Type	  */
+	public void setAuthenticationType (String AuthenticationType);
+
+	/** Get Authentication Type	  */
+	public String getAuthenticationType();
+
     /** Column name Birthday */
     public static final String COLUMNNAME_Birthday = "Birthday";
 
@@ -159,12 +168,12 @@ public interface I_AD_User
     /** Column name C_BPartner_ID */
     public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
 
-	/** Set Business Partner .
+	/** Set Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public void setC_BPartner_ID (int C_BPartner_ID);
 
-	/** Get Business Partner .
+	/** Get Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public int getC_BPartner_ID();
@@ -550,6 +559,19 @@ public interface I_AD_User
 
 	/** Get Support User	  */
 	public boolean isSupportUser();
+
+    /** Column name IsVendorLead */
+    public static final String COLUMNNAME_IsVendorLead = "IsVendorLead";
+
+	/** Set Vendor Lead.
+	  * This contact is a vendor lead
+	  */
+	public void setIsVendorLead (boolean IsVendorLead);
+
+	/** Get Vendor Lead.
+	  * This contact is a vendor lead
+	  */
+	public boolean isVendorLead();
 
     /** Column name LastContact */
     public static final String COLUMNNAME_LastContact = "LastContact";

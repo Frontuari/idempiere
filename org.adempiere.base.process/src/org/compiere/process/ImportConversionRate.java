@@ -23,6 +23,7 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import org.compiere.model.MConversionRate;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.X_I_Conversion_Rate;
 import org.compiere.util.DB;
 
@@ -32,6 +33,7 @@ import org.compiere.util.DB;
  *  @author Jorg Janke
  *  @version $Id: ImportConversionRate.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class ImportConversionRate extends SvrProcess
 {
 	
@@ -72,7 +74,7 @@ public class ImportConversionRate extends SvrProcess
 			else if (name.equals("DeleteOldImported"))
 				p_DeleteOldImported = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 
@@ -220,14 +222,7 @@ public class ImportConversionRate extends SvrProcess
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning ("Invalid Rates =" + no);
-	//	sql = new StringBuilder ("UPDATE I_Conversion_Rate i "	//	Rate diff > 10%
-	//		+ "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Inconsistent Rates='||(MultiplyRate - (1/DivideRate)) "
-	//		+ "WHERE ((MultiplyRate - (1/DivideRate)) > (MultiplyRate * .1))"
-	//		+ " AND I_IsImported<>'Y'").append (clientCheck);
-	//	no = DB.executeUpdate(sql.toString(), get_TrxName());
-	//	if (no != 0)
-	//		log.warn ("Inconsistent Rates =" + no);
-		
+	
 		commitEx();
 		/*********************************************************************/
 

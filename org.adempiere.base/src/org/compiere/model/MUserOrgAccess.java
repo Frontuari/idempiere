@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 
 
 /**
@@ -102,6 +103,18 @@ public class MUserOrgAccess extends X_AD_User_OrgAccess
 		super(ctx, rs, trxName);
 	}	//	MUserOrgAccess
 
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_User_OrgAccess_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MUserOrgAccess(Properties ctx, String AD_User_OrgAccess_UU, String trxName) {
+        super(ctx, AD_User_OrgAccess_UU, trxName);
+		if (Util.isEmpty(AD_User_OrgAccess_UU))
+			setInitialDefaults();
+    }
+
 	/**
 	 * 	Persistency Constructor
 	 *	@param ctx context
@@ -113,9 +126,16 @@ public class MUserOrgAccess extends X_AD_User_OrgAccess
 		super(ctx, 0, trxName);
 		if (ignored != 0)
 			throw new IllegalArgumentException("Multi-Key");
-		setIsReadOnly(false);
+		setInitialDefaults();
 	}	//	MUserOrgAccess
 	
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setIsReadOnly(false);
+	}
+
 	/**
 	 * 	Organization Constructor
 	 *	@param org org
@@ -126,18 +146,6 @@ public class MUserOrgAccess extends X_AD_User_OrgAccess
 		this (org.getCtx(), 0, org.get_TrxName());
 		setClientOrg (org);
 		setAD_User_ID (AD_User_ID);
-	}	//	MUserOrgAccess
-
-	/**
-	 * 	User Constructor
-	 *	param user user
-	 *	param AD_Org_ID org
-	 *
-	public MUserOrgAccess (MUser user, int AD_Org_ID)
-	{
-		this (user.getCtx(), 0, user.get_TrxName());
-		setClientOrg (user.getAD_Client_ID(), AD_Org_ID);
-		setAD_User_ID (user.getAD_User_ID());
 	}	//	MUserOrgAccess
 
 	/**

@@ -29,6 +29,7 @@ import org.compiere.util.CCache;
 import org.compiere.util.CLogMgt;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 /**
  *	GL Distribution Model
@@ -40,7 +41,7 @@ import org.compiere.util.Env;
 public class MDistribution extends X_GL_Distribution
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -5964912910470166735L;
 
@@ -190,7 +191,9 @@ public class MDistribution extends X_GL_Distribution
 	 *	@param ctx ignore
 	 *	@param Account_ID id
 	 *	@return array of distributions
+	 *  @deprecated
 	 */
+	@Deprecated
 	public static MDistribution[] get (Properties ctx, int Account_ID)
 	{
 		return get(Account_ID);
@@ -200,11 +203,14 @@ public class MDistribution extends X_GL_Distribution
 	 * 	Get Distributions for Account
 	 *	@param Account_ID id
 	 *	@return array of distributions
+	 *  @deprecated - using the method to get a specific account ID doesn't make sense because of the flag IsAnyAcct
+	 *                use method getAll() instead
 	 */
+	@Deprecated
 	public static MDistribution[] get (int Account_ID)
 	{
 		Properties ctx = Env.getCtx();
-		Integer key = Integer.valueOf(Account_ID);
+		String key = Env.getAD_Client_ID(ctx) + "_" + Account_ID;
 		MDistribution[] retValue = (MDistribution[])s_accounts.get(key);
 		if (retValue != null)
 			return retValue;
@@ -229,10 +235,9 @@ public class MDistribution extends X_GL_Distribution
 	/**
 	 * 	Get All Distributions
 	 *	@param ctx ignore
-	 *	@param Account_ID id
 	 *	@return array of distributions
-	 *  @deprecated
 	 */
+	@Deprecated
 	public static MDistribution[] getAll (Properties ctx)
 	{
 		return getAll();
@@ -240,7 +245,6 @@ public class MDistribution extends X_GL_Distribution
 	
 	/**
 	 * 	Get All Distributions
-	 *	@param Account_ID id
 	 *	@return array of distributions
 	 */
 	public static MDistribution[] getAll ()
@@ -252,11 +256,22 @@ public class MDistribution extends X_GL_Distribution
 	@SuppressWarnings("unused")
 	private static CLogger	s_log	= CLogger.getCLogger (MDistribution.class);
 	/**	Distributions by Account			*/
-	private static CCache<Integer,MDistribution[]> s_accounts 
-		= new CCache<Integer,MDistribution[]>(Table_Name, 100);
-	
-	
-	/**************************************************************************
+	private static CCache<String,MDistribution[]> s_accounts 
+		= new CCache<String,MDistribution[]>(Table_Name, 100);
+		
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param GL_Distribution_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MDistribution(Properties ctx, String GL_Distribution_UU, String trxName) {
+        super(ctx, GL_Distribution_UU, trxName);
+		if (Util.isEmpty(GL_Distribution_UU))
+			setInitialDefaults();
+    }
+
+	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
 	 *	@param GL_Distribution_ID id
@@ -266,28 +281,30 @@ public class MDistribution extends X_GL_Distribution
 	{
 		super (ctx, GL_Distribution_ID, trxName);
 		if (GL_Distribution_ID == 0)
-		{
-		//	setC_AcctSchema_ID (0);
-		//	setName (null);
-			//
-			setAnyAcct (true);	// Y
-			setAnyActivity (true);	// Y
-			setAnyBPartner (true);	// Y
-			setAnyCampaign (true);	// Y
-			setAnyLocFrom (true);	// Y
-			setAnyLocTo (true);	// Y
-			setAnyOrg (true);	// Y
-			setAnyOrgTrx (true);	// Y
-			setAnyProduct (true);	// Y
-			setAnyProject (true);	// Y
-			setAnySalesRegion (true);	// Y
-			setAnyUser1 (true);	// Y
-			setAnyUser2 (true);	// Y
-			//
-			setIsValid (false);	// N
-			setPercentTotal (Env.ZERO);
-		}
+			setInitialDefaults();
 	}	//	MDistribution
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setAnyAcct (true);	// Y
+		setAnyActivity (true);	// Y
+		setAnyBPartner (true);	// Y
+		setAnyCampaign (true);	// Y
+		setAnyLocFrom (true);	// Y
+		setAnyLocTo (true);	// Y
+		setAnyOrg (true);	// Y
+		setAnyOrgTrx (true);	// Y
+		setAnyProduct (true);	// Y
+		setAnyProject (true);	// Y
+		setAnySalesRegion (true);	// Y
+		setAnyUser1 (true);	// Y
+		setAnyUser2 (true);	// Y
+		//
+		setIsValid (false);	// N
+		setPercentTotal (Env.ZERO);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -301,7 +318,7 @@ public class MDistribution extends X_GL_Distribution
 	}	//	MDistribution
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MDistribution(MDistribution copy) 
@@ -310,7 +327,7 @@ public class MDistribution extends X_GL_Distribution
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -320,7 +337,7 @@ public class MDistribution extends X_GL_Distribution
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -337,7 +354,7 @@ public class MDistribution extends X_GL_Distribution
 	
 	/**
 	 * 	Get Lines and calculate total
-	 *	@param reload reload data
+	 *	@param reload true to reload data
 	 *	@return array of lines
 	 */
 	public MDistributionLine[] getLines (boolean reload)
@@ -351,7 +368,7 @@ public class MDistribution extends X_GL_Distribution
 		final String whereClause = I_GL_DistributionLine.COLUMNNAME_GL_Distribution_ID+"=?";
 		List<MDistributionLine> list = new Query(getCtx(),I_GL_DistributionLine.Table_Name,whereClause,get_TrxName())
 		.setParameters(getGL_Distribution_ID())
-		.setOrderBy("Line")
+		.setOrderBy("Line,GL_DistributionLine_ID")
 		.list();
 		//red1 Query  -end-
 		boolean hasNullRemainder = false;
@@ -417,7 +434,7 @@ public class MDistribution extends X_GL_Distribution
 	 * 	Distribute Amount to Lines
 	 * 	@param acct account
 	 *	@param Amt amount
-	 * @param Qty 
+	 *  @param Qty 
 	 *	@param C_Currency_ID currency
 	 */
 	public void distribute (MAccount acct, BigDecimal Amt, BigDecimal Qty, int C_Currency_ID)
@@ -442,7 +459,6 @@ public class MDistribution extends X_GL_Distribution
 			dl.calculateQty (Qty);	
 			total = total.add(dl.getAmt());
 			totalQty = totalQty.add(dl.getQty());
-		//	log.fine("distribute - Line=" + dl.getLine() + " - " + dl.getPercent() + "% " + dl.getAmt() + " - Total=" + total);
 			//	Remainder
 			if (dl.getPercent().compareTo(Env.ZERO) == 0)
 				indexZeroPercent = i;
@@ -460,12 +476,10 @@ public class MDistribution extends X_GL_Distribution
 		{
 			if (indexZeroPercent != -1)
 			{
-			//	log.fine("distribute - Difference=" + difference + " - 0%Line=" + m_lines[indexZeroPercent]); 
 				m_lines[indexZeroPercent].setAmt (difference);
 			}
 			else if (indexBiggest != -1)
 			{
-			//	log.fine("distribute - Difference=" + difference + " - MaxLine=" + m_lines[indexBiggest] + " - " + m_lines[indexBiggest].getAmt()); 
 				m_lines[indexBiggest].setAmt (m_lines[indexBiggest].getAmt().add(difference));
 			}
 			else
@@ -477,12 +491,10 @@ public class MDistribution extends X_GL_Distribution
 		{
 			if (indexZeroPercent != -1)
 			{
-			//	log.fine("distribute - Difference=" + difference + " - 0%Line=" + m_lines[indexZeroPercent]); 
 				m_lines[indexZeroPercent].setQty (differenceQty);
 			}
 			else if (indexBiggest != -1)
 			{
-			//	log.fine("distribute - Difference=" + difference + " - MaxLine=" + m_lines[indexBiggest] + " - " + m_lines[indexBiggest].getAmt()); 
 				m_lines[indexBiggest].setQty (m_lines[indexBiggest].getQty().add(differenceQty));
 			}
 			else
@@ -498,13 +510,13 @@ public class MDistribution extends X_GL_Distribution
 			}
 		}
 	}	//	distribute
-	
-	
+		
 	/**
 	 * 	Before Save
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		//	Reset not selected Any

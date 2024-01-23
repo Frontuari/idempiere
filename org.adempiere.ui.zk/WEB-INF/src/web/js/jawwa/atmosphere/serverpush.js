@@ -1,16 +1,16 @@
 (function() {
   jawwa.atmosphere.startServerPush = function(dtid, timeout) {
-    var dt = zk.Desktop.$(dtid);
+    let dt = zk.Desktop.$(dtid);
     if (dt._serverpush)
       dt._serverpush.stop();
 
     //change to true to enable trace of execution
-    var trace = false;
-    var spush = new jawwa.atmosphere.ServerPush(dt, timeout, trace);
+    let trace = false;
+    let spush = new jawwa.atmosphere.ServerPush(dt, timeout, trace);
     spush.start();
   };
   jawwa.atmosphere.stopServerPush = function(dtid) {
-    var dt = zk.Desktop.$(dtid);
+    let dt = zk.Desktop.$(dtid);
     if (dt._serverpush)
       dt._serverpush.stop();
   };
@@ -35,30 +35,30 @@
       this.timeout = timeout;
       this.ajaxOptions.data = { dtid: this.desktop.id };
       this.ajaxOptions.timeout = this.timeout;
-      this.ajaxOptions.url = zk.ajaxURI("/comet", {au: true,desktop:this.desktop.id,ignoreSession:false}),
+      this.ajaxOptions.url = zk.ajaxURI("/comet", {au: true,desktop:this.desktop.id,ignoreSession:true}),
       this.trace = trace;
-      var me = this;
+      let me = this;
       this.ajaxOptions.error = function(jqxhr, textStatus, errorThrown) {
     	  if (me.trace)
-    		  console.log("error: " + textStatus + " dtid: " + me.desktop.id);
+    		  console.log("error: " + textStatus + " dtid: " + me.desktop.id + " errorThrown: " + errorThrown + " status: " + jqxhr.status);
     	  if (textStatus != "timeout" && textStatus != "abort" && errorThrown != "SessionNotFound") {
-	          if (typeof console == "object") {
-	        	  console.error(textStatus);
-	              console.error(errorThrown);
-	          }
+	          console.error("error: " + textStatus + " errorThrown: " + errorThrown + " status: " + jqxhr.status);
 	          me.failures += 1;
     	  }
       };
-      this.ajaxOptions.success = function(data) {
+      this.ajaxOptions.success = function() {
     	  if (me.trace)
     		  console.log("success" + " dtid: " + me.desktop.id);
           zAu.cmd0.echo(this.desktop);
           me.failures = 0;
       };
       this.ajaxOptions.complete = function() {
-    	  if (me.trace)
+    	  if (me.trace) {
     		  console.log("complete"+ " dtid: " + me.desktop.id);
-    	  if (me._req && me._req.statusText == "SessionNotFound" && me._req.status == 400) {
+    		  if (me._req)
+    		  	console.log(me._req.status + " " + me._req.statusText);
+    	  }
+    	  if (me._req && (me._req.statusText == "SessionNotFound" || me._req.statusText == "DesktopNotFound") && me._req.status == 400) {
     		  ;
     	  } else {
     		  me._schedule();
@@ -66,9 +66,12 @@
       };
     },
     _schedule: function() {
-      if (this.failures < 20) {
+      if (this.failures < 3) {
+		let d = this.delay;
+		if (this._req && (this._req.status == 0 || this._req.status == 400))
+			d = 500;
     	this._req = null;
-        setTimeout(this.proxy(this._send), this.delay);
+        setTimeout(this.proxy(this._send), d);
       } else {
         this.stop();
         jawwa.atmosphere.serverNotAvailable();
@@ -80,7 +83,7 @@
 
       if (this.trace)
     	  console.log("_send"+ " dtid: " + this.desktop.id);
-      var jqxhr = $.ajax(this.ajaxOptions);
+      let jqxhr = $.ajax(this.ajaxOptions);
       this._req = jqxhr;
       zAu.cmd0.echo(this.desktop);
     },

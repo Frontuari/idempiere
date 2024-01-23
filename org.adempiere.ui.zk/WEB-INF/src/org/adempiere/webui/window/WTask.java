@@ -18,7 +18,6 @@ package org.adempiere.webui.window;
 
 import java.util.logging.Level;
 
-import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.panel.IHelpContext;
@@ -43,7 +42,7 @@ import org.zkoss.zul.Html;
 import org.zkoss.zul.South;
 
 /**
- *  Application Task
+ *  Dialog to execute OS Task
  *
  *  @author     Jorg Janke
  *  @version    $Id: ATask.java,v 1.2 2006/07/30 00:51:27 jjanke Exp $
@@ -53,10 +52,9 @@ import org.zkoss.zul.South;
 public class WTask extends Window implements EventListener<Event>, IHelpContext
 {
 	/**
-	 *
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -1235619876719378703L;
-
 
 	/**
 	 *  Start Application Task
@@ -71,9 +69,7 @@ public class WTask extends Window implements EventListener<Event>, IHelpContext
 
 	private Thread taskThread;
 
-
-	/**************************************************************************
-	 *  Full Constructor
+	/**
 	 *  @param title title
 	 *  @param task task
 	 */
@@ -88,10 +84,7 @@ public class WTask extends Window implements EventListener<Event>, IHelpContext
 
 			//
 			m_task = task;
-			if (task.isServerProcess())
-				info.setContent("Executing on Server ...");
-			else
-				info.setContent("Executing locally ...");
+			info.setContent("Executing task ...");
 			
 			addEventListener(WindowContainer.ON_WINDOW_CONTAINER_SELECTION_CHANGED_EVENT, this);
 
@@ -112,7 +105,9 @@ public class WTask extends Window implements EventListener<Event>, IHelpContext
 		}
 	}   //  ATask
 
-
+	/**
+	 * Execute OS task.
+	 */
 	public void executeTask() {
 		Runnable runnable = new Runnable() {
 			public void run() {
@@ -169,7 +164,7 @@ public class WTask extends Window implements EventListener<Event>, IHelpContext
 	private Html info = new Html();
 
 	/**
-	 *  Static Layout
+	 *  Layout dialog
 	 *  @throws Exception
 	 */
 	private void zkInit() throws Exception
@@ -197,15 +192,14 @@ public class WTask extends Window implements EventListener<Event>, IHelpContext
 		//
 		confirmPanel.addActionListener(this);
 		confirmPanel.getOKButton().setEnabled(false);
-
-		LayoutUtils.sendDeferLayoutEvent(layout, 100);
 	}   //  jbInit
 
 
 	/**
-	 *  Action Listener
+	 *  Event Listener
 	 *  @param e
 	 */
+	@Override
 	public void onEvent(Event e)
 	{
 		if (taskThread != null && taskThread.isAlive())

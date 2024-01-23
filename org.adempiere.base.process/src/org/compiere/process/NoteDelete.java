@@ -19,6 +19,7 @@ package org.compiere.process;
 import java.math.BigDecimal;
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.util.DB;
 
 /**
@@ -31,6 +32,7 @@ import org.compiere.util.DB;
  *  [ 1639204 ] Delete Old Notes is deleting all notes
  *  Add parameter KeepLogDays
  */
+@org.adempiere.base.annotation.Process
 public class NoteDelete extends SvrProcess
 {
 	private int		p_AD_User_ID = -1;
@@ -53,7 +55,7 @@ public class NoteDelete extends SvrProcess
 			else if (name.equals("KeepLogDays"))
 				p_KeepLogDays = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

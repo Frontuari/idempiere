@@ -247,7 +247,7 @@ public class SystemInfo implements Serializable {
 		si.availableProcessors = os.getAvailableProcessors();
 		if (os instanceof com.sun.management.OperatingSystemMXBean) {
 			com.sun.management.OperatingSystemMXBean extInfo = (com.sun.management.OperatingSystemMXBean) os;
-			si.averageSystemLoad = extInfo.getSystemCpuLoad() * 100;			
+			si.averageSystemLoad = extInfo.getCpuLoad() * 100;			
 		} else {
 			si.averageSystemLoad = (os.getSystemLoadAverage() / si.availableProcessors) * 100;
 		}
@@ -270,7 +270,7 @@ public class SystemInfo implements Serializable {
 		si.peakThreadCount = th.getPeakThreadCount();
 		si.daemonThreadCount = th.getDaemonThreadCount();
 		si.totalStartedThreadCount = th.getTotalStartedThreadCount();
-		si.trxInfos = TrxInfo.getActiveTransactions();
+		si.trxInfos = TrxInfo.getOpenTransactions();
 		si.logLevel = CLogMgt.getLevel();
 		si.currentLogFile = LogFileInfo.getCurrentLogFile();
 		si.logFileInfos = LogFileInfo.getLogFileInfos();

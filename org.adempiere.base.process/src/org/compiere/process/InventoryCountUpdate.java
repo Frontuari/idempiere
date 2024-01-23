@@ -20,6 +20,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MInventory;
 import org.compiere.model.MInventoryLineMA;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereSystemError;
 import org.compiere.util.DB;
 
@@ -29,6 +30,7 @@ import org.compiere.util.DB;
  *  @author Jorg Janke
  *  @version $Id: InventoryCountUpdate.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class InventoryCountUpdate extends SvrProcess
 {
 	/** Physical Inventory		*/
@@ -50,7 +52,7 @@ public class InventoryCountUpdate extends SvrProcess
 			else if (name.equals("InventoryCountSet"))
 				p_InventoryCountSetZero = "Z".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_M_Inventory_ID = getRecord_ID();
 	}	//	prepare

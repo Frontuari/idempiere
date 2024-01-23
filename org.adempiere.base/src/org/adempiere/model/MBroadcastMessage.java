@@ -16,41 +16,60 @@ package org.adempiere.model;
 import java.sql.ResultSet;
 import java.util.Properties;
 
+import org.compiere.model.PO;
 import org.compiere.model.X_AD_BroadcastMessage;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutableIntPOCache;
 import org.idempiere.cache.ImmutablePOSupport;
 
 /**
- * 
+ * Extended model class for AD_BroadcastMessage
  * @author Vivek
  * @author Deepak Pansheriya
- *
  */
 public class MBroadcastMessage extends X_AD_BroadcastMessage implements ImmutablePOSupport
 {
-    /**
-	 * 
+	/**
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = -5402131480890468471L;
+	private static final long serialVersionUID = 3733943472482553977L;
+	public final static String CLIENTINFO_BROADCAST_COMPONENT_ID = "#clientInfo_BroadcastComponentId";
+	static private ImmutableIntPOCache<Integer,MBroadcastMessage> s_cache = new ImmutableIntPOCache<Integer,MBroadcastMessage>("AD_BroadcastMessage", 30, 60);
 
-    static private ImmutableIntPOCache<Integer,MBroadcastMessage> s_cache = new ImmutableIntPOCache<Integer,MBroadcastMessage>("AD_BroadcastMessage", 30, 60);
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_BroadcastMessage_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MBroadcastMessage(Properties ctx, String AD_BroadcastMessage_UU, String trxName) {
+        super(ctx, AD_BroadcastMessage_UU, trxName);
+    }
 
-    public MBroadcastMessage(Properties ctx, int AD_BroadcastMessage_ID,
-	    String trxName)
+    /**
+     * @param ctx
+     * @param AD_BroadcastMessage_ID
+     * @param trxName
+     */
+    public MBroadcastMessage(Properties ctx, int AD_BroadcastMessage_ID, String trxName)
     {
 		super(ctx, AD_BroadcastMessage_ID, trxName);
 	}
     
-    public MBroadcastMessage(Properties ctx, ResultSet rs,
-    	    String trxName)
+    /**
+     * @param ctx
+     * @param rs
+     * @param trxName
+     */
+    public MBroadcastMessage(Properties ctx, ResultSet rs, String trxName)
     {
     	super(ctx, rs, trxName);
     }
     
     /**
-     * 
+     * Copy constructor
      * @param copy
      */
     public MBroadcastMessage(MBroadcastMessage copy)
@@ -59,7 +78,7 @@ public class MBroadcastMessage extends X_AD_BroadcastMessage implements Immutabl
     }
     
     /**
-     * 
+     * Copy constructor
      * @param ctx
      * @param copy
      */
@@ -69,7 +88,7 @@ public class MBroadcastMessage extends X_AD_BroadcastMessage implements Immutabl
     }
     
     /**
-     * 
+     * Copy constructor
      * @param ctx
      * @param copy
      * @param trxName
@@ -102,21 +121,28 @@ public class MBroadcastMessage extends X_AD_BroadcastMessage implements Immutabl
 		MBroadcastMessage retValue = s_cache.get(ctx, key, e -> new MBroadcastMessage(ctx, e));
 		if (retValue == null)
 		{
-			retValue = new MBroadcastMessage (ctx, AD_BroadcastMessage_ID, (String)null);
-			if (retValue.get_ID() == AD_BroadcastMessage_ID)
-			{
-				s_cache.put(key, retValue, e -> new MBroadcastMessage(Env.getCtx(), e));
-				return retValue;
-			}
-			return null;
+			try {
+	            PO.setCrossTenantSafe();
+	            // Here we can receive messages from another tenant and discard them
+				retValue = new MBroadcastMessage (ctx, AD_BroadcastMessage_ID, (String)null);
+	        } finally {
+	            PO.clearCrossTenantSafe();
+	        }
+			if (retValue.get_ID() != AD_BroadcastMessage_ID)
+				return null;
+			s_cache.put(key, retValue, e -> new MBroadcastMessage(Env.getCtx(), e));
 		}
+		if (retValue != null
+			&& retValue.getAD_Client_ID() != 0
+			&& retValue.getAD_Client_ID() != Env.getAD_Client_ID(ctx))
+			return null;
 		return retValue;
 	}	//	get
     
 	
 	/**
 	 * Is broadcast message applicable to current login user
-	 * @return
+	 * @return true if applicable, false otherwise
 	 */
     public boolean isValidUserforMessage()
     {
@@ -151,11 +177,12 @@ public class MBroadcastMessage extends X_AD_BroadcastMessage implements Immutabl
     	return false;
     }
     
-    /**************************************************************************
+    /**
 	 * 	Before Save
 	 *	@param newRecord new
 	 *	@return save
 	 */
+    @Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		if (BROADCASTTYPE_Immediate.equals(getBroadcastType())) {
@@ -175,5 +202,32 @@ public class MBroadcastMessage extends X_AD_BroadcastMessage implements Immutabl
 
 		makeImmutable();
 		return this;
+	}
+
+	@Override
+	public String get_Translation (String columnName) {
+		String translation = super.get_Translation(columnName);
+		if (!Util.isEmpty(translation) && translation.indexOf('@') > 0)
+			return Env.parseContext(getCtx(), 0, translation, false, false);
+
+		return translation;
+	}
+
+	/** 
+	 * Returns a link to be used in broadcast messages to open a record
+	 * @param po PO
+	 * @param windowUUID of the window
+	 * @param text of the link
+	 * @return the URL link to set in the broadcast message
+	 */
+	public String getUrlZoom(PO po, String windowUUID, String text) {
+		StringBuilder url = new StringBuilder("");
+		url.append("<a href=\"javascript:void(0)\" class=\"rp-href\" onclick=\"window.idempiere.zoomWindow(@" + CLIENTINFO_BROADCAST_COMPONENT_ID + "@, '");
+		url.append(po.get_KeyColumns()[0]);
+		url.append("', '").append(po.get_ID()).append("','").append(windowUUID).append("')\">");
+		url.append(text);
+		url.append("</a>");
+
+		return url.toString();
 	}
 }

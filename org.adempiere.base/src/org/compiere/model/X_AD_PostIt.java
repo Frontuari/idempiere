@@ -21,21 +21,52 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for AD_PostIt
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_PostIt")
+public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_PostIt (Properties ctx, int AD_PostIt_ID, String trxName)
     {
       super (ctx, AD_PostIt_ID, trxName);
       /** if (AD_PostIt_ID == 0)
+        {
+			setAD_PostIt_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_PostIt (Properties ctx, int AD_PostIt_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_PostIt_ID, trxName, virtualColumns);
+      /** if (AD_PostIt_ID == 0)
+        {
+			setAD_PostIt_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_PostIt (Properties ctx, String AD_PostIt_UU, String trxName)
+    {
+      super (ctx, AD_PostIt_UU, trxName);
+      /** if (AD_PostIt_UU == null)
+        {
+			setAD_PostIt_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_PostIt (Properties ctx, String AD_PostIt_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_PostIt_UU, trxName, virtualColumns);
+      /** if (AD_PostIt_UU == null)
         {
 			setAD_PostIt_ID (0);
         } */
@@ -48,7 +79,7 @@ public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent
     }
 
     /** AccessLevel
-      * @return 7 - System - Client - Org 
+      * @return 7 - System - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -70,18 +101,19 @@ public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent
     }
 
 	/** Set Post-it.
-		@param AD_PostIt_ID Post-it	  */
+		@param AD_PostIt_ID Post-it
+	*/
 	public void setAD_PostIt_ID (int AD_PostIt_ID)
 	{
-		if (AD_PostIt_ID < 1) 
+		if (AD_PostIt_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_PostIt_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_PostIt_ID, Integer.valueOf(AD_PostIt_ID));
 	}
 
 	/** Get Post-it.
 		@return Post-it	  */
-	public int getAD_PostIt_ID () 
+	public int getAD_PostIt_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_PostIt_ID);
 		if (ii == null)
@@ -90,7 +122,8 @@ public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent
 	}
 
 	/** Set AD_PostIt_UU.
-		@param AD_PostIt_UU AD_PostIt_UU	  */
+		@param AD_PostIt_UU AD_PostIt_UU
+	*/
 	public void setAD_PostIt_UU (String AD_PostIt_UU)
 	{
 		set_Value (COLUMNNAME_AD_PostIt_UU, AD_PostIt_UU);
@@ -98,32 +131,32 @@ public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent
 
 	/** Get AD_PostIt_UU.
 		@return AD_PostIt_UU	  */
-	public String getAD_PostIt_UU () 
+	public String getAD_PostIt_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_PostIt_UU);
 	}
 
 	public org.compiere.model.I_AD_Table getAD_Table() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_Table)MTable.get(getCtx(), org.compiere.model.I_AD_Table.Table_Name)
-			.getPO(getAD_Table_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_Table)MTable.get(getCtx(), org.compiere.model.I_AD_Table.Table_ID)
+			.getPO(getAD_Table_ID(), get_TrxName());
+	}
 
 	/** Set Table.
-		@param AD_Table_ID 
-		Database Table information
-	  */
+		@param AD_Table_ID Database Table information
+	*/
 	public void setAD_Table_ID (int AD_Table_ID)
 	{
-		if (AD_Table_ID < 1) 
+		if (AD_Table_ID < 1)
 			set_Value (COLUMNNAME_AD_Table_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_Table_ID, Integer.valueOf(AD_Table_ID));
 	}
 
 	/** Get Table.
 		@return Database Table information
 	  */
-	public int getAD_Table_ID () 
+	public int getAD_Table_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Table_ID);
 		if (ii == null)
@@ -132,21 +165,20 @@ public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent
 	}
 
 	/** Set Record ID.
-		@param Record_ID 
-		Direct internal record ID
-	  */
+		@param Record_ID Direct internal record ID
+	*/
 	public void setRecord_ID (int Record_ID)
 	{
-		if (Record_ID < 0) 
+		if (Record_ID < 0)
 			set_Value (COLUMNNAME_Record_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_Record_ID, Integer.valueOf(Record_ID));
 	}
 
 	/** Get Record ID.
 		@return Direct internal record ID
 	  */
-	public int getRecord_ID () 
+	public int getRecord_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Record_ID);
 		if (ii == null)
@@ -154,8 +186,24 @@ public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent
 		return ii.intValue();
 	}
 
+	/** Set Record UUID.
+		@param Record_UU Record UUID
+	*/
+	public void setRecord_UU (String Record_UU)
+	{
+		set_Value (COLUMNNAME_Record_UU, Record_UU);
+	}
+
+	/** Get Record UUID.
+		@return Record UUID	  */
+	public String getRecord_UU()
+	{
+		return (String)get_Value(COLUMNNAME_Record_UU);
+	}
+
 	/** Set Description.
-		@param Text Description	  */
+		@param Text Description
+	*/
 	public void setText (String Text)
 	{
 		set_Value (COLUMNNAME_Text, Text);
@@ -163,7 +211,7 @@ public class X_AD_PostIt extends PO implements I_AD_PostIt, I_Persistent
 
 	/** Get Description.
 		@return Description	  */
-	public String getText () 
+	public String getText()
 	{
 		return (String)get_Value(COLUMNNAME_Text);
 	}

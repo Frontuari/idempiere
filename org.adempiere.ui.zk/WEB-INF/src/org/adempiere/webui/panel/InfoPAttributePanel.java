@@ -54,24 +54,23 @@ import org.zkoss.zul.Vbox;
 
 /**
  * Search by Product Attribute.
- * This class is based on org.compiere.apps.search.InfoPAttribute written by Jorg Janke
  * @author Elaine
  *
  */
 public class InfoPAttributePanel extends Window implements EventListener<Event>
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -4922961793415942591L;
 
-	/* the attribute set selected on the InfoProduct window */
+	/** the attribute set selected on the InfoProduct window */
 	private int p_M_AttributeSet_ID = 0;
 	
 	/**
 	 * 	Constructor.
 	 * 	Called from InfoProduct,cmd_InfoPAttribute
-	 *	@param parent
+	 *	@param input
 	 */
 	@SuppressWarnings("deprecation")
 	public InfoPAttributePanel(Object input)
@@ -106,7 +105,7 @@ public class InfoPAttributePanel extends Window implements EventListener<Event>
 	
 	/**	Resulting Query			*/
 	private String		m_query = "";
-	/**	Product Attribure Editors	*/
+	/**	Product Attribute Editors	*/
 	private ArrayList<Component>	m_productEditors = new ArrayList<Component>();
 	private ArrayList<Component>	m_productEditorsTo = new ArrayList<Component>();
 	/**	Instance Attribute Editors	*/
@@ -129,7 +128,7 @@ public class InfoPAttributePanel extends Window implements EventListener<Event>
 	//
 
 	/**
-	 * 	Static Init
+	 * 	Layout dialog
 	 *	@throws Exception
 	 */
 	private void jbInit() throws Exception
@@ -232,18 +231,20 @@ public class InfoPAttributePanel extends Window implements EventListener<Event>
 	{
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		String whereAttributeSet;
+		String joinAttributeSet;
 		if (p_M_AttributeSet_ID > 0)
-			whereAttributeSet = "AND M_Attribute_ID IN (SELECT M_Attribute_ID FROM M_AttributeUse WHERE M_AttributeSet_ID="+p_M_AttributeSet_ID+")";
+			joinAttributeSet = "JOIN M_AttributeUse mau ON (a.M_Attribute_ID = mau.M_Attribute_ID AND mau.M_AttributeSet_ID="+p_M_AttributeSet_ID+")";
 		else
-			whereAttributeSet = "";
+			joinAttributeSet = "";
 		String sql = MRole.getDefault().addAccessSQL(
-			"SELECT M_Attribute_ID, Name, Description, AttributeValueType, IsInstanceAttribute "
-			+ "FROM M_Attribute "
-			+ "WHERE IsActive='Y' "
-			+ whereAttributeSet
-			+ " ORDER BY IsInstanceAttribute, Name", 
-			"M_Attribute", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO);
+			"SELECT a.M_Attribute_ID, a.Name, a.Description, a.AttributeValueType, a.IsInstanceAttribute "
+			+ "FROM M_Attribute a "
+			+ joinAttributeSet
+			+ " WHERE a.IsActive='Y' "
+			+ " ORDER BY "
+			+ (p_M_AttributeSet_ID > 0 ? "mau.SeqNo, " : "")
+			+ "a.IsInstanceAttribute, a.Name", 
+			"a", MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 		boolean instanceLine = false;
 		try
 		{
@@ -383,8 +384,8 @@ public class InfoPAttributePanel extends Window implements EventListener<Event>
 
 	/**
 	 *	Get Attribute List
-	 *	@param M_Attribute_ID attribure
-	 *	@return array
+	 *	@param M_Attribute_ID attribute
+	 *	@return [M_AttributeValue_ID:Name]
 	 */
 	private KeyNamePair[] getAttributeList(int M_Attribute_ID)
 	{
@@ -431,7 +432,7 @@ public class InfoPAttributePanel extends Window implements EventListener<Event>
 		
 		String whereAttributeSet;
 		if (p_M_AttributeSet_ID > 0)
-			whereAttributeSet = "AND M_Product_ID IN (SELECT M_Product_ID FROM M_Product WHERE M_AttributeSet_ID="+p_M_AttributeSet_ID+")";
+			whereAttributeSet = " AND M_Product_ID IN (SELECT M_Product_ID FROM M_Product WHERE M_AttributeSet_ID="+p_M_AttributeSet_ID+")";
 		else
 			whereAttributeSet = "";
 		String sql = MRole.getDefault().addAccessSQL(
@@ -469,9 +470,10 @@ public class InfoPAttributePanel extends Window implements EventListener<Event>
 
 	
 	/**
-	 *	Action Listener
+	 *	Handle event
 	 *	@param e event
 	 */
+	@Override
 	public void onEvent(Event e) throws Exception 
 	{
 		if (e.getTarget().getId().equals(ConfirmPanel.A_OK))
@@ -484,16 +486,16 @@ public class InfoPAttributePanel extends Window implements EventListener<Event>
 			m_query = null;
 			dispose();
 		}
-	}	//	actionPerformed
+	}
 
 	/**
 	 * 	Create Query
-	 *  <code>
+	 *  <p>
 	 * 	Available synonyms:
-	 *		M_Product p
-	 *		M_ProductPrice pr
-	 *		M_AttributeSet pa
-	 *	</code>
+	 *	<ul>M_Product p</ul>
+	 *	<ul>M_ProductPrice pr</ul>
+	 *	<ul>M_AttributeSet pa</ul>
+	 *	</p>
 	 *	@return query
 	 */
 	private String createQuery()
@@ -696,12 +698,13 @@ public class InfoPAttributePanel extends Window implements EventListener<Event>
 		m_query = null;
 		if (sb.length() > 0)
 			m_query = sb.toString();
-		log.config(m_query);		
+		if (log.isLoggable(Level.CONFIG))
+			log.config(m_query);		
 		return m_query;
 	}	//	createQuery
 
 	/**
-	 * 	Get resulting Query WHERE
+	 * 	Get where clause
 	 *	@return query or null
 	 */
 	public String getWhereClause()

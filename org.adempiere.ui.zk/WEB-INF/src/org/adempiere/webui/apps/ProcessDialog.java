@@ -30,17 +30,20 @@ import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.DocumentLink;
 import org.adempiere.webui.component.Mask;
+import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.desktop.IDesktop;
 import org.adempiere.webui.panel.IHelpContext;
+import org.adempiere.webui.panel.ITabOnCloseHandler;
 import org.adempiere.webui.part.WindowContainer;
 import org.adempiere.webui.process.WProcessInfo;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.adempiere.webui.window.SimplePDFViewer;
 import org.compiere.model.MProcess;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.X_AD_CtxHelp;
 import org.compiere.print.ReportEngine;
 import org.compiere.process.ProcessInfo;
@@ -69,16 +72,17 @@ import org.zkoss.zul.A;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Html;
 import org.zkoss.zul.Label;
+import org.zkoss.zul.Tab;
 import org.zkoss.zul.Vlayout;
 
-import com.itextpdf.text.Document;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfImportedPage;
-import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.lowagie.text.Document;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfImportedPage;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.PdfWriter;
 
 /**
- *	Dialog to Start process or report.
+ *	Embedded Dialog to Start process or report.
  *	Displays information about the process
  *		and lets the user decide to start it
  *  	and displays results (optionally print them).
@@ -87,60 +91,82 @@ import com.itextpdf.text.pdf.PdfWriter;
  *  @author     arboleda - globalqss
  *  - Implement ShowHelp option on processes and reports
  */
-public class ProcessDialog extends AbstractProcessDialog implements EventListener<Event>, IHelpContext
+public class ProcessDialog extends AbstractProcessDialog implements EventListener<Event>, IHelpContext, ITabOnCloseHandler
 {
+	public static final String SAVED_PREDEFINED_CONTEXT_VARIABLES = "__PredefinedContextVariables__";
+
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -6728929130788829223L;
 
 	public static final String ON_INITIAL_FOCUS_EVENT = "onInitialFocus";
 	
-	private static final String ON_OK_ECHO = "onOkEcho";
+	/** 
+	 * Event echo form {@link #onOk()} to defer execution of {@link #onOk()}.
+	 * Execution is defer to happens after the dismiss of modal dialog (usually info window) blocking parameter panel. 
+	 */
+	private static final String ON_OK_ECHO_EVENT = "onOkEcho";
 	
 	/**	Logger			*/
 	private static final CLogger log = CLogger.getCLogger(ProcessDialog.class);
 	//
-
-	private Table logMessageTable;	
-	private int[]		    m_ids = null;	
-	
+	/** message from {@link ProcessInfoLog} **/
+	private Table logMessageTable;
+	/** record ids from {@link ProcessInfo} **/
+	private int[] m_ids = null;	
+	/** true if dialog is showing process parameters **/
 	private boolean isParameterPage = true;	
 	private Mask mask;
+	/** layout for process execution result **/
 	private HtmlBasedComponent resultPanelLayout;
+	/** process message content of {@link #resultPanelLayout} **/
 	private HtmlBasedComponent messageResultContent;
+	/** process log content of {@link #resultPanelLayout}, host {@link #logMessageTable} **/
 	private HtmlBasedComponent infoResultContent;
 
 	/** Window No					*/
-	private int                 m_WindowNo = -1;
-	private long prevKeyEventTime = 0;
-	private KeyEvent prevKeyEvent;
+	private int m_WindowNo = -1;
+	/**
+	 * SysConfig USE_ESC_FOR_TAB_CLOSING
+	 */
+	private boolean isUseEscForTabClosing = MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
 
 	/**
 	 * Dialog to start a process/report
-	 * @param ctx
-	 * @param parent
-	 * @param title
-	 * @param aProcess
-	 * @param WindowNo
 	 * @param AD_Process_ID
-	 * @param tableId
-	 * @param recordId
-	 * @param autoStart
+	 * @param isSOTrx
 	 */
 	public ProcessDialog (int AD_Process_ID, boolean isSOTrx)
 	{
-		log.info("Process=" + AD_Process_ID );
+		this(AD_Process_ID, isSOTrx, null);
+	}
+	
+	/**
+	 * Dialog to start a process/report
+	 * @param AD_Process_ID
+	 * @param isSOTrx
+	 * @param predefinedContextVariables
+	 */
+	public ProcessDialog (int AD_Process_ID, boolean isSOTrx, String predefinedContextVariables)
+	{
+		if (log.isLoggable(Level.INFO)) log.info("Process=" + AD_Process_ID );
 		m_WindowNo = SessionManager.getAppDesktop().registerWindow(this);
 		this.setAttribute(IDesktop.WINDOWNO_ATTRIBUTE, m_WindowNo);
 		Env.setContext(Env.getCtx(), m_WindowNo, "IsSOTrx", isSOTrx ? "Y" : "N");
+		//save for rerun of report
+		if (predefinedContextVariables != null && MProcess.get(AD_Process_ID).isReport())
+		{
+			Env.setContext(Env.getCtx(), m_WindowNo, SAVED_PREDEFINED_CONTEXT_VARIABLES, predefinedContextVariables);
+		}
+		Env.setPredefinedVariables(Env.getCtx(), m_WindowNo, predefinedContextVariables);
 		try
 		{
 			init(Env.getCtx(), m_WindowNo, AD_Process_ID, null, false, false);
 			querySaved();
 			addEventListener(WindowContainer.ON_WINDOW_CONTAINER_SELECTION_CHANGED_EVENT, this);
 			addEventListener(ON_INITIAL_FOCUS_EVENT, this);
-			addEventListener(ON_OK_ECHO, this);
+			addEventListener(ON_OK_ECHO_EVENT, this);
 		}
 		catch(Exception ex)
 		{
@@ -153,6 +179,12 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		super.onPageAttached(newpage, oldpage);
 		try {
 			SessionManager.getSessionApplication().getKeylistener().addEventListener(Events.ON_CTRL_KEY, this);
+			addEventListener(IDesktop.ON_CLOSE_WINDOW_SHORTCUT_EVENT, this);
+			
+			Component parentTab = this.getParent();
+			if (parentTab != null && parentTab instanceof Tabpanel) {
+				((Tabpanel)parentTab).setOnCloseHandler(this);
+			}
 		} catch (Exception e) {}
 	}
 
@@ -161,6 +193,8 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		super.onPageDetached(page);
 		try {
 			SessionManager.getSessionApplication().getKeylistener().removeEventListener(Events.ON_CTRL_KEY, this);
+			removeEventListener(IDesktop.ON_CLOSE_WINDOW_SHORTCUT_EVENT, this);
+			SessionManager.getAppDesktop().unregisterWindow(m_WindowNo);
 		} catch (Exception e) {}
 	}
 
@@ -182,7 +216,8 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		super.dispose();
 		SessionManager.getAppDesktop().closeWindow(getWindowNo());
 	}//	dispose
-	
+
+	@Override
 	public void onEvent(Event event) {
 		Component component = event.getTarget(); 
 		
@@ -192,7 +227,7 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 			super.onEvent(event);
 			
 			onOk();
-		} else if (event.getName().equals(ON_OK_ECHO)) {
+		} else if (event.getName().equals(ON_OK_ECHO_EVENT)) {
 			onOk();
 		}else if (bCancel.equals(component)){
 			super.onEvent(event);
@@ -209,33 +244,30 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 			}
         } else if (event.getName().equals(Events.ON_CTRL_KEY)) {
         	KeyEvent keyEvent = (KeyEvent) event;
-        	if (LayoutUtils.isReallyVisible(this)) {
-	        	//filter same key event that is too close
-	        	//firefox fire key event twice when grid is visible
-	        	long time = System.currentTimeMillis();
-	        	if (prevKeyEvent != null && prevKeyEventTime > 0 &&
-	        			prevKeyEvent.getKeyCode() == keyEvent.getKeyCode() &&
-	    				prevKeyEvent.getTarget() == keyEvent.getTarget() &&
-	    				prevKeyEvent.isAltKey() == keyEvent.isAltKey() &&
-	    				prevKeyEvent.isCtrlKey() == keyEvent.isCtrlKey() &&
-	    				prevKeyEvent.isShiftKey() == keyEvent.isShiftKey()) {
-	        		if ((time - prevKeyEventTime) <= 300) {
-	        			return;
-	        		}
-	        	}
+        	if (LayoutUtils.isReallyVisible(this))
 	        	this.onCtrlKeyEvent(keyEvent);
-        	}
-		} else {
+		} 
+        else if(IDesktop.ON_CLOSE_WINDOW_SHORTCUT_EVENT.equals(event.getName())) {
+        	IDesktop desktop = SessionManager.getAppDesktop();
+        	if (m_WindowNo > 0 && desktop.isCloseTabWithShortcut())
+        		desktop.closeWindow(m_WindowNo);
+        	else
+        		desktop.setCloseTabWithShortcut(true);
+        }
+        else {
 			super.onEvent(event);
 		}
 	}
 
+	/**
+	 * Handle ON_Click event from {@link #bOK}
+	 */
 	private void onOk() {
 		if (isParameterPage)
 		{
 			if (getParameterPanel().isWaitingForDialog())
 			{
-				Events.echoEvent(ON_OK_ECHO, this, null);
+				Events.echoEvent(ON_OK_ECHO_EVENT, this, null);
 				return;
 			}
 			startProcess();
@@ -244,17 +276,22 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 			restart();
 	}
 	
+	/**
+	 * Handle shortcut key event
+	 * @param keyEvent
+	 */
 	private void onCtrlKeyEvent(KeyEvent keyEvent) {
-		if (keyEvent.isAltKey() && keyEvent.getKeyCode() == 0x58) { // Alt-X
-			if (m_WindowNo > 0) {
-				prevKeyEventTime = System.currentTimeMillis();
-				prevKeyEvent = keyEvent;
-				keyEvent.stopPropagation();
-				SessionManager.getAppDesktop().closeWindow(m_WindowNo);
-			}
+		if ((keyEvent.isAltKey() && keyEvent.getKeyCode() == 0x58)	// Alt-X
+				|| (keyEvent.getKeyCode() == 0x1B && isUseEscForTabClosing)) {	// ESC
+			keyEvent.stopPropagation();
+			Events.echoEvent(new Event(IDesktop.ON_CLOSE_WINDOW_SHORTCUT_EVENT, this));
 		}
 	}
 
+	/**
+	 * Handle on click event for record link.
+	 * @param btn
+	 */
 	private void doOnClick(A btn) {
 		int Record_ID = 0;
 		int AD_Table_ID =0;
@@ -266,8 +303,7 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		catch (Exception e) {
 		}
 
-		if (Record_ID > 0 && AD_Table_ID > 0) {
-			
+		if (Record_ID > 0 && AD_Table_ID > 0) {			
 			AEnv.zoom(AD_Table_ID, Record_ID);
 		}		
 	}
@@ -280,6 +316,9 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		LayoutUtils.openOverlappedWindow(this, progressWindow, "middle_center");
 	}
 
+	/**
+	 * @return in progress mask
+	 */
 	private Div getMask() {
 		if (mask == null) {
 			mask = new Mask();
@@ -287,27 +326,39 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		return mask;
 	}
 	
+	/**
+	 * show in progress mask
+	 * @param window
+	 */
 	private void showBusyMask(Window window) {
 	  if (getParent() != null) {
 		getParent().appendChild(getMask());
-		StringBuilder script = new StringBuilder("var w=zk.Widget.$('#");
+		//to prevent focus to components beneath the in progress mask (see canActivate in web/js/org/idempiere/commons/window.js)
+		StringBuilder script = new StringBuilder("(function(){let w=zk.Widget.$('#");
 		script.append(getParent().getUuid()).append("');");
 		if (window != null) {
-			script.append("var d=zk.Widget.$('#").append(window.getUuid()).append("');w.busy=d;");
+			script.append("let d=zk.Widget.$('#").append(window.getUuid()).append("');w.busy=d;");
 		} else {
 			script.append("w.busy=true;");
 		}
+		script.append("})()");
 		Clients.response(new AuScript(script.toString()));
 	  }
 	}
 		
+	/**
+	 * close in progress mask
+	 */
 	private void hideBusyMask() 
 	{
 		if (mask != null && mask.getParent() != null) {
 			mask.detach();
-			StringBuilder script = new StringBuilder("var w=zk.Widget.$('#");
-			script.append(getParent().getUuid()).append("');w.busy=false;");
-			Clients.response(new AuScript(script.toString()));
+			if(getParent() != null) {
+				StringBuilder script = new StringBuilder("(function(){let w=zk.Widget.$('#");
+				script.append(getParent().getUuid()).append("');w.busy=false;");
+				script.append("})()");
+				Clients.response(new AuScript(script.toString()));
+			}
 		}
 	}
 	
@@ -323,6 +374,9 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		swithToFinishScreen();
 	}
 	
+	/**
+	 * Switch to process execution result panel.
+	 */
 	protected void swithToFinishScreen() {
 		ProcessInfo pi = getProcessInfo();
 		ProcessInfoUtil.setLogFromDB(pi);
@@ -365,6 +419,10 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		Clients.response(new AuEcho(this, "onAfterProcess", null));
 	}
 	
+	/**
+	 * layout process execution result panel
+	 * @param topParameterLayout
+	 */
 	private void layoutResultPanel (HtmlBasedComponent topParameterLayout){
 		if (resultPanelLayout == null){
 			resultPanelLayout = new Vlayout();
@@ -378,11 +436,21 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		}
 	}
 	
+	/**
+	 * replace oldComponent with newComponent
+	 * @param newComponent
+	 * @param oldComponent
+	 */
 	protected void replaceComponent(HtmlBasedComponent newComponent, HtmlBasedComponent oldComponent) {
 		oldComponent.getParent().insertBefore(newComponent, oldComponent);
 		oldComponent.detach();
 	}	
 	
+	/**
+	 * append m_logs content to {@link #logMessageTable}
+	 * @param m_logs
+	 * @param infoResultContent
+	 */
 	private void appendRecordLogInfo(ProcessInfoLog[] m_logs, HtmlBasedComponent infoResultContent) {
 		if (m_logs == null)
 			return;
@@ -456,9 +524,11 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 				tr.appendChild(td);
 			}
 		}
-		//messageDiv.appendChild(logMessageTable);
 	}
 
+	/**
+	 * Move back from process execution result panel to process parameter panel
+	 */
 	private void restart() {
 		replaceComponent (topParameterLayout, resultPanelLayout);
 		
@@ -490,6 +560,9 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		invalidate();
 	}
 
+	/**
+	 * Handle onAfterProcess event echo from {@link #swithToFinishScreen()}
+	 */
 	public void onAfterProcess() 
 	{
 		//
@@ -500,15 +573,15 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		}
 	}
 	
-	/**************************************************************************
-	 *	Optional Processing Task
+	/**
+	 * Optional after/post process execution task
 	 */
 	private boolean afterProcessTask()
 	{
 		//  something to do?
 		if (m_ids != null && m_ids.length > 0)
 		{
-			log.config("");
+			if (log.isLoggable(Level.CONFIG)) log.config("");
 			//	Print invoices
 			if (getAD_Process_ID() == PROCESS_C_INVOICE_GENERATE)
 			{
@@ -528,14 +601,14 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		return false;
 	}	//	afterProcessTask
 	
-	/**************************************************************************
-	 *	Print Shipments
+	/**
+	 * Print Shipments
 	 */
 	private void printShipments()
 	{		
 		if (m_ids == null)
 			return;
-		FDialog.ask(getWindowNo(), this, "PrintShipments", new Callback<Boolean>() {
+		Dialog.ask(getWindowNo(), "PrintShipments", new Callback<Boolean>() {
 			@Override
 			public void onCallback(Boolean result) {
 				if (result) {
@@ -547,8 +620,11 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 				}
 			}
 		});						
-	}	//	printInvoices
+	}
 	
+	/**
+	 * Handle onPrintShipments event echo by {@link #printShipments()}
+	 */
 	public void onPrintShipments() 
 	{		
 		//	Loop through all items
@@ -556,11 +632,12 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		for (int i = 0; i < m_ids.length; i++)
 		{
 			int M_InOut_ID = m_ids[i];
-			ReportEngine re = ReportEngine.get (Env.getCtx(), ReportEngine.SHIPMENT, M_InOut_ID);
+			ReportEngine re = ReportEngine.get (Env.getCtx(), ReportEngine.SHIPMENT, M_InOut_ID, getWindowNo());
 			pdfList.add(re.getPDF());				
 		}
 		
 		if (pdfList.size() > 1) {
+			List<PdfReader> pdfReaders = new ArrayList<PdfReader>();
 			try {
 				File outFile = File.createTempFile("PrintShipments", ".pdf");					
 				Document document = null;
@@ -569,6 +646,7 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 				{
 					String fileName = f.getAbsolutePath();
 					PdfReader reader = new PdfReader(fileName);
+					pdfReaders.add(reader);
 					reader.consolidateNamedDestinations();
 					if (document == null)
 					{
@@ -592,6 +670,11 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 			} catch (Exception e) {
 				log.log(Level.SEVERE, e.getLocalizedMessage(), e);
 			} finally {
+				for (PdfReader reader : pdfReaders)
+				{
+					if (reader != null)
+						reader.close();
+				}
 				//do no harm calling this twice
 				hideBusyDialog();
 			}
@@ -612,13 +695,13 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 	}
 
 	/**
-	 *	Print Invoices
+	 * Print Invoices
 	 */
 	private void printInvoices()
 	{
 		if (m_ids == null)
 			return;
-		FDialog.ask(getWindowNo(), this, "PrintInvoices", new Callback<Boolean>() {
+		Dialog.ask(getWindowNo(), "PrintInvoices", new Callback<Boolean>() {
 			@Override
 			public void onCallback(Boolean result) 
 			{
@@ -632,8 +715,11 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 				}
 			}
 		});						
-	}	//	printInvoices
+	}
 	
+	/**
+	 * Handle onPrintInvoices event echo by {@link #printInvoices()}
+	 */
 	public void onPrintInvoices()
 	{
 		//	Loop through all items
@@ -641,11 +727,12 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		for (int i = 0; i < m_ids.length; i++)
 		{
 			int C_Invoice_ID = m_ids[i];
-			ReportEngine re = ReportEngine.get (Env.getCtx(), ReportEngine.INVOICE, C_Invoice_ID);
+			ReportEngine re = ReportEngine.get (Env.getCtx(), ReportEngine.INVOICE, C_Invoice_ID, getWindowNo());
 			pdfList.add(re.getPDF());				
 		}
 		
 		if (pdfList.size() > 1) {
+			List<PdfReader> pdfReaders = new ArrayList<PdfReader>();
 			try {
 				File outFile = File.createTempFile("PrintInvoices", ".pdf");					
 				Document document = null;
@@ -653,6 +740,7 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 				for (File f : pdfList) 
 				{
 					PdfReader reader = new PdfReader(f.getAbsolutePath());
+					pdfReaders.add(reader);
 					if (document == null)
 					{
 						document = new Document(reader.getPageSizeWithRotation(1));
@@ -675,6 +763,11 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 			} catch (Exception e) {
 				log.log(Level.SEVERE, e.getLocalizedMessage(), e);
 			} finally {
+				for (PdfReader reader : pdfReaders)
+				{
+					if (reader != null)
+						reader.close();
+				}
 				//do no harm calling this twice
 				hideBusyDialog();
 			}
@@ -692,6 +785,25 @@ public class ProcessDialog extends AbstractProcessDialog implements EventListene
 		// If the process is a silent one and no errors occurred, close the dialog
 		if(getShowHelp() != null && MProcess.SHOWHELP_RunSilently_TakeDefaults.equals(getShowHelp()))
 			this.dispose();	
+	}
+
+	@Override
+	public void onClose(Tabpanel tabPanel) {
+		if(!isUILocked()) {
+			Tab tab = tabPanel.getLinkedTab();
+			if (tab != null) {
+				tab.close();
+				cleanUp();
+			}
+		}
+	}
+
+	private void cleanUp() {
+		if (m_WindowNo >= 0)
+		{
+			SessionManager.getAppDesktop().unregisterWindow(m_WindowNo);
+			m_WindowNo = -1;
+		}
 	}
 	
 }	//	ProcessDialog

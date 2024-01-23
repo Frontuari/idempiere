@@ -29,7 +29,9 @@ import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutablePOSupport;
 
 /**
@@ -41,14 +43,14 @@ import org.idempiere.cache.ImmutablePOSupport;
 public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 8266487405778526776L;
 
 	/**	Logger	*/
 	private static CLogger s_log = CLogger.getCLogger (MAttribute.class);
 
-	private static CCache<Integer, MAttribute>	s_cache				= new CCache<Integer, MAttribute>(Table_Name, 30, 60);
+	private static CCache<Integer, MAttribute>	s_cache				= new CCache<Integer, MAttribute>(Table_Name, 30, CCache.DEFAULT_EXPIRE_MINUTE);
 	
 	/**	Values						*/
 	private MAttributeValue[]		m_values = null;
@@ -91,6 +93,18 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 		return retValue;
 	}	//	getOfClient
 
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param M_Attribute_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MAttribute(Properties ctx, String M_Attribute_UU, String trxName) {
+        super(ctx, M_Attribute_UU, trxName);
+		if (Util.isEmpty(M_Attribute_UU))
+			setInitialDefaults();
+    }
+
 	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
@@ -101,12 +115,17 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	{
 		super (ctx, M_Attribute_ID, trxName);
 		if (M_Attribute_ID == 0)
-		{
-			setAttributeValueType(ATTRIBUTEVALUETYPE_StringMax40);
-			setIsInstanceAttribute (false);
-			setIsMandatory (false);
-		}
+			setInitialDefaults();
 	}	//	MAttribute
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setAttributeValueType(ATTRIBUTEVALUETYPE_StringMax40);
+		setIsInstanceAttribute (false);
+		setIsMandatory (false);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -120,7 +139,7 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	}	//	MAttribute
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MAttribute(MAttribute copy) 
@@ -129,7 +148,7 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -139,7 +158,7 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -151,9 +170,13 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 		this.m_values = copy.m_values != null ? Arrays.stream(copy.m_values).map(e -> {return new MAttributeValue(ctx, e, trxName);}).toArray(MAttributeValue[]::new) : null;
 	}
 
+	public MAttribute(Properties ctx, int M_Attribute_ID, String trxName, String... virtualColumns) {
+		super(ctx, M_Attribute_ID, trxName, virtualColumns);
+	}
+
 	/**
-	 *	Get Values if List
-	 *	@return Values or null if not list
+	 *	Get Values List
+	 *	@return Values or null if not of type list
 	 */
 	public MAttributeValue[] getMAttributeValues()
 	{
@@ -173,6 +196,11 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 		return m_values;
 	}	//	getValues
 
+	/**
+	 * @param ctx
+	 * @param M_Attribute_ID
+	 * @return MAttribute
+	 */
 	public static MAttribute get(Properties ctx, int M_Attribute_ID)
 	{
 		Integer key = Integer.valueOf(M_Attribute_ID);
@@ -188,7 +216,7 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 		return retValue;
 	} // get
 	
-	/**************************************************************************
+	/**
 	 * 	Get Attribute Instance
 	 *	@param M_AttributeSetInstance_ID attribute set instance
 	 *	@return Attribute Instance or null
@@ -204,9 +232,9 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	}	//	getAttributeInstance
 
 	/**
-	 * 	Set Attribute Instance
-	 * 	@param value value
+	 * 	Update or create new Attribute Instance
 	 * 	@param M_AttributeSetInstance_ID id
+	 * 	@param value attribute value
 	 */
 	public void setMAttributeInstance (int M_AttributeSetInstance_ID, MAttributeValue value)
 	{
@@ -238,9 +266,9 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	}	//	setAttributeInstance
 
 	/**
-	 * 	Set Attribute Instance
-	 * 	@param value string value
+	 * 	Update or create new Attribute Instance
 	 * 	@param M_AttributeSetInstance_ID id
+	 * 	@param value string value
 	 */
 	public void setMAttributeInstance (int M_AttributeSetInstance_ID, String value)
 	{
@@ -254,9 +282,9 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	}	//	setAttributeInstance
 
 	/**
-	 * 	Set Attribute Instance
-	 * 	@param value number value
+	 * 	Update or create new Attribute Instance
 	 * 	@param M_AttributeSetInstance_ID id
+	 * 	@param value numeric value
 	 */
 	public void setMAttributeInstance (int M_AttributeSetInstance_ID, BigDecimal value)
 	{
@@ -270,22 +298,43 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	}	//	setAttributeInstance
 	
 	/**
-	 * Set Attribute Instance
-	 * 
-	 * @param valueInt                  Integer value
-	 * @param M_AttributeSetInstance_ID id
-	 * @param value
+	 * 	Update or create new Attribute Instance
+	 * 	@param M_AttributeSetInstance_ID id
+	 * 	@param value integer value
 	 */
-	public void setMAttributeInstance(int M_AttributeSetInstance_ID, int valueInt, String value)
+	public void setMAttributeInstance (int M_AttributeSetInstance_ID, int value)
 	{
 		MAttributeInstance instance = getMAttributeInstance(M_AttributeSetInstance_ID);
 		if (instance == null)
-			instance = new MAttributeInstance(getCtx(), getM_Attribute_ID(), M_AttributeSetInstance_ID, valueInt, get_TrxName());
+			instance = new MAttributeInstance (getCtx(), getM_Attribute_ID(), 
+				M_AttributeSetInstance_ID, value, get_TrxName());
 		else
-			instance.setValueInt(valueInt, value);
+			instance.setValueInt(value);
+		instance.saveEx();
+	}	//	setAttributeInstance
+	
+	/**
+	 * Update or create new Attribute Instance
+	 * 
+	 * @param M_AttributeSetInstance_ID id
+	 * @param value                     KeyNamePair
+	 */
+	public void setMAttributeInstance(int M_AttributeSetInstance_ID, KeyNamePair value)
+	{
+		MAttributeInstance instance = getMAttributeInstance(M_AttributeSetInstance_ID);
+		if (instance == null)
+			instance = new MAttributeInstance(getCtx(), getM_Attribute_ID(), M_AttributeSetInstance_ID, value, get_TrxName());
+		else
+			instance.setValueKeyNamePair(value);
 		instance.saveEx();
 	} // setAttributeInstance
-	
+
+	/**
+	 * Update or create new Attribute Instance
+	 * 
+	 * @param M_AttributeSetInstance_ID id
+	 * @param value                     Timestamp
+	 */
 	public void setMAttributeInstance(int M_AttributeSetInstance_ID, Timestamp value)
 	{
 		MAttributeInstance instance = getMAttributeInstance(M_AttributeSetInstance_ID);
@@ -301,6 +350,7 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder ("MAttribute[");
@@ -333,6 +383,7 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 	 *	@param success success
 	 *	@return success
 	 */
+	@Override
 	protected boolean afterSave (boolean newRecord, boolean success)
 	{
 		if (!success)
@@ -352,6 +403,9 @@ public class MAttribute extends X_M_Attribute implements ImmutablePOSupport
 		return success;
 	}	//	afterSave
 
+	/**
+	 * @return true if it is of type reference
+	 */
 	public boolean isAttributeValueTypeReference()
 	{
 		return ATTRIBUTEVALUETYPE_Reference.equals(getAttributeValueType());

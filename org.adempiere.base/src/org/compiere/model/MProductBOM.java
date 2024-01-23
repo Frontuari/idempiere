@@ -30,9 +30,12 @@ import org.compiere.util.Env;
  *	M_Product_BOM_ID = the BOM line
  *	M_ProductBOM_ID = the BOM line product
  *	
+ *  Replace by MPPProductBOM and MPPProductBOMLine since version 9
+ *  @deprecated
  *  @author Jorg Janke
  *  @version $Id: MProductBOM.java,v 1.5 2006/07/30 00:51:02 jjanke Exp $
  */
+@Deprecated
 public class MProductBOM extends X_M_Product_BOM
 {
 	/**
@@ -66,7 +69,6 @@ public class MProductBOM extends X_M_Product_BOM
 		.setOrderBy("Line")
 		.list();
  
-	//	s_log.fine("getBOMLines - #" + list.size() + " - M_Product_ID=" + M_Product_ID);
 		MProductBOM[] retValue = new MProductBOM[list.size()];
 		list.toArray(retValue);
 		return retValue;
@@ -88,9 +90,6 @@ public class MProductBOM extends X_M_Product_BOM
 		super (ctx, M_Product_BOM_ID, trxName);
 		if (M_Product_BOM_ID == 0)
 		{
-		//	setM_Product_ID (0);	//	parent
-		//	setLine (0);	// @SQL=SELECT NVL(MAX(Line),0)+10 AS DefaultValue FROM M_Product_BOM WHERE M_Product_ID=@M_Product_ID@
-		//	setM_ProductBOM_ID(0);
 			setBOMQty (Env.ZERO);	// 1
 		}
 	}	//	MProductBOM

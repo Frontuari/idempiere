@@ -42,6 +42,7 @@ import org.compiere.process.SvrProcess;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 
+@org.adempiere.base.annotation.Process
 public class ApplyMigrationScripts extends SvrProcess {
 
 	/** Logger */
@@ -148,7 +149,7 @@ public class ApplyMigrationScripts extends SvrProcess {
 				if (statementReady) {
 					if (sqlBuf.length() == 0)
 						continue;
-					Connection conn = DB.getConnectionRW();
+					Connection conn = DB.getConnection();
 					conn.setAutoCommit(false);
 					Statement stmt = null;
 					try {

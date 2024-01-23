@@ -16,6 +16,7 @@
  *****************************************************************************/
 package org.compiere.util;
 
+import com.google.common.net.MediaType;
 
 /**
  * 	Mime - Content type map.
@@ -63,8 +64,7 @@ public class MimeType
 	/** application/octet-stream			*/
 	public static String	BINARY = "application/octet-stream";
 	
-	
-	/**************************************************************************
+	/**
 	 *	MimeType
 	 *	@param extension extension (with dot)
 	 *	@param mimeType mime type
@@ -80,7 +80,6 @@ public class MimeType
 	/** MIME Type	*/
 	private String	m_mimeType	= null;
 	
-
 	/**
 	 * @return Returns the extension.
 	 */
@@ -112,18 +111,18 @@ public class MimeType
 	{
 		m_mimeType = mimeType;
 	}	//	setMimeType
-	
-	
+		
 	/**
 	 * 	String representation
 	 *	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		return m_mimeType + "(" + m_extension + ")";
 	}	//	toString
 	
-	/**************************************************************************
+	/**
 	 * 	Mime / Content Type Map
 	 */
 	public static final String[][]	TYPES	= new String[][] { 
@@ -217,6 +216,7 @@ public class MimeType
 		{ ".csh", "text/x-script.csh"},
 	//	{ ".css", "application/x-pointplus"}, 
 		{ ".css", "text/css"},
+		{ ".csv", MediaType.CSV_UTF_8.toString()},
 		{ ".cvs", "application/vnd.ms-excel"},
 		{ ".cxx", "text/plain"},
 		
@@ -355,6 +355,7 @@ public class MimeType
 	//	{ ".jpg", "image/pjpeg"},
 		{ ".jps", "image/x-jps"}, 
 		{ ".js", "application/x-javascript"},
+		{ ".json", "application/json"},
 		{ ".jut", "image/jutvision"},
 		
 		{ ".kar", "audio/midi"},
@@ -760,6 +761,7 @@ public class MimeType
 	//	{ ".xlm", "application/x-excel"}, 
 	//	{ ".xls", "application/excel"},
 		{ ".xls", "application/vnd.ms-excel"},
+		{ ".xlsx", MediaType.OOXML_SHEET.toString()},
 	//	{ ".xls", "application/x-excel"}, 
 	//	{ ".xls", "application/x-msexcel"},
 	//	{ ".xlt", "application/excel"}, 

@@ -19,12 +19,14 @@ import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.apps.ProcessDialog;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.panel.ADForm;
+import org.adempiere.webui.panel.InfoPanel;
 import org.adempiere.webui.part.UIPart;
 import org.compiere.model.GridField;
 import org.compiere.model.GridTab;
 import org.compiere.model.MQuery;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
+import org.zkoss.zk.ui.event.EventQueue;
 
 /**
  * Desktop interface
@@ -34,8 +36,11 @@ import org.zkoss.zk.ui.Page;
 public interface IDesktop extends UIPart {
 
 	public static final String WINDOWNO_ATTRIBUTE = "desktop.windowno";
+	/** {@link EventQueue} name for activities (workflow activities, request, notice and unprocessed documents) */
 	public static final String ACTIVITIES_EVENT_QUEUE = "ActivitiesEventQueue";
 	public static final String ON_ACTIVITIES_CHANGED_EVENT = "onActivitiesChanged";
+	/** Event when closing window/tab with shortcut */
+    public static final String ON_CLOSE_WINDOW_SHORTCUT_EVENT = "onCloseWindowShortcut";
 
 	/**
 	 *
@@ -62,6 +67,12 @@ public interface IDesktop extends UIPart {
 	 * @return Object
 	 */
 	public Object findWindow(int WindowNo);
+
+	/**
+	 * @param component
+	 * @return register window no or -1 if not found
+	 */
+	public int findWindowNo(Component component);
 
 	/**
 	 * close active window
@@ -91,8 +102,8 @@ public interface IDesktop extends UIPart {
 
 	/**
 	 *
-	 * @param doc
-	 * @param string
+	 * @param content
+	 * @param title
 	 * @param closeable
 	 */
 	public void showHTMLContent(String content, String title, boolean closeable);
@@ -149,14 +160,13 @@ public interface IDesktop extends UIPart {
 	/**
     *
     * @param infoId
-    * @return ADWindow
     */
 	public void openInfo(int infoId);
 
 	/**
 	 *
 	 * @param windowId
-	 * @return ADWindow
+	 * @param callback
 	 */
 	public void openWindow(int windowId, Callback<ADWindow> callback);
 
@@ -164,7 +174,7 @@ public interface IDesktop extends UIPart {
 	 *
 	 * @param windowId
 	 * @param query
-	 * @return ADWindow
+	 * @param callback
 	 */
 	public void openWindow(int windowId, MQuery query, Callback<ADWindow> callback);
 
@@ -202,17 +212,85 @@ public interface IDesktop extends UIPart {
 	 */
 	public void logout();
 	
+	/**
+	 * 
+	 * @param callback callback after logout
+	 */
+	public default void logout(Callback<Boolean> callback) {
+		logout();
+		if (callback != null) {
+			callback.onCallback(Boolean.TRUE);
+		}
+	}
+	
+	/**
+	 * update help content in help/info panel
+	 * @param infoWindowId
+	 * @param infoPanel
+	 */
+	public void updateHelpContext(String ctxType, int infoWindowId, InfoPanel infoPanel);
+	
+	/**
+	 * update help content in help/info panel
+	 * @param ctxType
+	 * @param recordId
+	 */
 	public void updateHelpContext(String ctxType, int recordId);
 	
+	/**
+	 * update tooltip content in help/info panel
+	 * @param gridField
+	 */
 	public void updateHelpTooltip(GridField gridField);
 
+	/**
+	 * update tooltip content in help/info panel
+	 * @param hdr
+	 * @param desc
+	 * @param help
+	 * @param otherContent
+	 */
 	public void updateHelpTooltip(String hdr, String  desc, String help, String otherContent);
 
+	/**
+	 * update quick info (status line) in help/info panel
+	 * @param gridTab
+	 */
 	public void updateHelpQuickInfo(GridTab gridTab);
+	
+	/**
+	 * update quick info (status line) in help/info panel
+	 * @param infoPanel
+	 */
+	public void updateHelpQuickInfo(InfoPanel infoPanel);
 
+	/**
+	 * 
+	 * @return true if there are changes not save yet
+	 */
 	public boolean isPendingWindow();
 
+	/**
+	 * update tab title by windowNo
+	 * @param title
+	 * @param windowNo
+	 */
 	public void setTabTitle(String title, int windowNo);
 	
+	/**
+	 * render home tab
+	 */
 	public void renderHomeTab();
+	
+	/**
+	 * Is closing tab with shortcut allowed
+	 * @return true if allowed
+	 */
+	public boolean isCloseTabWithShortcut();
+	
+	/**
+	 * Set if closing tab with shortcut is allowed
+	 * @param isCloseTabWithShortcut
+	 */
+	public void setCloseTabWithShortcut(boolean isCloseTabWithShortcut);
 }

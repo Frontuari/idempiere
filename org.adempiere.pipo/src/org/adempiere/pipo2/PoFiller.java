@@ -1,16 +1,20 @@
 package org.adempiere.pipo2;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipInputStream;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MArchive;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MColumn;
+import org.compiere.model.MImage;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
@@ -28,9 +32,9 @@ public class PoFiller{
 	private Element element;
 
 	/**
-	 *
+	 * @param ctx
 	 * @param po
-	 * @param atts
+	 * @param element
 	 * @param handler
 	 */
 	public PoFiller(PIPOContext ctx, PO po, Element element, AbstractElementHandler handler){
@@ -53,10 +57,12 @@ public class PoFiller{
 		String value = getStringValue(columnName);
 		if(value == null)
 			return false;
-		
-		String strParts [] = value.split("[|]");
-		return strParts.length == 2;
 
+		String strParts [] = value.split("[|]");
+		return (   strParts.length == 2
+				&& strParts[0].endsWith(PackOut.PACKOUT_BLOB_FILE_EXTENSION)
+				&& (   PoExporter.POEXPORTER_BLOB_TYPE_STRING.equals(strParts[1]) // see PoExporter.addBlob
+					|| PoExporter.POEXPORTER_BLOB_TYPE_BYTEARRAY.equals(strParts[1])));
 	}
 	
 	/**
@@ -167,7 +173,7 @@ public class PoFiller{
 	 *
 	 * @param qName
 	 */
-	public int setTableReference(String qName) {
+	public Object setTableReference(String qName) {
 		Element e = element.properties.get(qName);
 		if (e == null)
 			return 0;
@@ -175,20 +181,35 @@ public class PoFiller{
 		String value = e.contents.toString();
 		String columnName = qName;
 		if (value != null && value.trim().length() > 0) {
-			int id = ReferenceUtils.resolveReference(ctx.ctx, e, po.get_TrxName());
-			if (columnName.equals("AD_Client_ID") && id > 0) {
-				if (id != Env.getAD_Client_ID(ctx.ctx)) {
-					return -1;
-				}
-			}
 			if (po.get_ColumnIndex(columnName) >= 0) {
-				MColumn col = MColumn.get(ctx.ctx, po.get_TableName(), columnName);
+				MColumn col = MColumn.get(ctx.ctx, po.get_TableName(), columnName, po.get_TrxName());
+				if (col == null) {
+					POInfo poInfo = POInfo.getPOInfo(ctx.ctx, po.get_Table_ID(), po.get_TrxName());
+					col = new MColumn(ctx.ctx, poInfo.getAD_Column_ID(columnName), po.get_TrxName());
+					if (col.get_ID() == 0)
+						return -1;
+				}
+				boolean isMulti = DisplayType.isMultiID(col.getAD_Reference_ID());
+				Object id;
+				if (isMulti)
+					id = ReferenceUtils.resolveReferenceMulti(ctx.ctx, e, po.get_TrxName());
+				else
+					id = ReferenceUtils.resolveReference(ctx.ctx, e, po.get_TrxName());
+				if (columnName.equals("AD_Client_ID") && ((Number)id).intValue() > 0) {
+					if (((Number)id).intValue() != Env.getAD_Client_ID(ctx.ctx)) {
+						return -1;
+					}
+				}
 				MTable foreignTable = null;
-				String refTableName = col.getReferenceTableName();
+				String refTableName;
+				if (isMulti)
+					refTableName = col.getMultiReferenceTableName();
+				else
+					refTableName = col.getReferenceTableName();
 				if (refTableName != null) {
-					foreignTable = MTable.get(Env.getCtx(), refTableName);
+					foreignTable = MTable.get(Env.getCtx(), refTableName, po.get_TrxName());
 				} else {
-					if ("Record_ID".equalsIgnoreCase(columnName)) {
+					if ("Record_ID".equalsIgnoreCase(columnName) || "Record_UU".equalsIgnoreCase(columnName)) {
 						// special case - get the foreign table using AD_Table_ID
 						int tableID = 0;
 						try {
@@ -203,29 +224,35 @@ public class PoFiller{
 							}
 						}
 						if (tableID > 0) {
-							foreignTable = MTable.get(Env.getCtx(), tableID);
+							foreignTable = MTable.get(Env.getCtx(), tableID, po.get_TrxName());
 							refTableName = foreignTable.getTableName();
 						}
 					}
 				}
-				if (id > 0 && refTableName != null) {
+				if (id != null && refTableName != null) {
 					if (foreignTable != null) {
-						PO subPo = foreignTable.getPO(id, po.get_TrxName());
-						if (subPo != null && subPo.getAD_Client_ID() != Env.getAD_Client_ID(ctx.ctx)) {
-							String accessLevel = foreignTable.getAccessLevel();
-							if ((MTable.ACCESSLEVEL_All.equals(accessLevel)
-									|| MTable.ACCESSLEVEL_SystemOnly.equals(accessLevel)
-									|| MTable.ACCESSLEVEL_SystemPlusClient.equals(accessLevel)) && 
-									subPo.getAD_Client_ID() != 0)
+						if (isMulti) {
+							for (String idstring : id.toString().split(",")) {
+								if (!isValidTenant(foreignTable, idstring, isMulti))
+									return -1;
+							}
+						} else {
+							if (!isValidTenant(foreignTable, id, isMulti))
 								return -1;
 						}
 					}
 
-					if (po.get_ValueAsInt(columnName) != id) {
-						po.set_ValueNoCheck(columnName, id);
-					}
+    				if (id instanceof String) {
+    					if (!((String)id).equals(po.get_ValueAsString(columnName))) {
+    						po.set_ValueNoCheck(columnName, id);
+    					}
+    				} else {
+    					if (po.get_ValueAsInt(columnName) != ((Number)id).intValue()) {
+    						po.set_ValueNoCheck(columnName, id);
+    					}
+    				}
 					return id;
-				} else if (id == 0) {
+				} else if (id instanceof Number && ((Number)id).intValue() == 0) {
 					if (refTableName != null && MTable.isZeroIDTable(refTableName)) {
 						po.set_ValueNoCheck(columnName, id);
 						return id;
@@ -239,6 +266,38 @@ public class PoFiller{
 			po.set_ValueNoCheck(columnName, null);
 			return 0;
 		}
+	}
+
+	private boolean isValidTenant(MTable foreignTable, Object id, boolean isMulti) {
+		/* Allow to read here from another tenant, cross tenant control is implemented later in a safe way */
+		PO subPo = null;
+		try {
+			PO.setCrossTenantSafe();
+			if (id instanceof String) {
+				if (isMulti) {
+					subPo = foreignTable.getPO(Integer.valueOf(id.toString()), po.get_TrxName());
+				} else {
+					subPo = foreignTable.getPOByUU((String)id, po.get_TrxName());
+				}
+			} else {
+				if (((Number)id).intValue() == 0 && MTable.isZeroIDTable(foreignTable.getTableName()))
+					return true;
+				subPo = foreignTable.getPO(((Number)id).intValue(), po.get_TrxName());
+			}
+		} finally {
+			PO.clearCrossTenantSafe();
+		}
+		if (subPo != null && subPo.getAD_Client_ID() != Env.getAD_Client_ID(ctx.ctx)) {
+			String accessLevel = foreignTable.getAccessLevel();
+			if ((MTable.ACCESSLEVEL_All.equals(accessLevel)
+					|| MTable.ACCESSLEVEL_SystemOnly.equals(accessLevel)
+					|| MTable.ACCESSLEVEL_SystemPlusClient.equals(accessLevel)) && 
+					subPo.getAD_Client_ID() != 0)
+				return false;
+		}
+		if (subPo.is_new())
+			return false;
+		return true;
 	}
 
 	/**
@@ -270,7 +329,7 @@ public class PoFiller{
 			} else if (sAD_Org_ID != null && sAD_Org_ID.equals("@AD_Org_ID@")) {
 				po.setAD_Org_ID(Env.getAD_Org_ID(ctx.ctx));
 			} else {
-				if (setTableReference("AD_Client_ID") >= 0)
+				if (((Number)setTableReference("AD_Client_ID")).intValue() >= 0)
 					setTableReference("AD_Org_ID");
 			}
 		}
@@ -291,8 +350,8 @@ public class PoFiller{
 			}
 			Element e = element.properties.get(qName);
 			if (ReferenceUtils.isLookup(e)) {
-				int id = setTableReference(qName);
-				if (id < 0) {
+				Object id = setTableReference(qName);
+				if (id == null || (id instanceof Number && ((Number)id).intValue() < 0)) {
 					notFounds.add(qName);
 				}
 			} else {
@@ -347,7 +406,11 @@ public class PoFiller{
 				} else if (DisplayType.isLOB(info.getColumnDisplayType(index))) {
 					setBlob(qName);
 				} else {
-					setString(qName);
+					if (isBlobOnPackinFile(qName)) {
+						setBlob(qName);
+					} else {
+						setString(qName);
+					}
 				}
 			}
 		}
@@ -399,7 +462,7 @@ public class PoFiller{
 					PackIn packIn = ctx.packIn;
 					try {
 						bytes = packIn.readBlob(fileName);
-						if ("byte[]".equals(dataType)) {
+						if (PoExporter.POEXPORTER_BLOB_TYPE_BYTEARRAY.equals(dataType)) {
 							data = bytes;
 						} else {
 							data = new String(bytes, "UTF-8");
@@ -408,7 +471,30 @@ public class PoFiller{
 						throw new AdempiereException(e.getLocalizedMessage(), e);
 					}
 				}
-				po.set_ValueNoCheck(qName, data);
+				if ("BinaryData".equals(qName) && data instanceof byte[]) {
+					if (po instanceof MArchive) {
+						/* it comes as a zip file with a single PDF file */
+					    byte[] output = null;
+					    try (ZipInputStream zipStream = new ZipInputStream(new ByteArrayInputStream((byte[]) data));) {
+							if (zipStream.getNextEntry() != null) {
+								output = zipStream.readAllBytes();
+							}
+						} catch (Exception e) {
+							throw new AdempiereException(e.getLocalizedMessage(), e);
+						}
+						if (output != null) {
+						    ((MArchive) po).setBinaryData((byte[]) output);
+						} else {
+							throw new AdempiereException("Zip file for Archive could not be decompressed");
+						}
+					} else if (po instanceof MImage) {
+						((MImage) po).setBinaryData((byte[]) data);
+					} else {
+						po.set_ValueNoCheck(qName, data);
+					}
+				} else {
+					po.set_ValueNoCheck(qName, data);
+				}
 			}
 		}
 	}

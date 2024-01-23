@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.model.MUOM;
 import org.compiere.model.MUOMConversion;
@@ -33,6 +34,7 @@ import org.compiere.util.Env;
  *  @author Jorg Janke
  *  @version $Id: ProductUOMConvert.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class ProductUOMConvert extends SvrProcess
 {
 	/** Product From			*/
@@ -64,7 +66,7 @@ public class ProductUOMConvert extends SvrProcess
 			else if (name.equals("Qty"))
 				p_Qty = (BigDecimal)para[i].getParameter();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

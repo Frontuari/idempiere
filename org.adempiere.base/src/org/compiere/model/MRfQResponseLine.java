@@ -33,17 +33,26 @@ import org.compiere.util.TimeUtil;
  *  
  *  @author Teo Sarca, teo.sarca@gmail.com
  *  		<li>BF [ 2892581 ] Cannot load RfQResponseLine
- *  			https://sourceforge.net/tracker/?func=detail&aid=2892581&group_id=176962&atid=879335
+ *  			https://sourceforge.net/p/adempiere/bugs/2201/
  */
 public class MRfQResponseLine extends X_C_RfQResponseLine
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 3388579962604552288L;
 
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_RfQResponseLine_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MRfQResponseLine(Properties ctx, String C_RfQResponseLine_UU, String trxName) {
+        super(ctx, C_RfQResponseLine_UU, trxName);
+    }
+
 	/**
-	 * 	Persistency Constructor
 	 *	@param ctx context
 	 *	@param C_RfQResponseLine_ID
 	 *	@param trxName transaction
@@ -51,8 +60,6 @@ public class MRfQResponseLine extends X_C_RfQResponseLine
 	public MRfQResponseLine (Properties ctx, int C_RfQResponseLine_ID, String trxName)
 	{
 		super(ctx, C_RfQResponseLine_ID, trxName);
-//		if (ignored != 0)
-//			throw new IllegalArgumentException("Multi-Key");
 	}	//	MRfQResponseLine
 
 	/**
@@ -67,9 +74,8 @@ public class MRfQResponseLine extends X_C_RfQResponseLine
 	}	//	MRfQResponseLine
 	
 	/**
-	 * 	Parent Constructor.
-	 * 	Also creates qtys if RfQ Qty
-	 * 	Is saved if there are qtys(!)
+	 * 	Parent Constructor.<br/>
+	 * 	Create and save MRfQResponseLineQty if MRfQLineQty IsRfQQty=Y.
 	 *	@param response response
 	 *	@param line line
 	 */
@@ -104,7 +110,7 @@ public class MRfQResponseLine extends X_C_RfQResponseLine
 	
 	/**
 	 * 	Get Quantities
-	 *	@return array of quantities
+	 *	@return array of MRfQResponseLineQty
 	 */
 	public MRfQResponseLineQty[] getQtys ()
 	{
@@ -113,8 +119,8 @@ public class MRfQResponseLine extends X_C_RfQResponseLine
 
 	/**
 	 * 	Get Quantities
-	 * 	@param requery requery
-	 *	@return array of quantities
+	 * 	@param requery true to re-query from DB
+	 *	@return array of MRfQResponseLineQty
 	 */
 	public MRfQResponseLineQty[] getQtys (boolean requery)
 	{
@@ -165,6 +171,7 @@ public class MRfQResponseLine extends X_C_RfQResponseLine
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder ("MRfQResponseLine[");
@@ -172,13 +179,13 @@ public class MRfQResponseLine extends X_C_RfQResponseLine
 			.append ("]");
 		return sb.toString ();
 	}	//	toString
-	
-	
+		
 	/**
 	 * 	Before Save
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		//	Calculate Complete Date (also used to verify)
@@ -194,8 +201,7 @@ public class MRfQResponseLine extends X_C_RfQResponseLine
 		if (!isActive())
 			setIsSelectedWinner(false);
 		return true;
-	}	//	beforeSave
-	
+	}	//	beforeSave	
 
 	/**
 	 * 	After Save
@@ -203,6 +209,7 @@ public class MRfQResponseLine extends X_C_RfQResponseLine
 	 *	@param success success
 	 *	@return success
 	 */
+	@Override
 	protected boolean afterSave (boolean newRecord, boolean success)
 	{	
 		if (!success)

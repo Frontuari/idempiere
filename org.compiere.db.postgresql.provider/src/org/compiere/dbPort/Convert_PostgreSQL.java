@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.compiere.db.DB_PostgreSQL;
+import org.compiere.model.SystemProperties;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -81,16 +82,9 @@ public class Convert_PostgreSQL extends Convert_SQL92 {
 	 */
 	protected ArrayList<String> convertStatement(String sqlStatement) {
 		ArrayList<String> result = new ArrayList<String>();
-		if (DB_PostgreSQL.isUseNativeDialect()) {
-			sqlStatement = convertSysDate(sqlStatement);
-			sqlStatement = convertSimilarTo(sqlStatement);
-			result.add(sqlStatement);
-			return result;
-		}
-		
 		/** Vector to save previous values of quoted strings **/
 		Vector<String> retVars = new Vector<String>();
-		
+
 		String nonce = sharedNonce;
 
 		// check for collision with nonce
@@ -100,46 +94,57 @@ public class Convert_PostgreSQL extends Convert_SQL92 {
 		}
 
 		String statement = replaceQuotedStrings(sqlStatement, retVars, nonce);
-		statement = convertWithConvertMap(statement);
-		statement = convertSimilarTo(statement);
-		statement = DB_PostgreSQL.removeNativeKeyworkMarker(statement);
-		
-		String cmpString = statement.toUpperCase();
-		boolean isCreate = cmpString.startsWith("CREATE ");
 
-		// Process
-		if (isCreate && cmpString.indexOf(" FUNCTION ") != -1)
-			;
-		else if (isCreate && cmpString.indexOf(" TRIGGER ") != -1)
-			;
-		else if (isCreate && cmpString.indexOf(" PROCEDURE ") != -1)
-			;
-		else if (isCreate && cmpString.indexOf(" VIEW ") != -1)
-			;
-		else if (cmpString.indexOf("ALTER TABLE") != -1) {
-			statement = recoverQuotedStrings(statement, retVars, nonce);
-			retVars.clear();
-			statement = convertDDL(convertComplexStatement(statement));
-		/*
-		} else if (cmpString.indexOf("ROWNUM") != -1) {
-			result.add(convertRowNum(convertComplexStatement(convertAlias(statement))));*/
-		} else if (cmpString.indexOf("DELETE ") != -1
-				&& cmpString.indexOf("DELETE FROM") == -1) {
-			statement = convertDelete(statement);
-			statement = convertComplexStatement(convertAlias(statement));
-		} else if (cmpString.indexOf("DELETE FROM") != -1) {
-			statement = convertComplexStatement(convertAlias(statement));
-		} else if (cmpString.indexOf("UPDATE ") != -1) {
-			statement = convertComplexStatement(convertUpdate(convertAlias(statement)));
+		if (DB_PostgreSQL.isUseNativeDialect()) {
+
+			statement = convertSysDate(statement);
+			statement = convertSimilarTo(statement);
+			statement = DB_PostgreSQL.removeNativeKeyworkMarker(statement);
+
 		} else {
-			statement = convertComplexStatement(convertAlias(statement));
+
+			statement = convertWithConvertMap(statement);
+			statement = convertSimilarTo(statement);
+			statement = DB_PostgreSQL.removeNativeKeyworkMarker(statement);
+
+			String cmpString = statement.toUpperCase();
+			boolean isCreate = cmpString.startsWith("CREATE ");
+
+			// Process
+			if (isCreate && cmpString.indexOf(" FUNCTION ") != -1)
+				;
+			else if (isCreate && cmpString.indexOf(" TRIGGER ") != -1)
+				;
+			else if (isCreate && cmpString.indexOf(" PROCEDURE ") != -1)
+				;
+			else if (isCreate && cmpString.indexOf(" VIEW ") != -1)
+				;
+			else if (cmpString.indexOf("ALTER TABLE") != -1) {
+				// See https://sourceforge.net/p/adempiere/bugs/655/
+				statement = recoverQuotedStrings(statement, retVars, nonce);
+				retVars.clear();
+				statement = convertDDL(convertComplexStatement(statement));
+				/*
+		    } else if (cmpString.indexOf("ROWNUM") != -1) {
+			    result.add(convertRowNum(convertComplexStatement(convertAlias(statement))));*/
+			} else if (cmpString.indexOf("DELETE ") != -1
+					&& cmpString.indexOf("DELETE FROM") == -1) {
+				statement = convertDelete(statement);
+				statement = convertComplexStatement(convertAlias(statement));
+			} else if (cmpString.indexOf("DELETE FROM") != -1) {
+				statement = convertComplexStatement(convertAlias(statement));
+			} else if (cmpString.indexOf("UPDATE ") != -1) {
+				statement = convertComplexStatement(convertUpdate(convertAlias(statement)));
+			} else {
+				statement = convertComplexStatement(convertAlias(statement));
+			}
 		}
 		if (retVars.size() > 0)
 			statement = recoverQuotedStrings(statement, retVars, nonce);
 		result.add(statement);
 
-		if ("true".equals(System.getProperty("org.idempiere.db.debug"))) {
-			String filterPgDebug = System.getProperty("org.idempiere.db.debug.filter");
+		if (SystemProperties.isDBDebug()) {
+			String filterPgDebug = SystemProperties.getDBDebugFilter();
 			boolean print = true;
 			if (filterPgDebug != null)
 				print = statement.matches(filterPgDebug);

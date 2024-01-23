@@ -24,6 +24,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MColumn;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MTable;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -35,6 +36,7 @@ import org.compiere.util.DisplayType;
  *  @author Jorg Janke
  *  @version $Id: ChangeLogProcess.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class ChangeLogProcess extends SvrProcess
 {
 	/** The Change Log (when applied directly)		*/
@@ -97,7 +99,7 @@ public class ChangeLogProcess extends SvrProcess
 			else if (name.equals("SetCustomization"))
 				p_SetCustomization = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_AD_ChangeLog_ID = getRecord_ID();
 	}	//	prepare
@@ -198,7 +200,6 @@ public class ChangeLogProcess extends SvrProcess
 			m_oldRecord_ID = cLog.getRecord_ID();
 			
 			//	Insert - new value is null and UnDo only
-			// m_isInsert = cLog.isNewNull() && p_CheckNewValue != null;
 			m_isInsert = MChangeLog.EVENTCHANGELOG_Insert.equals(cLog.getEventChangeLog());
 			if (m_isInsert)
 			{
@@ -311,7 +312,6 @@ public class ChangeLogProcess extends SvrProcess
 			no = DB.executeUpdate(m_sqlInsert.toString(), get_TrxName());
 			if (no == -1)
 			{
-			//	log.warning("Insert failed - " + m_sqlInsert);
 				m_errors++;
 			}
 			else if (no == 0)
@@ -330,7 +330,6 @@ public class ChangeLogProcess extends SvrProcess
 			no = DB.executeUpdate(m_sqlUpdate.toString(), get_TrxName());
 			if (no == -1)
 			{
-			//	log.warning("Failed - " + m_sqlUpdate);
 				m_errors++;
 			}
 			else if (no == 0)

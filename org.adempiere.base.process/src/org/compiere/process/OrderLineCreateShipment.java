@@ -23,6 +23,7 @@ import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -33,6 +34,7 @@ import org.compiere.util.Msg;
  *  @author Jorg Janke
  *  @version $Id: OrderLineCreateShipment.java,v 1.1 2007/07/23 05:34:35 mfuggle Exp $
  */
+@org.adempiere.base.annotation.Process
 public class OrderLineCreateShipment extends SvrProcess
 {
 	/**	Shipment					*/
@@ -53,11 +55,11 @@ public class OrderLineCreateShipment extends SvrProcess
 			if (name.equals("MovementDate"))
 				p_MovementDate = (Timestamp) para[i].getParameter();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		
 		if (p_MovementDate == null)
-			p_MovementDate = Env.getContextAsDate(getCtx(), "#Date");
+			p_MovementDate = Env.getContextAsDate(getCtx(), Env.DATE);
 		if ( p_MovementDate==null)
 			p_MovementDate = new Timestamp(System.currentTimeMillis());
 		
@@ -98,7 +100,6 @@ public class OrderLineCreateShipment extends SvrProcess
 		
 		MInOutLine sline = new MInOutLine( shipment );
 		sline.setOrderLine(line, 0, line.getQtyReserved());
-		//sline.setDatePromised(line.getDatePromised());
 		sline.setQtyEntered(line.getQtyReserved());
 		sline.setC_UOM_ID(line.getC_UOM_ID());
 		sline.setQty(line.getQtyReserved());

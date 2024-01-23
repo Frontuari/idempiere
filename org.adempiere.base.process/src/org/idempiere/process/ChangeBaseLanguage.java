@@ -28,6 +28,7 @@ package org.idempiere.process;
 import java.util.logging.Level;
 
 import org.compiere.model.MLanguage;
+import org.compiere.model.MProcessPara;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.AdempiereUserError;
@@ -39,6 +40,7 @@ import org.compiere.util.Util;
  *
  * 	@author 	Carlos Ruiz - globalqss
  */
+@org.adempiere.base.annotation.Process
 public class ChangeBaseLanguage extends SvrProcess
 {
 	/* The new language */
@@ -55,7 +57,7 @@ public class ChangeBaseLanguage extends SvrProcess
 			if (name.equals("AD_Language")) {
 				p_Language = (String) para.getParameter();
 			} else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para);
 		}
 	}	//	prepare
 
@@ -71,7 +73,8 @@ public class ChangeBaseLanguage extends SvrProcess
 		if (Util.isEmpty(p_Language))
 			throw new AdempiereUserError("Language required");
 
-		MLanguage lang = MLanguage.get(getCtx(), p_Language);
+		MLanguage langCached = MLanguage.get(getCtx(), p_Language);
+		MLanguage lang = new MLanguage(getCtx(), langCached.getAD_Language_ID(), get_TrxName());
 		if (lang.isBaseLanguage())
 			throw new AdempiereUserError("Same base language");
 		if (lang.isSystemLanguage())
@@ -81,7 +84,8 @@ public class ChangeBaseLanguage extends SvrProcess
 			throw new AdempiereUserError("Same base language");
 
 		// Disable the base flag on the actual
-		MLanguage baselang = MLanguage.get(getCtx(), Language.getBaseAD_Language());
+		MLanguage baselangCached = MLanguage.get(getCtx(), Language.getBaseAD_Language());
+		MLanguage baselang = new MLanguage(getCtx(), baselangCached.getAD_Language_ID(), get_TrxName());
 		baselang.setIsBaseLanguage(false);
 		baselang.saveEx(get_TrxName());
 

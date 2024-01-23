@@ -58,6 +58,7 @@ import org.jfree.data.time.Year;
 import org.jfree.data.xy.IntervalXYDataset;
 
 /**
+ * Builder for JFree Chart
  * @author Paul Bowden, Adaxa Pty Ltd 
  * @author hengsin
  *
@@ -70,13 +71,14 @@ public class ChartBuilder {
 	private HashMap<String,MQuery> queries;
 	private Dataset dataset;
 	
+	/**
+	 * @param chart
+	 */
 	public ChartBuilder(MChart chart) {
 		this.chartModel = chart;
 	}
 	
 	/**
-	 *
-	 * @param type
 	 * @return JFreeChart
 	 */
 	public JFreeChart createChart() {
@@ -147,6 +149,9 @@ public class ChartBuilder {
 		}
 	}
 
+	/**
+	 * Load data from chart data source
+	 */
 	public void loadData() {
 		queries = new HashMap<String,MQuery>();
 		for ( MChartDatasource ds : chartModel.getDatasources() )
@@ -155,6 +160,10 @@ public class ChartBuilder {
 		}
 	}
 
+	/**
+	 * Load data from data source into {@link #dataset}
+	 * @param ds
+	 */
 	private void addData(MChartDatasource ds) {
 		
 		String value = ds.getValueColumn();
@@ -209,7 +218,7 @@ public class ChartBuilder {
 			hasWhere = true;
 		}
 		
-		Date currentDate = Env.getContextAsDate(Env.getCtx(), "#Date");
+		Date currentDate = Env.getContextAsDate(Env.getCtx(), Env.DATE);
 		Date startDate = null;
 		Date endDate = null;
 		
@@ -337,8 +346,13 @@ public class ChartBuilder {
 
 	}
 
-	private Date increment(Date lastDate, String timeUnit, int qty) {
-		
+	/**
+	 * @param lastDate input date
+	 * @param timeUnit AD_Chart.TIMEUNIT_*
+	 * @param qty qty to increment
+	 * @return alter date
+	 */
+	private Date increment(Date lastDate, String timeUnit, int qty) {		
 		if ( lastDate == null )
 			return null;
 		
@@ -359,35 +373,56 @@ public class ChartBuilder {
 		return cal.getTime();
 	}
 
+	/**
+	 * Create and load data set from data source
+	 * @return CategoryDataset
+	 */
 	public CategoryDataset getCategoryDataset() {
 		dataset = new DefaultCategoryDataset();
 		loadData();
 		return (CategoryDataset) dataset;
 	}
 	
+	/**
+	 * Create and load data set from data source
+	 * @return IntervalXYDataset
+	 */
 	public IntervalXYDataset getXYDataset() {
 		dataset = new TimeSeriesCollection();
 		loadData();
 		return (IntervalXYDataset) dataset;
 	}
 
+	/**
+	 * Create and load data set from data source
+	 * @return PieDataset
+	 */
 	public PieDataset getPieDataset() {
 		dataset = new DefaultPieDataset();
 		loadData();
 		return (PieDataset) dataset;
 	}
 	
+	/**
+	 * Get current data set
+	 * @return dataset
+	 */
 	public Dataset getDataset() {
 		return dataset;
 	}
 	
+	/**
+	 * @return named query
+	 */
 	public HashMap<String, MQuery> getQueries() {
 		return queries;
 	}
 	
-	public MQuery getQuery(String key) {
-		
-
+	/**
+	 * @param key
+	 * @return MQuery
+	 */
+	public MQuery getQuery(String key) {		
 		if ( queries.containsKey(key) )
 		{
 			return queries.get(key);
@@ -396,6 +431,9 @@ public class ChartBuilder {
 		return null;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createXYBarChart() {
 		JFreeChart chart = ChartFactory.createXYBarChart(
 				chartModel.get_Translation(MChart.COLUMNNAME_Name),         // chart title
@@ -414,6 +452,9 @@ public class ChartBuilder {
 		return chart;
 	}
 	
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createTimeSeriesChart() {
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(
 				chartModel.get_Translation(MChart.COLUMNNAME_Name),         // chart title
@@ -429,6 +470,9 @@ public class ChartBuilder {
 		return chart;
 	}
 	
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createWaterfallChart() {
 		JFreeChart chart = ChartFactory.createWaterfallChart(
 				chartModel.get_Translation(MChart.COLUMNNAME_Name),         // chart title
@@ -446,6 +490,9 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createRingChart() {
 		final JFreeChart chart = ChartFactory.createRingChart(chartModel.get_Translation(MChart.COLUMNNAME_Name),
 				getPieDataset(), chartModel.isDisplayLegend(), true, true);
@@ -453,6 +500,9 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createPieChart() {
 		final JFreeChart chart = ChartFactory.createPieChart(chartModel.get_Translation(MChart.COLUMNNAME_Name),
 				getPieDataset(), false, true, true);
@@ -460,13 +510,19 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart create3DPieChart() {
-		final JFreeChart chart = ChartFactory.createPieChart3D(chartModel.get_Translation(MChart.COLUMNNAME_Name),
+		final JFreeChart chart = ChartFactory.createPieChart(chartModel.get_Translation(MChart.COLUMNNAME_Name),
 				getPieDataset(), false, true, true);
 	
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createBarChart() {
 		JFreeChart chart = ChartFactory.createBarChart(
 				chartModel.get_Translation(MChart.COLUMNNAME_Name),         // chart title
@@ -490,8 +546,11 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart create3DBarChart() {
-		JFreeChart chart = ChartFactory.createBarChart3D(
+		JFreeChart chart = ChartFactory.createBarChart(
 				chartModel.get_Translation(MChart.COLUMNNAME_Name),         // chart title
 				chartModel.get_Translation(MChart.COLUMNNAME_DomainLabel),               // domain axis label
 				chartModel.get_Translation(MChart.COLUMNNAME_RangeLabel),                  // range axis label
@@ -507,6 +566,9 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createStackedBarChart() {
 		JFreeChart chart = ChartFactory.createStackedBarChart(
 				chartModel.get_Translation(MChart.COLUMNNAME_Name),         // chart title
@@ -531,8 +593,11 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart create3DStackedBarChart() {
-		JFreeChart chart = ChartFactory.createStackedBarChart3D(
+		JFreeChart chart = ChartFactory.createStackedBarChart(
 				chartModel.get_Translation(MChart.COLUMNNAME_Name),         // chart title
 				chartModel.get_Translation(MChart.COLUMNNAME_DomainLabel),               // domain axis label
 				chartModel.get_Translation(MChart.COLUMNNAME_RangeLabel),                  // range axis label
@@ -548,6 +613,9 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createAreaChart() {
 		// create the chart...
 		JFreeChart chart = ChartFactory.createAreaChart(
@@ -566,6 +634,9 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createStackedAreaChart() {
 		// create the chart...
 		JFreeChart chart = ChartFactory.createStackedAreaChart(
@@ -584,6 +655,9 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart createLineChart() {
 		// create the chart...
 		JFreeChart chart = ChartFactory.createLineChart(
@@ -603,9 +677,12 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @return JFreeChart
+	 */
 	private JFreeChart create3DLineChart() {
 		// create the chart...
-		JFreeChart chart = ChartFactory.createLineChart3D(
+		JFreeChart chart = ChartFactory.createLineChart(
 				chartModel.get_Translation(MChart.COLUMNNAME_Name),         // chart title
 				chartModel.get_Translation(MChart.COLUMNNAME_DomainLabel),               // domain axis label
 				chartModel.get_Translation(MChart.COLUMNNAME_RangeLabel),                  // range axis label
@@ -622,6 +699,9 @@ public class ChartBuilder {
 		return chart;
 	}
 
+	/**
+	 * @param chart
+	 */
 	private void setupCategoryChart(JFreeChart chart) {
 		CategoryPlot plot = chart.getCategoryPlot();
 		CategoryAxis xAxis = (CategoryAxis)plot.getDomainAxis();

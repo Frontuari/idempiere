@@ -22,21 +22,55 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for M_QualityTest
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_QualityTest")
+public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_QualityTest (Properties ctx, int M_QualityTest_ID, String trxName)
     {
       super (ctx, M_QualityTest_ID, trxName);
       /** if (M_QualityTest_ID == 0)
+        {
+			setM_QualityTest_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_QualityTest (Properties ctx, int M_QualityTest_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_QualityTest_ID, trxName, virtualColumns);
+      /** if (M_QualityTest_ID == 0)
+        {
+			setM_QualityTest_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_QualityTest (Properties ctx, String M_QualityTest_UU, String trxName)
+    {
+      super (ctx, M_QualityTest_UU, trxName);
+      /** if (M_QualityTest_UU == null)
+        {
+			setM_QualityTest_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_QualityTest (Properties ctx, String M_QualityTest_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_QualityTest_UU, trxName, virtualColumns);
+      /** if (M_QualityTest_UU == null)
         {
 			setM_QualityTest_ID (0);
 			setName (null);
@@ -50,7 +84,7 @@ public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -72,9 +106,8 @@ public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -83,15 +116,14 @@ public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -100,24 +132,25 @@ public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Quality Test.
-		@param M_QualityTest_ID Quality Test	  */
+		@param M_QualityTest_ID Quality Test
+	*/
 	public void setM_QualityTest_ID (int M_QualityTest_ID)
 	{
-		if (M_QualityTest_ID < 1) 
+		if (M_QualityTest_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_QualityTest_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_QualityTest_ID, Integer.valueOf(M_QualityTest_ID));
 	}
 
 	/** Get Quality Test.
 		@return Quality Test	  */
-	public int getM_QualityTest_ID () 
+	public int getM_QualityTest_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_QualityTest_ID);
 		if (ii == null)
@@ -126,7 +159,8 @@ public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
 	}
 
 	/** Set M_QualityTest_UU.
-		@param M_QualityTest_UU M_QualityTest_UU	  */
+		@param M_QualityTest_UU M_QualityTest_UU
+	*/
 	public void setM_QualityTest_UU (String M_QualityTest_UU)
 	{
 		set_Value (COLUMNNAME_M_QualityTest_UU, M_QualityTest_UU);
@@ -134,15 +168,14 @@ public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
 
 	/** Get M_QualityTest_UU.
 		@return M_QualityTest_UU	  */
-	public String getM_QualityTest_UU () 
+	public String getM_QualityTest_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_QualityTest_UU);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -151,7 +184,7 @@ public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -159,7 +192,7 @@ public class X_M_QualityTest extends PO implements I_M_QualityTest, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }

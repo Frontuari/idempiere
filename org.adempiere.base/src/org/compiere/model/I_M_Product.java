@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for M_Product
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_M_Product 
 {
@@ -44,8 +44,8 @@ public interface I_M_Product
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +53,12 @@ public interface I_M_Product
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -163,6 +163,19 @@ public interface I_M_Product
 	public int getC_UOM_ID();
 
 	public org.compiere.model.I_C_UOM getC_UOM() throws RuntimeException;
+
+    /** Column name CustomsTariffNumber */
+    public static final String COLUMNNAME_CustomsTariffNumber = "CustomsTariffNumber";
+
+	/** Set Customs Tariff Number.
+	  * Customs Tariff Number, usually the HS-Code
+	  */
+	public void setCustomsTariffNumber (String CustomsTariffNumber);
+
+	/** Get Customs Tariff Number.
+	  * Customs Tariff Number, usually the HS-Code
+	  */
+	public String getCustomsTariffNumber();
 
     /** Column name Description */
     public static final String COLUMNNAME_Description = "Description";
@@ -312,6 +325,19 @@ public interface I_M_Product
 	  */
 	public boolean isActive();
 
+    /** Column name IsAutoProduce */
+    public static final String COLUMNNAME_IsAutoProduce = "IsAutoProduce";
+
+	/** Set Auto Produce.
+	  * Auto create production to fulfill shipment
+	  */
+	public void setIsAutoProduce (boolean IsAutoProduce);
+
+	/** Get Auto Produce.
+	  * Auto create production to fulfill shipment
+	  */
+	public boolean isAutoProduce();
+
     /** Column name IsBOM */
     public static final String COLUMNNAME_IsBOM = "IsBOM";
 
@@ -329,12 +355,12 @@ public interface I_M_Product
     public static final String COLUMNNAME_IsDropShip = "IsDropShip";
 
 	/** Set Drop Shipment.
-	  * Drop Shipments are sent from the Vendor directly to the Customer
+	  * Drop Shipments are sent directly to the Drop Shipment Location
 	  */
 	public void setIsDropShip (boolean IsDropShip);
 
 	/** Get Drop Shipment.
-	  * Drop Shipments are sent from the Vendor directly to the Customer
+	  * Drop Shipments are sent directly to the Drop Shipment Location
 	  */
 	public boolean isDropShip();
 
@@ -354,12 +380,12 @@ public interface I_M_Product
     /** Column name IsInvoicePrintDetails */
     public static final String COLUMNNAME_IsInvoicePrintDetails = "IsInvoicePrintDetails";
 
-	/** Set Print detail records on invoice .
+	/** Set Print detail records on invoice.
 	  * Print detail BOM elements on the invoice
 	  */
 	public void setIsInvoicePrintDetails (boolean IsInvoicePrintDetails);
 
-	/** Get Print detail records on invoice .
+	/** Get Print detail records on invoice.
 	  * Print detail BOM elements on the invoice
 	  */
 	public boolean isInvoicePrintDetails();
@@ -787,12 +813,12 @@ public interface I_M_Product
     /** Column name UnitsPerPack */
     public static final String COLUMNNAME_UnitsPerPack = "UnitsPerPack";
 
-	/** Set UnitsPerPack.
+	/** Set Units Per Pack.
 	  * The Units Per Pack indicates the no of units of a product packed together.
 	  */
 	public void setUnitsPerPack (int UnitsPerPack);
 
-	/** Get UnitsPerPack.
+	/** Get Units Per Pack.
 	  * The Units Per Pack indicates the no of units of a product packed together.
 	  */
 	public int getUnitsPerPack();

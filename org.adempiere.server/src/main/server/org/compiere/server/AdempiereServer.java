@@ -26,6 +26,7 @@ import org.compiere.model.AdempiereProcessor;
 import org.compiere.model.AdempiereProcessor2;
 import org.compiere.model.AdempiereProcessorLog;
 import org.compiere.model.MClient;
+import org.compiere.model.MClientInfo;
 import org.compiere.model.MOrgInfo;
 import org.compiere.model.MRole;
 import org.compiere.model.MSchedule;
@@ -33,9 +34,11 @@ import org.compiere.model.MSystem;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.model.SystemIDs;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
+import org.compiere.util.Util;
 
 /**
  *	Adempiere Server Base
@@ -110,10 +113,12 @@ public abstract class AdempiereServer implements Runnable
 
 	public void recalculateSleepMS()
 	{
+		int adOrgId = 0;
 		if (p_model instanceof PO) 
 		{
 			PO po = (PO) p_model;
 			po.load(null);
+			adOrgId = po.getAD_Org_ID();
 		}
 		m_sleepMS = 0;
 		m_nextWork = 0;
@@ -124,10 +129,21 @@ public abstract class AdempiereServer implements Runnable
 			m_nextWork = dateNextRun.getTime();
 		}
 		else
-		{			
+		{		
+			String timeZoneId = null;
+			if((p_model.getAD_Client_ID() == 0 && adOrgId == 0) || adOrgId > 0) {
+				MOrgInfo orgInfo = MOrgInfo.get(adOrgId);
+				timeZoneId = orgInfo.getTimeZone();
+			}
+			
+			if(Util.isEmpty(timeZoneId, true)) {
+				MClientInfo clientInfo = MClientInfo.get(getCtx(), p_model.getAD_Client_ID());
+				timeZoneId = clientInfo.getTimeZone();
+			}
+			
 			m_nextWork = MSchedule.getNextRunMS(now.getTime(),
 					p_model.getScheduleType(), p_model.getFrequencyType(),
-					p_model.getFrequency(), p_model.getCronPattern());
+					p_model.getFrequency(), p_model.getCronPattern(), timeZoneId);
 		}
 
 		if (m_nextWork > now.getTime())
@@ -155,30 +171,30 @@ public abstract class AdempiereServer implements Runnable
 	{
 		Properties context = new Properties();
 		MClient schedclient = MClient.get(getCtx(), p_model.getAD_Client_ID());
-		Env.setContext(context, "#AD_Client_ID", schedclient.getAD_Client_ID());
-		Env.setContext(context, "#AD_Language", schedclient.getAD_Language());
+		Env.setContext(context, Env.AD_CLIENT_ID, schedclient.getAD_Client_ID());
+		Env.setContext(context, Env.LANGUAGE, schedclient.getAD_Language());
 		if (p_model instanceof PO) {
 			PO po = (PO) p_model;
 			if (po.get_ColumnIndex("AD_Org_ID") >= 0) {
-				Env.setContext(context, "#AD_Org_ID", po.get_ValueAsInt("AD_Org_ID"));
+				Env.setContext(context, Env.AD_ORG_ID, po.get_ValueAsInt("AD_Org_ID"));
 				MOrgInfo schedorg = new Query(context, MOrgInfo.Table_Name, "AD_Org_ID=?", null)
 						.setParameters(po.get_ValueAsInt("AD_Org_ID")).first();
 				if (schedorg != null && schedorg.getM_Warehouse_ID() > 0)
-					Env.setContext(context, "#M_Warehouse_ID", schedorg.getM_Warehouse_ID());
+					Env.setContext(context, Env.M_WAREHOUSE_ID, schedorg.getM_Warehouse_ID());
 			}
 			int AD_User_ID = getAD_User_ID(po);
 			if (AD_User_ID > 0) {
-				Env.setContext(context, "#AD_User_ID", AD_User_ID);
-				Env.setContext(context, "#SalesRep_ID", AD_User_ID);
+				Env.setContext(context, Env.AD_USER_ID, AD_User_ID);
+				Env.setContext(context, Env.SALESREP_ID, AD_User_ID);
 				MUser scheduser = new MUser(context, AD_User_ID, null);
 				MRole[] schedroles = scheduser.getRoles(po.get_ValueAsInt("AD_Org_ID"));
 				if (schedroles != null && schedroles.length > 0)
-					Env.setContext(context, "#AD_Role_ID", schedroles[0].getAD_Role_ID()); // first role, ordered by AD_Role_ID				
+					Env.setContext(context, Env.AD_ROLE_ID, schedroles[0].getAD_Role_ID()); // first role, ordered by AD_Role_ID				
 			}
 		}
 		Timestamp ts = new Timestamp(System.currentTimeMillis());
 		SimpleDateFormat dateFormat4Timestamp = new SimpleDateFormat("yyyy-MM-dd"); 
-		Env.setContext(context, "#Date", dateFormat4Timestamp.format(ts)+" 00:00:00" );    //  JDBC format
+		Env.setContext(context, Env.DATE, dateFormat4Timestamp.format(ts)+" 00:00:00" );    //  JDBC format
 		
 		Properties prevContext = ServerContext.getCurrentInstance();
 		try {
@@ -201,7 +217,7 @@ public abstract class AdempiereServer implements Runnable
 		else if (po.get_ValueAsInt("UpdatedBy") > 0)
 			AD_User_ID = po.get_ValueAsInt("UpdatedBy");
 		else
-			AD_User_ID = 100; //fall back to SuperUser
+			AD_User_ID = SystemIDs.USER_SUPERUSER; //fall back to SuperUser
 		return AD_User_ID;
 	}
 	
@@ -240,13 +256,13 @@ public abstract class AdempiereServer implements Runnable
 		}
 
 		Properties context = new Properties();
-		Env.setContext(context, "#AD_Client_ID", p_model.getAD_Client_ID());
+		Env.setContext(context, Env.AD_CLIENT_ID, p_model.getAD_Client_ID());
 		if (p_model instanceof PO) {
 			PO po = (PO) p_model;
 			if (po.get_ColumnIndex("AD_Org_ID") >= 0)
-				Env.setContext(context, "#AD_Org_ID", po.get_ValueAsInt("AD_Org_ID"));
+				Env.setContext(context, Env.AD_ORG_ID, po.get_ValueAsInt("AD_Org_ID"));
 			if (po.get_ColumnIndex("AD_User_ID") >= 0)
-				Env.setContext(context, "#AD_User_ID", po.get_ValueAsInt("AD_User_ID"));
+				Env.setContext(context, Env.AD_USER_ID, po.get_ValueAsInt("AD_User_ID"));
 		}
 		
 		try {
@@ -294,7 +310,7 @@ public abstract class AdempiereServer implements Runnable
 
 		m_nextWork = MSchedule.getNextRunMS(lastRun.getTime(),
 				p_model.getScheduleType(), p_model.getFrequencyType(),
-				p_model.getFrequency(), p_model.getCronPattern());
+				p_model.getFrequency(), p_model.getCronPattern(), MClientInfo.get(getCtx(), p_model.getAD_Client_ID()).getTimeZone());
 
 		m_sleepMS = m_nextWork - now;
 		if (m_nextWork == 0) {

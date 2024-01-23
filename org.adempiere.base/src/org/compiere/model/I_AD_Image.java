@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for AD_Image
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_AD_Image 
 {
@@ -44,8 +44,8 @@ public interface I_AD_Image
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -75,14 +75,25 @@ public interface I_AD_Image
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
+
+    /** Column name AD_StorageProvider_ID */
+    public static final String COLUMNNAME_AD_StorageProvider_ID = "AD_StorageProvider_ID";
+
+	/** Set Storage Provider	  */
+	public void setAD_StorageProvider_ID (int AD_StorageProvider_ID);
+
+	/** Get Storage Provider	  */
+	public int getAD_StorageProvider_ID();
+
+	public org.compiere.model.I_AD_StorageProvider getAD_StorageProvider() throws RuntimeException;
 
     /** Column name BinaryData */
     public static final String COLUMNNAME_BinaryData = "BinaryData";

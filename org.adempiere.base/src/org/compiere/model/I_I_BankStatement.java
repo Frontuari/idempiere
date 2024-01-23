@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for I_BankStatement
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_I_BankStatement 
 {
@@ -44,8 +44,8 @@ public interface I_I_BankStatement
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +53,12 @@ public interface I_I_BankStatement
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -136,12 +136,12 @@ public interface I_I_BankStatement
     /** Column name C_BPartner_ID */
     public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
 
-	/** Set Business Partner .
+	/** Set Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public void setC_BPartner_ID (int C_BPartner_ID);
 
-	/** Get Business Partner .
+	/** Get Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public int getC_BPartner_ID();
@@ -680,12 +680,14 @@ public interface I_I_BankStatement
     public static final String COLUMNNAME_ReferenceNo = "ReferenceNo";
 
 	/** Set Reference No.
-	  * Your customer or vendor number at the Business Partner's site
+	  * Your customer or vendor number at the Business Partner&#039;
+s site
 	  */
 	public void setReferenceNo (String ReferenceNo);
 
 	/** Get Reference No.
-	  * Your customer or vendor number at the Business Partner's site
+	  * Your customer or vendor number at the Business Partner&#039;
+s site
 	  */
 	public String getReferenceNo();
 

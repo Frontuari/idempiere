@@ -17,11 +17,13 @@ package org.adempiere.webui.panel;
 import org.adempiere.webui.component.ToolBarButton;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.TreeUtils;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MUser;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.EventQueues;
@@ -33,14 +35,15 @@ import org.zkoss.zul.Toolbar;
 import org.zkoss.zul.Toolbarbutton;
 
 /**
- * Menu Tree Panel
+ * Menu tree panel. <br/>
+ * Consist of Tree, expand toggle and {@link MenuTreeFilterPanel}.
  * @author Elaine
  * @date July 31, 2012
  */
 public class MenuTreePanel extends AbstractMenuPanel
 {
     /**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -911113870835089567L;
 	private static final String ON_EXPAND_MENU_EVENT = "onExpandMenu";
@@ -48,12 +51,18 @@ public class MenuTreePanel extends AbstractMenuPanel
 	private ToolBarButton expandToggle;
 	private MenuTreeFilterPanel filterPanel;
 	private Toolbarbutton filterBtn;
+	private EventListener<Event> listener;
     
+	/**
+	 * 
+	 * @param parent
+	 */
     public MenuTreePanel(Component parent)
     {
     	super(parent);
     }
 
+    @Override
     protected void init() 
     {
 		super.init();
@@ -61,10 +70,11 @@ public class MenuTreePanel extends AbstractMenuPanel
         // Auto Expand Tree - nmicoud IDEMPIERE 195
      	if (MUser.get(getCtx()).isMenuAutoExpand())
      		expandAll();
-     	// Auto Expand Tree - nmicoud IDEMPIERE 195
      	
-     	EventQueues.lookup(MenuTreeFilterPanel.MENU_TREE_FILTER_CHECKED_QUEUE, EventQueues.DESKTOP, true).subscribe(new EventListener<Event>() {
+     	listener = new EventListener<Event>() {
 			public void onEvent(Event event) throws Exception {
+				if (getMenuTree() == null || getMenuTree().getPage() == null)
+					return;
 				if (event.getName() == Events.ON_CHECK)
 				{
 					Checkbox chk = (Checkbox) event.getData();
@@ -78,9 +88,14 @@ public class MenuTreePanel extends AbstractMenuPanel
 					}
 				}
 			}
-		});
-     }
+		};
+		EventQueues.lookup(MenuTreeFilterPanel.MENU_TREE_FILTER_CHECKED_QUEUE, EventQueues.DESKTOP, true).subscribe(listener);
+		
+		if (MSysConfig.getBooleanValue(MSysConfig.ZK_FLAT_VIEW_MENU_TREE, false, Env.getAD_Client_ID(Env.getCtx())))
+        	filterPanel.switchToFlatView();
+    }
     
+    @Override
     protected void initComponents()
     {
     	super.initComponents();
@@ -89,7 +104,6 @@ public class MenuTreePanel extends AbstractMenuPanel
         this.appendChild(pc);
         pc.appendChild(getMenuTree());
         
-        // Elaine 2009/02/27 - expand tree
         Toolbar toolbar = new Toolbar();
         toolbar.setSclass("desktop-menu-toolbar");
         this.appendChild(toolbar);
@@ -114,12 +128,12 @@ public class MenuTreePanel extends AbstractMenuPanel
         toolbar.appendChild(filterBtn);        
     }
     
+    @Override
     public void onEvent(Event event)
     {
     	super.onEvent(event);
     	
         String eventName = event.getName();
-        // Elaine 2009/02/27 - expand tree
         if (eventName.equals(Events.ON_CHECK) && event.getTarget() == expandToggle)
         {
         	Clients.showBusy(null);
@@ -136,8 +150,8 @@ public class MenuTreePanel extends AbstractMenuPanel
     }
 	
 	/**
-	* expand all node
-	*/
+	 * expand all node
+	 */
 	public void expandAll()
 	{
 		if (!expandToggle.isChecked())
@@ -158,7 +172,7 @@ public class MenuTreePanel extends AbstractMenuPanel
 	}
 	
 	/**
-	 *  On check event for the expand checkbox
+	 * On check event for the expand checkbox
 	 */
 	private void expandOnCheck()
 	{
@@ -167,5 +181,14 @@ public class MenuTreePanel extends AbstractMenuPanel
 		else
 			collapseAll();
 	}
+
+	@Override
+	public void onPageDetached(Page page) {
+		super.onPageDetached(page);
+		if (listener != null) {
+			EventQueues.lookup(MenuTreeFilterPanel.MENU_TREE_FILTER_CHECKED_QUEUE, EventQueues.DESKTOP, true).unsubscribe(listener);
+			listener = null;
+		}
+	}		
 	//
 }

@@ -24,21 +24,79 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for C_RfQLineQty
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_RfQLineQty")
+public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_RfQLineQty (Properties ctx, int C_RfQLineQty_ID, String trxName)
     {
       super (ctx, C_RfQLineQty_ID, trxName);
       /** if (C_RfQLineQty_ID == 0)
+        {
+			setBenchmarkPrice (Env.ZERO);
+			setC_RfQLine_ID (0);
+			setC_RfQLineQty_ID (0);
+			setC_UOM_ID (0);
+			setIsOfferQty (false);
+			setIsPurchaseQty (false);
+			setIsRfQQty (true);
+// Y
+			setQty (Env.ZERO);
+// 1
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RfQLineQty (Properties ctx, int C_RfQLineQty_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_RfQLineQty_ID, trxName, virtualColumns);
+      /** if (C_RfQLineQty_ID == 0)
+        {
+			setBenchmarkPrice (Env.ZERO);
+			setC_RfQLine_ID (0);
+			setC_RfQLineQty_ID (0);
+			setC_UOM_ID (0);
+			setIsOfferQty (false);
+			setIsPurchaseQty (false);
+			setIsRfQQty (true);
+// Y
+			setQty (Env.ZERO);
+// 1
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RfQLineQty (Properties ctx, String C_RfQLineQty_UU, String trxName)
+    {
+      super (ctx, C_RfQLineQty_UU, trxName);
+      /** if (C_RfQLineQty_UU == null)
+        {
+			setBenchmarkPrice (Env.ZERO);
+			setC_RfQLine_ID (0);
+			setC_RfQLineQty_ID (0);
+			setC_UOM_ID (0);
+			setIsOfferQty (false);
+			setIsPurchaseQty (false);
+			setIsRfQQty (true);
+// Y
+			setQty (Env.ZERO);
+// 1
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RfQLineQty (Properties ctx, String C_RfQLineQty_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_RfQLineQty_UU, trxName, virtualColumns);
+      /** if (C_RfQLineQty_UU == null)
         {
 			setBenchmarkPrice (Env.ZERO);
 			setC_RfQLine_ID (0);
@@ -60,7 +118,7 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
     }
 
     /** AccessLevel
-      * @return 1 - Org 
+      * @return 1 - Org
       */
     protected int get_AccessLevel()
     {
@@ -82,9 +140,8 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
     }
 
 	/** Set Benchmark Price.
-		@param BenchmarkPrice 
-		Price to compare responses to
-	  */
+		@param BenchmarkPrice Price to compare responses to
+	*/
 	public void setBenchmarkPrice (BigDecimal BenchmarkPrice)
 	{
 		set_Value (COLUMNNAME_BenchmarkPrice, BenchmarkPrice);
@@ -93,7 +150,7 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	/** Get Benchmark Price.
 		@return Price to compare responses to
 	  */
-	public BigDecimal getBenchmarkPrice () 
+	public BigDecimal getBenchmarkPrice()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_BenchmarkPrice);
 		if (bd == null)
@@ -102,9 +159,8 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	}
 
 	/** Set Best Response Amount.
-		@param BestResponseAmt 
-		Best Response Amount
-	  */
+		@param BestResponseAmt Best Response Amount
+	*/
 	public void setBestResponseAmt (BigDecimal BestResponseAmt)
 	{
 		set_Value (COLUMNNAME_BestResponseAmt, BestResponseAmt);
@@ -113,7 +169,7 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	/** Get Best Response Amount.
 		@return Best Response Amount
 	  */
-	public BigDecimal getBestResponseAmt () 
+	public BigDecimal getBestResponseAmt()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_BestResponseAmt);
 		if (bd == null)
@@ -122,26 +178,26 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	}
 
 	public org.compiere.model.I_C_RfQLine getC_RfQLine() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_RfQLine)MTable.get(getCtx(), org.compiere.model.I_C_RfQLine.Table_Name)
-			.getPO(getC_RfQLine_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_RfQLine)MTable.get(getCtx(), org.compiere.model.I_C_RfQLine.Table_ID)
+			.getPO(getC_RfQLine_ID(), get_TrxName());
+	}
 
 	/** Set RfQ Line.
-		@param C_RfQLine_ID 
-		Request for Quotation Line
-	  */
+		@param C_RfQLine_ID Request for Quotation Line
+	*/
 	public void setC_RfQLine_ID (int C_RfQLine_ID)
 	{
-		if (C_RfQLine_ID < 1) 
+		if (C_RfQLine_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_RfQLine_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_RfQLine_ID, Integer.valueOf(C_RfQLine_ID));
 	}
 
 	/** Get RfQ Line.
 		@return Request for Quotation Line
 	  */
-	public int getC_RfQLine_ID () 
+	public int getC_RfQLine_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_RfQLine_ID);
 		if (ii == null)
@@ -150,21 +206,20 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	}
 
 	/** Set RfQ Line Quantity.
-		@param C_RfQLineQty_ID 
-		Request for Quotation Line Quantity
-	  */
+		@param C_RfQLineQty_ID Request for Quotation Line Quantity
+	*/
 	public void setC_RfQLineQty_ID (int C_RfQLineQty_ID)
 	{
-		if (C_RfQLineQty_ID < 1) 
+		if (C_RfQLineQty_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_RfQLineQty_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_RfQLineQty_ID, Integer.valueOf(C_RfQLineQty_ID));
 	}
 
 	/** Get RfQ Line Quantity.
 		@return Request for Quotation Line Quantity
 	  */
-	public int getC_RfQLineQty_ID () 
+	public int getC_RfQLineQty_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_RfQLineQty_ID);
 		if (ii == null)
@@ -173,7 +228,8 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	}
 
 	/** Set C_RfQLineQty_UU.
-		@param C_RfQLineQty_UU C_RfQLineQty_UU	  */
+		@param C_RfQLineQty_UU C_RfQLineQty_UU
+	*/
 	public void setC_RfQLineQty_UU (String C_RfQLineQty_UU)
 	{
 		set_Value (COLUMNNAME_C_RfQLineQty_UU, C_RfQLineQty_UU);
@@ -181,32 +237,32 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 
 	/** Get C_RfQLineQty_UU.
 		@return C_RfQLineQty_UU	  */
-	public String getC_RfQLineQty_UU () 
+	public String getC_RfQLineQty_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_RfQLineQty_UU);
 	}
 
 	public org.compiere.model.I_C_UOM getC_UOM() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_UOM)MTable.get(getCtx(), org.compiere.model.I_C_UOM.Table_Name)
-			.getPO(getC_UOM_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_UOM)MTable.get(getCtx(), org.compiere.model.I_C_UOM.Table_ID)
+			.getPO(getC_UOM_ID(), get_TrxName());
+	}
 
 	/** Set UOM.
-		@param C_UOM_ID 
-		Unit of Measure
-	  */
+		@param C_UOM_ID Unit of Measure
+	*/
 	public void setC_UOM_ID (int C_UOM_ID)
 	{
-		if (C_UOM_ID < 1) 
+		if (C_UOM_ID < 1)
 			set_Value (COLUMNNAME_C_UOM_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_UOM_ID, Integer.valueOf(C_UOM_ID));
 	}
 
 	/** Get UOM.
 		@return Unit of Measure
 	  */
-	public int getC_UOM_ID () 
+	public int getC_UOM_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_UOM_ID);
 		if (ii == null)
@@ -217,15 +273,14 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), String.valueOf(getC_UOM_ID()));
     }
 
 	/** Set Offer Quantity.
-		@param IsOfferQty 
-		This quantity is used in the Offer to the Customer
-	  */
+		@param IsOfferQty This quantity is used in the Offer to the Customer
+	*/
 	public void setIsOfferQty (boolean IsOfferQty)
 	{
 		set_Value (COLUMNNAME_IsOfferQty, Boolean.valueOf(IsOfferQty));
@@ -234,22 +289,21 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	/** Get Offer Quantity.
 		@return This quantity is used in the Offer to the Customer
 	  */
-	public boolean isOfferQty () 
+	public boolean isOfferQty()
 	{
 		Object oo = get_Value(COLUMNNAME_IsOfferQty);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Purchase Quantity.
-		@param IsPurchaseQty 
-		This quantity is used in the Purchase Order to the Supplier
-	  */
+		@param IsPurchaseQty This quantity is used in the Purchase Order to the Supplier
+	*/
 	public void setIsPurchaseQty (boolean IsPurchaseQty)
 	{
 		set_Value (COLUMNNAME_IsPurchaseQty, Boolean.valueOf(IsPurchaseQty));
@@ -258,22 +312,21 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	/** Get Purchase Quantity.
 		@return This quantity is used in the Purchase Order to the Supplier
 	  */
-	public boolean isPurchaseQty () 
+	public boolean isPurchaseQty()
 	{
 		Object oo = get_Value(COLUMNNAME_IsPurchaseQty);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set RfQ Quantity.
-		@param IsRfQQty 
-		The quantity is used when generating RfQ Responses
-	  */
+		@param IsRfQQty The quantity is used when generating RfQ Responses
+	*/
 	public void setIsRfQQty (boolean IsRfQQty)
 	{
 		set_Value (COLUMNNAME_IsRfQQty, Boolean.valueOf(IsRfQQty));
@@ -282,22 +335,21 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	/** Get RfQ Quantity.
 		@return The quantity is used when generating RfQ Responses
 	  */
-	public boolean isRfQQty () 
+	public boolean isRfQQty()
 	{
 		Object oo = get_Value(COLUMNNAME_IsRfQQty);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Margin %.
-		@param Margin 
-		Margin for a product as a percentage
-	  */
+		@param Margin Margin for a product as a percentage
+	*/
 	public void setMargin (BigDecimal Margin)
 	{
 		set_Value (COLUMNNAME_Margin, Margin);
@@ -306,7 +358,7 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	/** Get Margin %.
 		@return Margin for a product as a percentage
 	  */
-	public BigDecimal getMargin () 
+	public BigDecimal getMargin()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_Margin);
 		if (bd == null)
@@ -315,9 +367,8 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	}
 
 	/** Set Offer Amount.
-		@param OfferAmt 
-		Amount of the Offer
-	  */
+		@param OfferAmt Amount of the Offer
+	*/
 	public void setOfferAmt (BigDecimal OfferAmt)
 	{
 		set_Value (COLUMNNAME_OfferAmt, OfferAmt);
@@ -326,7 +377,7 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	/** Get Offer Amount.
 		@return Amount of the Offer
 	  */
-	public BigDecimal getOfferAmt () 
+	public BigDecimal getOfferAmt()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_OfferAmt);
 		if (bd == null)
@@ -335,9 +386,8 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	}
 
 	/** Set Quantity.
-		@param Qty 
-		Quantity
-	  */
+		@param Qty Quantity
+	*/
 	public void setQty (BigDecimal Qty)
 	{
 		set_Value (COLUMNNAME_Qty, Qty);
@@ -346,7 +396,7 @@ public class X_C_RfQLineQty extends PO implements I_C_RfQLineQty, I_Persistent
 	/** Get Quantity.
 		@return Quantity
 	  */
-	public BigDecimal getQty () 
+	public BigDecimal getQty()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_Qty);
 		if (bd == null)

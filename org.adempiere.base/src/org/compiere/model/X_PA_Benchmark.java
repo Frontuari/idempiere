@@ -22,21 +22,58 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for PA_Benchmark
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="PA_Benchmark")
+public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_PA_Benchmark (Properties ctx, int PA_Benchmark_ID, String trxName)
     {
       super (ctx, PA_Benchmark_ID, trxName);
       /** if (PA_Benchmark_ID == 0)
+        {
+			setAccumulationType (null);
+			setName (null);
+			setPA_Benchmark_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_Benchmark (Properties ctx, int PA_Benchmark_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, PA_Benchmark_ID, trxName, virtualColumns);
+      /** if (PA_Benchmark_ID == 0)
+        {
+			setAccumulationType (null);
+			setName (null);
+			setPA_Benchmark_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_Benchmark (Properties ctx, String PA_Benchmark_UU, String trxName)
+    {
+      super (ctx, PA_Benchmark_UU, trxName);
+      /** if (PA_Benchmark_UU == null)
+        {
+			setAccumulationType (null);
+			setName (null);
+			setPA_Benchmark_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_Benchmark (Properties ctx, String PA_Benchmark_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, PA_Benchmark_UU, trxName, virtualColumns);
+      /** if (PA_Benchmark_UU == null)
         {
 			setAccumulationType (null);
 			setName (null);
@@ -51,7 +88,7 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -79,9 +116,8 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
 	/** Sum = S */
 	public static final String ACCUMULATIONTYPE_Sum = "S";
 	/** Set Accumulation Type.
-		@param AccumulationType 
-		How to accumulate data on time axis
-	  */
+		@param AccumulationType How to accumulate data on time axis
+	*/
 	public void setAccumulationType (String AccumulationType)
 	{
 
@@ -91,15 +127,14 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
 	/** Get Accumulation Type.
 		@return How to accumulate data on time axis
 	  */
-	public String getAccumulationType () 
+	public String getAccumulationType()
 	{
 		return (String)get_Value(COLUMNNAME_AccumulationType);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -108,15 +143,14 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -125,15 +159,14 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -142,7 +175,7 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -150,27 +183,26 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Benchmark.
-		@param PA_Benchmark_ID 
-		Performance Benchmark
-	  */
+		@param PA_Benchmark_ID Performance Benchmark
+	*/
 	public void setPA_Benchmark_ID (int PA_Benchmark_ID)
 	{
-		if (PA_Benchmark_ID < 1) 
+		if (PA_Benchmark_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_PA_Benchmark_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_PA_Benchmark_ID, Integer.valueOf(PA_Benchmark_ID));
 	}
 
 	/** Get Benchmark.
 		@return Performance Benchmark
 	  */
-	public int getPA_Benchmark_ID () 
+	public int getPA_Benchmark_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_PA_Benchmark_ID);
 		if (ii == null)
@@ -179,7 +211,8 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
 	}
 
 	/** Set PA_Benchmark_UU.
-		@param PA_Benchmark_UU PA_Benchmark_UU	  */
+		@param PA_Benchmark_UU PA_Benchmark_UU
+	*/
 	public void setPA_Benchmark_UU (String PA_Benchmark_UU)
 	{
 		set_Value (COLUMNNAME_PA_Benchmark_UU, PA_Benchmark_UU);
@@ -187,7 +220,7 @@ public class X_PA_Benchmark extends PO implements I_PA_Benchmark, I_Persistent
 
 	/** Get PA_Benchmark_UU.
 		@return PA_Benchmark_UU	  */
-	public String getPA_Benchmark_UU () 
+	public String getPA_Benchmark_UU()
 	{
 		return (String)get_Value(COLUMNNAME_PA_Benchmark_UU);
 	}

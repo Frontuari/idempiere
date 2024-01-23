@@ -18,12 +18,13 @@ package org.compiere.acct;
 
 import java.math.BigDecimal;
 
+import org.compiere.model.MBankStatement;
 import org.compiere.model.MBankStatementLine;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 /**
- *  Bank Statement Line
+ *  DocLine for {@link MBankStatementLine}
  *
  *  @author Jorg Janke
  *  @version  $Id: DocLine_Bank.java,v 1.2 2006/07/30 00:53:33 jjanke Exp $
@@ -46,7 +47,7 @@ public class DocLine_Bank extends DocLine
 		m_TrxAmt = line.getTrxAmt();
 		//
 		setDateDoc(line.getValutaDate());
-		setDateAcct(doc.getDateAcct());  // adaxa-pb use statement date
+		setDateAcct(MBankStatement.isPostWithDateFromLine(doc.getAD_Client_ID()) ? line.getDateAcct() : doc.getDateAcct());
 		setC_BPartner_ID(line.getC_BPartner_ID());
 	}   //  DocLine_Bank
 
@@ -71,7 +72,7 @@ public class DocLine_Bank extends DocLine
 	/**
 	 * 	Get AD_Org_ID
 	 * 	@param payment if true get Org from payment
-	 *	@return org
+	 *	@return AD_Org_ID
 	 */
 	public int getAD_Org_ID (boolean payment)
 	{
@@ -95,8 +96,8 @@ public class DocLine_Bank extends DocLine
 	}   //  isReversal
 
 	/**
-	 *  Get Interest
-	 *  @return InterestAmount
+	 *  Get Interest Amount
+	 *  @return Interest Amount
 	 */
 	public BigDecimal getInterestAmt()
 	{
@@ -104,8 +105,8 @@ public class DocLine_Bank extends DocLine
 	}   //  getInterestAmt
 
 	/**
-	 *  Get Statement
-	 *  @return Starement Amount
+	 *  Get Statement Amount
+	 *  @return Statement Amount
 	 */
 	public BigDecimal getStmtAmt()
 	{
@@ -113,7 +114,7 @@ public class DocLine_Bank extends DocLine
 	}   //  getStrmtAmt
 
 	/**
-	 *  Get Transaction
+	 *  Get Transaction Amount
 	 *  @return transaction amount
 	 */
 	public BigDecimal getTrxAmt()

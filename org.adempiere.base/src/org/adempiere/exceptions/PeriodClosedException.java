@@ -20,25 +20,26 @@ import org.compiere.model.X_C_DocType;
 import org.compiere.util.Env;
 
 /**
- * Period Closed Exception.
- * This exception is throwed by
+ * Period Closed Exception.<br/>
+ * This exception is throw by
  * {@link org.compiere.model.MPeriod#testPeriodOpen(java.util.Properties, Timestamp, int, int)} and
  * {@link org.compiere.model.MPeriod#testPeriodOpen(java.util.Properties, Timestamp, String, int)} methods.
  * @author Teo Sarca, SC ARHIPAC SERVICE SRL
  * @author victor.perez@e-evolution.com, e-Evolution http://www.e-evolution.com
  * 				<li>FR [ 2520591 ] Support multiples calendar for Org
- *				@see http://sourceforge.net/tracker2/?func=detail&atid=879335&aid=2520591&group_id=176962
+ *				@see https://sourceforge.net/p/adempiere/feature-requests/631/
  *
  */
 public class PeriodClosedException extends AdempiereException
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -2798371272365454799L;
 
 	/**
-	 * 
+	 * @param dateAcct
+	 * @param docBaseType
 	 */
 	public PeriodClosedException(Timestamp dateAcct, String docBaseType)
 	{

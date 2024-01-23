@@ -22,21 +22,55 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for C_City
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_City extends PO implements I_C_City, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_City")
+public class X_C_City extends PO implements I_C_City, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_City (Properties ctx, int C_City_ID, String trxName)
     {
       super (ctx, C_City_ID, trxName);
       /** if (C_City_ID == 0)
+        {
+			setC_City_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_City (Properties ctx, int C_City_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_City_ID, trxName, virtualColumns);
+      /** if (C_City_ID == 0)
+        {
+			setC_City_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_City (Properties ctx, String C_City_UU, String trxName)
+    {
+      super (ctx, C_City_UU, trxName);
+      /** if (C_City_UU == null)
+        {
+			setC_City_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_City (Properties ctx, String C_City_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_City_UU, trxName, virtualColumns);
+      /** if (C_City_UU == null)
         {
 			setC_City_ID (0);
 			setName (null);
@@ -50,7 +84,7 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -72,9 +106,8 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
     }
 
 	/** Set Area Code.
-		@param AreaCode 
-		Phone Area Code
-	  */
+		@param AreaCode Phone Area Code
+	*/
 	public void setAreaCode (String AreaCode)
 	{
 		set_Value (COLUMNNAME_AreaCode, AreaCode);
@@ -83,27 +116,26 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 	/** Get Area Code.
 		@return Phone Area Code
 	  */
-	public String getAreaCode () 
+	public String getAreaCode()
 	{
 		return (String)get_Value(COLUMNNAME_AreaCode);
 	}
 
 	/** Set City.
-		@param C_City_ID 
-		City
-	  */
+		@param C_City_ID City
+	*/
 	public void setC_City_ID (int C_City_ID)
 	{
-		if (C_City_ID < 1) 
+		if (C_City_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_City_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_City_ID, Integer.valueOf(C_City_ID));
 	}
 
 	/** Get City.
 		@return City
 	  */
-	public int getC_City_ID () 
+	public int getC_City_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_City_ID);
 		if (ii == null)
@@ -112,7 +144,8 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 	}
 
 	/** Set C_City_UU.
-		@param C_City_UU C_City_UU	  */
+		@param C_City_UU C_City_UU
+	*/
 	public void setC_City_UU (String C_City_UU)
 	{
 		set_Value (COLUMNNAME_C_City_UU, C_City_UU);
@@ -120,32 +153,32 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 
 	/** Get C_City_UU.
 		@return C_City_UU	  */
-	public String getC_City_UU () 
+	public String getC_City_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_City_UU);
 	}
 
 	public org.compiere.model.I_C_Country getC_Country() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_Country)MTable.get(getCtx(), org.compiere.model.I_C_Country.Table_Name)
-			.getPO(getC_Country_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_Country)MTable.get(getCtx(), org.compiere.model.I_C_Country.Table_ID)
+			.getPO(getC_Country_ID(), get_TrxName());
+	}
 
 	/** Set Country.
-		@param C_Country_ID 
-		Country 
-	  */
+		@param C_Country_ID Country 
+	*/
 	public void setC_Country_ID (int C_Country_ID)
 	{
-		if (C_Country_ID < 1) 
+		if (C_Country_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_Country_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_Country_ID, Integer.valueOf(C_Country_ID));
 	}
 
 	/** Get Country.
 		@return Country 
 	  */
-	public int getC_Country_ID () 
+	public int getC_Country_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_Country_ID);
 		if (ii == null)
@@ -154,9 +187,8 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 	}
 
 	/** Set Coordinates.
-		@param Coordinates 
-		Location coordinate
-	  */
+		@param Coordinates Location coordinate
+	*/
 	public void setCoordinates (String Coordinates)
 	{
 		set_Value (COLUMNNAME_Coordinates, Coordinates);
@@ -165,32 +197,32 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 	/** Get Coordinates.
 		@return Location coordinate
 	  */
-	public String getCoordinates () 
+	public String getCoordinates()
 	{
 		return (String)get_Value(COLUMNNAME_Coordinates);
 	}
 
 	public org.compiere.model.I_C_Region getC_Region() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_Region)MTable.get(getCtx(), org.compiere.model.I_C_Region.Table_Name)
-			.getPO(getC_Region_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_Region)MTable.get(getCtx(), org.compiere.model.I_C_Region.Table_ID)
+			.getPO(getC_Region_ID(), get_TrxName());
+	}
 
 	/** Set Region.
-		@param C_Region_ID 
-		Identifies a geographical Region
-	  */
+		@param C_Region_ID Identifies a geographical Region
+	*/
 	public void setC_Region_ID (int C_Region_ID)
 	{
-		if (C_Region_ID < 1) 
+		if (C_Region_ID < 1)
 			set_Value (COLUMNNAME_C_Region_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_Region_ID, Integer.valueOf(C_Region_ID));
 	}
 
 	/** Get Region.
 		@return Identifies a geographical Region
 	  */
-	public int getC_Region_ID () 
+	public int getC_Region_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_Region_ID);
 		if (ii == null)
@@ -199,9 +231,8 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 	}
 
 	/** Set Locode.
-		@param Locode 
-		Location code - UN/LOCODE 
-	  */
+		@param Locode Location code - UN/LOCODE 
+	*/
 	public void setLocode (String Locode)
 	{
 		set_Value (COLUMNNAME_Locode, Locode);
@@ -210,15 +241,14 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 	/** Get Locode.
 		@return Location code - UN/LOCODE 
 	  */
-	public String getLocode () 
+	public String getLocode()
 	{
 		return (String)get_Value(COLUMNNAME_Locode);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -227,7 +257,7 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -235,15 +265,14 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set ZIP.
-		@param Postal 
-		Postal code
-	  */
+		@param Postal Postal code
+	*/
 	public void setPostal (String Postal)
 	{
 		set_Value (COLUMNNAME_Postal, Postal);
@@ -252,7 +281,7 @@ public class X_C_City extends PO implements I_C_City, I_Persistent
 	/** Get ZIP.
 		@return Postal code
 	  */
-	public String getPostal () 
+	public String getPostal()
 	{
 		return (String)get_Value(COLUMNNAME_Postal);
 	}

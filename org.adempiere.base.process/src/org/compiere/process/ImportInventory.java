@@ -32,6 +32,7 @@ import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MCost;
 import org.compiere.model.MInventory;
 import org.compiere.model.MInventoryLine;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductCategoryAcct;
 import org.compiere.model.ModelValidationEngine;
@@ -55,6 +56,7 @@ import org.compiere.util.ValueNamePair;
  *  Carlos Ruiz - globalqss - IDEMPIERE-281 Extend Import Inventory to support also internal use
  *  Deepak Pansheriya - logilite - IDEMPIERE-2314 Making import inventory process extendible
  */
+@org.adempiere.base.annotation.Process
 public class ImportInventory extends SvrProcess implements ImportProcess
 {
 	/**	Client to be imported to		*/
@@ -121,7 +123,7 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 			else if (name.equals("C_DocType_ID"))
 				p_C_DocType_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.WARNING, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 
@@ -351,12 +353,9 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 		sql = new StringBuilder ("SELECT * FROM I_Inventory ")
 			.append("WHERE I_IsImported='N'").append (clientCheck)
 			.append(" ORDER BY M_Warehouse_ID, TRUNC(MovementDate), I_Inventory_ID");
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
+		try (PreparedStatement pstmt = DB.prepareStatement (sql.toString (), get_TrxName());)
 		{
-			pstmt = DB.prepareStatement (sql.toString (), get_TrxName());
-			rs = pstmt.executeQuery ();
+			ResultSet rs = pstmt.executeQuery ();
 			//
 			int x_M_Warehouse_ID = -1;
 			int x_C_DocType_ID = -1;
@@ -486,11 +485,6 @@ public class ImportInventory extends SvrProcess implements ImportProcess
 		catch (Exception e)
 		{
 			throw new AdempiereException(e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null; pstmt = null;
 		}
 
 		//	Set Error to indicator to not imported

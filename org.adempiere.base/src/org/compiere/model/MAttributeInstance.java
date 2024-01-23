@@ -23,9 +23,10 @@ import java.text.SimpleDateFormat;
 import java.util.Properties;
 
 import org.compiere.util.DisplayType;
+import org.compiere.util.KeyNamePair;
 
 /**
- *  Product Attribute Set
+ *  Attribute Instance Model (Instance of attribute for a particular attribute set instance record)
  *
  *	@author Jorg Janke
  *	@version $Id: MAttributeInstance.java,v 1.3 2006/07/30 00:51:02 jjanke Exp $
@@ -33,13 +34,22 @@ import org.compiere.util.DisplayType;
 public class MAttributeInstance extends X_M_AttributeInstance
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 5697542928282761922L;
 
 
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param M_AttributeInstance_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MAttributeInstance(Properties ctx, String M_AttributeInstance_UU, String trxName) {
+        super(ctx, M_AttributeInstance_UU, trxName);
+    }
+
 	/**
-	 * 	Persistency Constructor
 	 *	@param ctx context
 	 *	@param ignored ignored
 	 *	@param trxName transaction
@@ -52,7 +62,7 @@ public class MAttributeInstance extends X_M_AttributeInstance
 	}	//	MAttributeInstance
 
 	/**
-	 * 	Load Cosntructor
+	 * 	Load Constructor
 	 *	@param ctx context
 	 *	@param rs result set
 	 *	@param trxName transaction
@@ -61,6 +71,21 @@ public class MAttributeInstance extends X_M_AttributeInstance
 	{
 		super(ctx, rs, trxName);
 	}	//	MAttributeInstance
+
+	/**
+	 * General Constructor
+	 * 
+	 * @param ctx                       context
+	 * @param M_Attribute_ID            attribute
+	 * @param M_AttributeSetInstance_ID instance
+	 * @param trxName                   transaction
+	 */
+	public MAttributeInstance(Properties ctx, int M_Attribute_ID, int M_AttributeSetInstance_ID, String trxName)
+	{
+		super(ctx, 0, trxName);
+		setM_Attribute_ID(M_Attribute_ID);
+		setM_AttributeSetInstance_ID(M_AttributeSetInstance_ID);
+	} // MAttributeInstance
 
 	/**
 	 * 	String Value Constructor
@@ -73,14 +98,12 @@ public class MAttributeInstance extends X_M_AttributeInstance
 	public MAttributeInstance (Properties ctx, int M_Attribute_ID, 
 		int M_AttributeSetInstance_ID, String Value, String trxName)
 	{
-		super(ctx, 0, trxName);
-		setM_Attribute_ID (M_Attribute_ID);
-		setM_AttributeSetInstance_ID (M_AttributeSetInstance_ID);
+		this(ctx, M_Attribute_ID, M_AttributeSetInstance_ID, trxName);
 		setValue (Value);
 	}	//	MAttributeInstance
 	
 	/**
-	 * 	Number Value Constructior
+	 * 	Number Value Constructor
 	 *	@param ctx context
 	 *	@param M_Attribute_ID attribute
 	 *	@param M_AttributeSetInstance_ID instance
@@ -90,9 +113,7 @@ public class MAttributeInstance extends X_M_AttributeInstance
 	public MAttributeInstance (Properties ctx, int M_Attribute_ID, 
 		int M_AttributeSetInstance_ID, BigDecimal BDValue, String trxName)
 	{
-		super(ctx, 0, trxName);
-		setM_Attribute_ID (M_Attribute_ID);
-		setM_AttributeSetInstance_ID (M_AttributeSetInstance_ID);
+		this(ctx, M_Attribute_ID, M_AttributeSetInstance_ID, trxName);
 		setValueNumber(BDValue);
 	}	//	MAttributeInstance
 
@@ -108,31 +129,65 @@ public class MAttributeInstance extends X_M_AttributeInstance
 	public MAttributeInstance(Properties ctx, int M_Attribute_ID, int M_AttributeSetInstance_ID,
 			int M_AttributeValue_ID, String Value, String trxName)
 	{
-		super(ctx, 0, trxName);
-		setM_Attribute_ID(M_Attribute_ID);
-		setM_AttributeSetInstance_ID(M_AttributeSetInstance_ID);
+		this(ctx, M_Attribute_ID, M_AttributeSetInstance_ID, trxName);
 		setM_AttributeValue_ID(M_AttributeValue_ID);
 		setValue(Value);
 	} // MAttributeInstance
 
-
+	/**
+	 * Integer Value Constructor
+	 * @param ctx
+	 * @param M_Attribute_ID
+	 * @param M_AttributeSetInstance_ID
+	 * @param Value
+	 * @param trxName
+	 */
 	public MAttributeInstance (Properties ctx, int M_Attribute_ID, 
 		int M_AttributeSetInstance_ID, int Value, String trxName)
 	{
-		super(ctx, 0, trxName);
-		setM_Attribute_ID (M_Attribute_ID);
-		setM_AttributeSetInstance_ID (M_AttributeSetInstance_ID);
+		this(ctx, M_Attribute_ID, M_AttributeSetInstance_ID, trxName);
 		setValueNumber(BigDecimal.valueOf(Value));
 	} // MAttributeInstance
 
-	public MAttributeInstance(Properties ctx, int m_Attribute_ID, int m_AttributeSetInstance_ID, Timestamp value,
+	/**
+	 * TimeStamp Value Constructor
+	 * @param ctx
+	 * @param M_Attribute_ID
+	 * @param M_AttributeSetInstance_ID
+	 * @param value
+	 * @param trxName
+	 */
+	public MAttributeInstance(Properties ctx, int M_Attribute_ID, int M_AttributeSetInstance_ID, Timestamp value,
 			String trxName)
 	{
-		super(ctx, 0, trxName);
-		setM_Attribute_ID(m_Attribute_ID);
-		setM_AttributeSetInstance_ID(m_AttributeSetInstance_ID);
+		this(ctx, M_Attribute_ID, M_AttributeSetInstance_ID, trxName);
 		setValueDate(value);
 	} // MAttributeInstance
+
+	/**
+	 * KeyNamePair Value Constructor
+	 * Use for table direct or table type reference
+	 * @param ctx
+	 * @param M_Attribute_ID
+	 * @param M_AttributeSetInstance_ID
+	 * @param value
+	 * @param trxName
+	 */
+	public MAttributeInstance(Properties ctx, int M_Attribute_ID, int M_AttributeSetInstance_ID, KeyNamePair value, String trxName)
+	{
+		this(ctx, M_Attribute_ID, M_AttributeSetInstance_ID, trxName);
+		setValueKeyNamePair(value);
+	} // MAttributeInstance
+
+	/**
+	 * @param ctx
+	 * @param M_AttributeInstance_ID
+	 * @param trxName
+	 * @param virtualColumns
+	 */
+	public MAttributeInstance(Properties ctx, int M_AttributeInstance_ID, String trxName, String... virtualColumns) {
+		super(ctx, M_AttributeInstance_ID, trxName, virtualColumns);
+	}
 
 	/**
 	 * 	Set ValueNumber
@@ -211,20 +266,18 @@ public class MAttributeInstance extends X_M_AttributeInstance
 	 * Set ValueInt
 	 * 
 	 * @param valueInt
-	 * @param value
 	 */
-	public void setValueInt(int valueInt, String value)
+	public void setValueInt(int valueInt)
 	{
 		super.setValueNumber(BigDecimal.valueOf(valueInt));
-		if (value == null)
-			value = String.valueOf(valueInt);
+		String	value = String.valueOf(valueInt);
 		setValue(value);
 	} // setValueInt
 
 	/**
 	 * Get Value as Integer
 	 * 
-	 * @return
+	 * @return integer value
 	 */
 	public int getValueInt()
 	{
@@ -234,10 +287,22 @@ public class MAttributeInstance extends X_M_AttributeInstance
 			return super.getValueNumber().intValue();
 	} // getValueInt
 
+	
+	/**
+	 * Set Value as keyNamePair
+	 * @param value
+	 */
+	public void setValueKeyNamePair(KeyNamePair value)
+	{
+		super.setValueNumber(BigDecimal.valueOf(value.getKey()));
+		setValue(value.getName());
+	} // setValueKeyNamePair
+	
 	/**
 	 *	String Representation
 	 * 	@return info
 	 */
+	@Override
 	public String toString()
 	{
 		return getValue();

@@ -20,24 +20,35 @@ import java.util.logging.Level;
 import org.compiere.util.CLogger;
 
 /**
- *  Asset Addition Model
+ *  Asset Change Model (to record changes to asset)
  *	@author Teo Sarca, SC ARHIPAC SERVICE SRL
  *
  */
 public class MAssetChange extends X_A_Asset_Change
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 4083373951793617528L;
 
 	/**	Static Logger */
 	private static CLogger s_log = CLogger.getCLogger(MAssetChange.class);
 	
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param A_Asset_Change_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MAssetChange(Properties ctx, String A_Asset_Change_UU, String trxName) {
+        super(ctx, A_Asset_Change_UU, trxName);
+    }
+
 	/**
 	 * 	Default Constructor
 	 *	@param ctx context
-	 *	@param M_InventoryLine_ID line
+	 *  @param A_Asset_Change_ID
+	 *  @param trxName
 	 */
 	public MAssetChange (Properties ctx, int A_Asset_Change_ID, String trxName)
 	{
@@ -54,11 +65,12 @@ public class MAssetChange extends X_A_Asset_Change
 		super (ctx, rs, trxName);
 	}	//	MInventoryLine
 
-		/**
+	/**
 	 * 	Before Save
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		String textDetails = getTextDetails();
@@ -68,6 +80,12 @@ public class MAssetChange extends X_A_Asset_Change
 		return true;
 	}	//	beforeSave
 
+	/**
+	 * Create and save new MAssetChange record
+	 * @param assetAdd
+	 * @param assetwk
+	 * @return MAssetChange
+	 */
 	public static MAssetChange createAddition(MAssetAddition assetAdd, MDepreciationWorkfile assetwk) {
 		MAssetChange change = new MAssetChange (assetAdd.getCtx(), 0, assetAdd.get_TrxName());
 		change.setAD_Org_ID(assetAdd.getAD_Org_ID()); //@win added
@@ -83,6 +101,13 @@ public class MAssetChange extends X_A_Asset_Change
 		return change;
 	}
 	
+	/**
+	 * @param ctx
+	 * @param changeType
+	 * @param pos
+	 * @param trxName
+	 * @return MAssetChange
+	 */
 	public static MAssetChange create(Properties ctx, String changeType, PO[] pos, String trxName) {
 		return create(ctx, changeType, pos, false, trxName);
 	}
@@ -97,9 +122,17 @@ public class MAssetChange extends X_A_Asset_Change
 	 */
 	public static MAssetChange createAndSave(Properties ctx, String changeType, PO[] pos, String trxName) {
 		return null;
-		//~ return create(ctx, changeType, pos, true, trxName);
 	}
 	
+	/**
+	 * 
+	 * @param ctx
+	 * @param changeType
+	 * @param pos
+	 * @param save
+	 * @param trxName
+	 * @return MAssetChange
+	 */
 	public static MAssetChange create(Properties ctx, String changeType, PO[] pos, boolean save, String trxName) {
 		if (s_log.isLoggable(Level.FINE)) s_log.fine("Entering: changeType=" + changeType);
 		if (pos == null || pos.length == 0) {
@@ -119,42 +152,26 @@ public class MAssetChange extends X_A_Asset_Change
 		return change;
 	}
 	
+	/**
+	 * TODO
+	 * @param po
+	 */
 	public void addChanges(PO po) {
 		if (log.isLoggable(Level.FINE)) log.fine("Entering: po=" + po);
 		if (po == null) {
 			return;
 		}
-		/* arhipac: teo_sarca: TODO need to integrate
-		for(int idx = 0; idx < po.get_ColumnCount_P(); idx++) {
-			//~ if(!po.is_ValueChanged(idx)) {
-				//~ continue;
-			//~ }
-			String colName = po.get_ColumnName_P(idx);
-			int idx2 = get_ColumnIndex(colName);
-			if(idx2 < 0) {
-				if(CLogMgt.isLevelFine()) log.fine("Setting " + colName + ": SKIP (idx2 < 0)");
-				continue;
-			}
-			
-			Object value = po.get_Value(idx2);
-			set_Value(colName, value);
-			if(CLogMgt.isLevelFine()) log.fine("Setting " + colName + "=" + value + " (from " + po.getClass() + ", idx=" + idx + ", idx2=" + idx2 + ")");
-		}
-		*/
 		//
 		if (log.isLoggable(Level.FINE)) log.fine("Leaving: po=" + po);
 	}
-	/** ARHIPAC: TEO: END ------------------------------------------------------------------ */
 	
 	/**
-	 * 
 	 * @param ctx
 	 * @param A_Asset_ID
-	 * @param postingType
+	 * @param changeType
 	 * @param trxName
-	 * @param Account Schema
-	 * @return assetChange
-	 * @see #get(Properties, int, String, String)
+	 * @param C_AcctSchema_ID
+	 * @return MAssetChange
 	 */
 	public static MAssetChange get (Properties ctx, int A_Asset_ID, String changeType,  String trxName, int C_AcctSchema_ID)
 	{

@@ -21,21 +21,70 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for M_QualityTestResult
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_QualityTestResult")
+public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_QualityTestResult (Properties ctx, int M_QualityTestResult_ID, String trxName)
     {
       super (ctx, M_QualityTestResult_ID, trxName);
       /** if (M_QualityTestResult_ID == 0)
+        {
+			setIsQCPass (false);
+// N
+			setM_AttributeSetInstance_ID (0);
+			setM_QualityTest_ID (0);
+			setM_QualityTestResult_ID (0);
+			setProcessed (false);
+// N
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_QualityTestResult (Properties ctx, int M_QualityTestResult_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_QualityTestResult_ID, trxName, virtualColumns);
+      /** if (M_QualityTestResult_ID == 0)
+        {
+			setIsQCPass (false);
+// N
+			setM_AttributeSetInstance_ID (0);
+			setM_QualityTest_ID (0);
+			setM_QualityTestResult_ID (0);
+			setProcessed (false);
+// N
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_QualityTestResult (Properties ctx, String M_QualityTestResult_UU, String trxName)
+    {
+      super (ctx, M_QualityTestResult_UU, trxName);
+      /** if (M_QualityTestResult_UU == null)
+        {
+			setIsQCPass (false);
+// N
+			setM_AttributeSetInstance_ID (0);
+			setM_QualityTest_ID (0);
+			setM_QualityTestResult_ID (0);
+			setProcessed (false);
+// N
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_QualityTestResult (Properties ctx, String M_QualityTestResult_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_QualityTestResult_UU, trxName, virtualColumns);
+      /** if (M_QualityTestResult_UU == null)
         {
 			setIsQCPass (false);
 // N
@@ -54,7 +103,7 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -76,9 +125,8 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		throw new IllegalArgumentException ("Description is virtual column");	}
@@ -86,26 +134,28 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Expected Result.
-		@param ExpectedResult Expected Result	  */
+		@param ExpectedResult Expected Result
+	*/
 	public void setExpectedResult (String ExpectedResult)
 	{
 		throw new IllegalArgumentException ("ExpectedResult is virtual column");	}
 
 	/** Get Expected Result.
 		@return Expected Result	  */
-	public String getExpectedResult () 
+	public String getExpectedResult()
 	{
 		return (String)get_Value(COLUMNNAME_ExpectedResult);
 	}
 
 	/** Set QC Pass.
-		@param IsQCPass QC Pass	  */
+		@param IsQCPass QC Pass
+	*/
 	public void setIsQCPass (boolean IsQCPass)
 	{
 		set_Value (COLUMNNAME_IsQCPass, Boolean.valueOf(IsQCPass));
@@ -113,39 +163,39 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
 
 	/** Get QC Pass.
 		@return QC Pass	  */
-	public boolean isQCPass () 
+	public boolean isQCPass()
 	{
 		Object oo = get_Value(COLUMNNAME_IsQCPass);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	public I_M_AttributeSetInstance getM_AttributeSetInstance() throws RuntimeException
-    {
-		return (I_M_AttributeSetInstance)MTable.get(getCtx(), I_M_AttributeSetInstance.Table_Name)
-			.getPO(getM_AttributeSetInstance_ID(), get_TrxName());	}
+	{
+		return (I_M_AttributeSetInstance)MTable.get(getCtx(), I_M_AttributeSetInstance.Table_ID)
+			.getPO(getM_AttributeSetInstance_ID(), get_TrxName());
+	}
 
 	/** Set Attribute Set Instance.
-		@param M_AttributeSetInstance_ID 
-		Product Attribute Set Instance
-	  */
+		@param M_AttributeSetInstance_ID Product Attribute Set Instance
+	*/
 	public void setM_AttributeSetInstance_ID (int M_AttributeSetInstance_ID)
 	{
-		if (M_AttributeSetInstance_ID < 0) 
+		if (M_AttributeSetInstance_ID < 0)
 			set_ValueNoCheck (COLUMNNAME_M_AttributeSetInstance_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_AttributeSetInstance_ID, Integer.valueOf(M_AttributeSetInstance_ID));
 	}
 
 	/** Get Attribute Set Instance.
 		@return Product Attribute Set Instance
 	  */
-	public int getM_AttributeSetInstance_ID () 
+	public int getM_AttributeSetInstance_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_AttributeSetInstance_ID);
 		if (ii == null)
@@ -154,23 +204,25 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
 	}
 
 	public org.compiere.model.I_M_QualityTest getM_QualityTest() throws RuntimeException
-    {
-		return (org.compiere.model.I_M_QualityTest)MTable.get(getCtx(), org.compiere.model.I_M_QualityTest.Table_Name)
-			.getPO(getM_QualityTest_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_M_QualityTest)MTable.get(getCtx(), org.compiere.model.I_M_QualityTest.Table_ID)
+			.getPO(getM_QualityTest_ID(), get_TrxName());
+	}
 
 	/** Set Quality Test.
-		@param M_QualityTest_ID Quality Test	  */
+		@param M_QualityTest_ID Quality Test
+	*/
 	public void setM_QualityTest_ID (int M_QualityTest_ID)
 	{
-		if (M_QualityTest_ID < 1) 
+		if (M_QualityTest_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_QualityTest_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_QualityTest_ID, Integer.valueOf(M_QualityTest_ID));
 	}
 
 	/** Get Quality Test.
 		@return Quality Test	  */
-	public int getM_QualityTest_ID () 
+	public int getM_QualityTest_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_QualityTest_ID);
 		if (ii == null)
@@ -179,18 +231,19 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
 	}
 
 	/** Set Quality Test Result.
-		@param M_QualityTestResult_ID Quality Test Result	  */
+		@param M_QualityTestResult_ID Quality Test Result
+	*/
 	public void setM_QualityTestResult_ID (int M_QualityTestResult_ID)
 	{
-		if (M_QualityTestResult_ID < 1) 
+		if (M_QualityTestResult_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_QualityTestResult_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_QualityTestResult_ID, Integer.valueOf(M_QualityTestResult_ID));
 	}
 
 	/** Get Quality Test Result.
 		@return Quality Test Result	  */
-	public int getM_QualityTestResult_ID () 
+	public int getM_QualityTestResult_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_QualityTestResult_ID);
 		if (ii == null)
@@ -199,7 +252,8 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
 	}
 
 	/** Set M_QualityTestResult_UU.
-		@param M_QualityTestResult_UU M_QualityTestResult_UU	  */
+		@param M_QualityTestResult_UU M_QualityTestResult_UU
+	*/
 	public void setM_QualityTestResult_UU (String M_QualityTestResult_UU)
 	{
 		set_Value (COLUMNNAME_M_QualityTestResult_UU, M_QualityTestResult_UU);
@@ -207,15 +261,14 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
 
 	/** Get M_QualityTestResult_UU.
 		@return M_QualityTestResult_UU	  */
-	public String getM_QualityTestResult_UU () 
+	public String getM_QualityTestResult_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_QualityTestResult_UU);
 	}
 
 	/** Set Processed.
-		@param Processed 
-		The document has been processed
-	  */
+		@param Processed The document has been processed
+	*/
 	public void setProcessed (boolean Processed)
 	{
 		set_Value (COLUMNNAME_Processed, Boolean.valueOf(Processed));
@@ -224,22 +277,21 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
 	/** Get Processed.
 		@return The document has been processed
 	  */
-	public boolean isProcessed () 
+	public boolean isProcessed()
 	{
 		Object oo = get_Value(COLUMNNAME_Processed);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Result.
-		@param Result 
-		Result of the action taken
-	  */
+		@param Result Result of the action taken
+	*/
 	public void setResult (String Result)
 	{
 		set_Value (COLUMNNAME_Result, Result);
@@ -248,7 +300,7 @@ public class X_M_QualityTestResult extends PO implements I_M_QualityTestResult, 
 	/** Get Result.
 		@return Result of the action taken
 	  */
-	public String getResult () 
+	public String getResult()
 	{
 		return (String)get_Value(COLUMNNAME_Result);
 	}

@@ -21,21 +21,58 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for AD_CtxHelpMsg
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_CtxHelpMsg extends PO implements I_AD_CtxHelpMsg, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_CtxHelpMsg")
+public class X_AD_CtxHelpMsg extends PO implements I_AD_CtxHelpMsg, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_CtxHelpMsg (Properties ctx, int AD_CtxHelpMsg_ID, String trxName)
     {
       super (ctx, AD_CtxHelpMsg_ID, trxName);
       /** if (AD_CtxHelpMsg_ID == 0)
+        {
+			setAD_CtxHelp_ID (0);
+			setAD_CtxHelpMsg_ID (0);
+			setMsgText (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_CtxHelpMsg (Properties ctx, int AD_CtxHelpMsg_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_CtxHelpMsg_ID, trxName, virtualColumns);
+      /** if (AD_CtxHelpMsg_ID == 0)
+        {
+			setAD_CtxHelp_ID (0);
+			setAD_CtxHelpMsg_ID (0);
+			setMsgText (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_CtxHelpMsg (Properties ctx, String AD_CtxHelpMsg_UU, String trxName)
+    {
+      super (ctx, AD_CtxHelpMsg_UU, trxName);
+      /** if (AD_CtxHelpMsg_UU == null)
+        {
+			setAD_CtxHelp_ID (0);
+			setAD_CtxHelpMsg_ID (0);
+			setMsgText (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_CtxHelpMsg (Properties ctx, String AD_CtxHelpMsg_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_CtxHelpMsg_UU, trxName, virtualColumns);
+      /** if (AD_CtxHelpMsg_UU == null)
         {
 			setAD_CtxHelp_ID (0);
 			setAD_CtxHelpMsg_ID (0);
@@ -50,7 +87,7 @@ public class X_AD_CtxHelpMsg extends PO implements I_AD_CtxHelpMsg, I_Persistent
     }
 
     /** AccessLevel
-      * @return 7 - System - Client - Org 
+      * @return 7 - System - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -72,23 +109,25 @@ public class X_AD_CtxHelpMsg extends PO implements I_AD_CtxHelpMsg, I_Persistent
     }
 
 	public org.compiere.model.I_AD_CtxHelp getAD_CtxHelp() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_CtxHelp)MTable.get(getCtx(), org.compiere.model.I_AD_CtxHelp.Table_Name)
-			.getPO(getAD_CtxHelp_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_CtxHelp)MTable.get(getCtx(), org.compiere.model.I_AD_CtxHelp.Table_ID)
+			.getPO(getAD_CtxHelp_ID(), get_TrxName());
+	}
 
 	/** Set Context Help.
-		@param AD_CtxHelp_ID Context Help	  */
+		@param AD_CtxHelp_ID Context Help
+	*/
 	public void setAD_CtxHelp_ID (int AD_CtxHelp_ID)
 	{
-		if (AD_CtxHelp_ID < 1) 
+		if (AD_CtxHelp_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_CtxHelp_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_CtxHelp_ID, Integer.valueOf(AD_CtxHelp_ID));
 	}
 
 	/** Get Context Help.
 		@return Context Help	  */
-	public int getAD_CtxHelp_ID () 
+	public int getAD_CtxHelp_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_CtxHelp_ID);
 		if (ii == null)
@@ -97,18 +136,19 @@ public class X_AD_CtxHelpMsg extends PO implements I_AD_CtxHelpMsg, I_Persistent
 	}
 
 	/** Set Context Help Message.
-		@param AD_CtxHelpMsg_ID Context Help Message	  */
+		@param AD_CtxHelpMsg_ID Context Help Message
+	*/
 	public void setAD_CtxHelpMsg_ID (int AD_CtxHelpMsg_ID)
 	{
-		if (AD_CtxHelpMsg_ID < 1) 
+		if (AD_CtxHelpMsg_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_CtxHelpMsg_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_CtxHelpMsg_ID, Integer.valueOf(AD_CtxHelpMsg_ID));
 	}
 
 	/** Get Context Help Message.
 		@return Context Help Message	  */
-	public int getAD_CtxHelpMsg_ID () 
+	public int getAD_CtxHelpMsg_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_CtxHelpMsg_ID);
 		if (ii == null)
@@ -117,7 +157,8 @@ public class X_AD_CtxHelpMsg extends PO implements I_AD_CtxHelpMsg, I_Persistent
 	}
 
 	/** Set AD_CtxHelpMsg_UU.
-		@param AD_CtxHelpMsg_UU AD_CtxHelpMsg_UU	  */
+		@param AD_CtxHelpMsg_UU AD_CtxHelpMsg_UU
+	*/
 	public void setAD_CtxHelpMsg_UU (String AD_CtxHelpMsg_UU)
 	{
 		set_Value (COLUMNNAME_AD_CtxHelpMsg_UU, AD_CtxHelpMsg_UU);
@@ -125,15 +166,14 @@ public class X_AD_CtxHelpMsg extends PO implements I_AD_CtxHelpMsg, I_Persistent
 
 	/** Get AD_CtxHelpMsg_UU.
 		@return AD_CtxHelpMsg_UU	  */
-	public String getAD_CtxHelpMsg_UU () 
+	public String getAD_CtxHelpMsg_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_CtxHelpMsg_UU);
 	}
 
 	/** Set Message Text.
-		@param MsgText 
-		Textual Informational, Menu or Error Message
-	  */
+		@param MsgText Textual Informational, Menu or Error Message
+	*/
 	public void setMsgText (String MsgText)
 	{
 		set_Value (COLUMNNAME_MsgText, MsgText);
@@ -142,7 +182,7 @@ public class X_AD_CtxHelpMsg extends PO implements I_AD_CtxHelpMsg, I_Persistent
 	/** Get Message Text.
 		@return Textual Informational, Menu or Error Message
 	  */
-	public String getMsgText () 
+	public String getMsgText()
 	{
 		return (String)get_Value(COLUMNNAME_MsgText);
 	}

@@ -22,21 +22,58 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for PA_Ratio
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="PA_Ratio")
+public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_PA_Ratio (Properties ctx, int PA_Ratio_ID, String trxName)
     {
       super (ctx, PA_Ratio_ID, trxName);
       /** if (PA_Ratio_ID == 0)
+        {
+			setC_AcctSchema_ID (0);
+			setName (null);
+			setPA_Ratio_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_Ratio (Properties ctx, int PA_Ratio_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, PA_Ratio_ID, trxName, virtualColumns);
+      /** if (PA_Ratio_ID == 0)
+        {
+			setC_AcctSchema_ID (0);
+			setName (null);
+			setPA_Ratio_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_Ratio (Properties ctx, String PA_Ratio_UU, String trxName)
+    {
+      super (ctx, PA_Ratio_UU, trxName);
+      /** if (PA_Ratio_UU == null)
+        {
+			setC_AcctSchema_ID (0);
+			setName (null);
+			setPA_Ratio_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_Ratio (Properties ctx, String PA_Ratio_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, PA_Ratio_UU, trxName, virtualColumns);
+      /** if (PA_Ratio_UU == null)
         {
 			setC_AcctSchema_ID (0);
 			setName (null);
@@ -51,7 +88,7 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
     }
 
     /** AccessLevel
-      * @return 2 - Client 
+      * @return 2 - Client
       */
     protected int get_AccessLevel()
     {
@@ -73,26 +110,26 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
     }
 
 	public org.compiere.model.I_C_AcctSchema getC_AcctSchema() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_AcctSchema)MTable.get(getCtx(), org.compiere.model.I_C_AcctSchema.Table_Name)
-			.getPO(getC_AcctSchema_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_AcctSchema)MTable.get(getCtx(), org.compiere.model.I_C_AcctSchema.Table_ID)
+			.getPO(getC_AcctSchema_ID(), get_TrxName());
+	}
 
 	/** Set Accounting Schema.
-		@param C_AcctSchema_ID 
-		Rules for accounting
-	  */
+		@param C_AcctSchema_ID Rules for accounting
+	*/
 	public void setC_AcctSchema_ID (int C_AcctSchema_ID)
 	{
-		if (C_AcctSchema_ID < 1) 
+		if (C_AcctSchema_ID < 1)
 			set_Value (COLUMNNAME_C_AcctSchema_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_AcctSchema_ID, Integer.valueOf(C_AcctSchema_ID));
 	}
 
 	/** Get Accounting Schema.
 		@return Rules for accounting
 	  */
-	public int getC_AcctSchema_ID () 
+	public int getC_AcctSchema_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_AcctSchema_ID);
 		if (ii == null)
@@ -101,9 +138,8 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -112,15 +148,14 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -129,15 +164,14 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -146,7 +180,7 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -154,27 +188,26 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Ratio.
-		@param PA_Ratio_ID 
-		Performance Ratio
-	  */
+		@param PA_Ratio_ID Performance Ratio
+	*/
 	public void setPA_Ratio_ID (int PA_Ratio_ID)
 	{
-		if (PA_Ratio_ID < 1) 
+		if (PA_Ratio_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_PA_Ratio_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_PA_Ratio_ID, Integer.valueOf(PA_Ratio_ID));
 	}
 
 	/** Get Ratio.
 		@return Performance Ratio
 	  */
-	public int getPA_Ratio_ID () 
+	public int getPA_Ratio_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_PA_Ratio_ID);
 		if (ii == null)
@@ -183,7 +216,8 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
 	}
 
 	/** Set PA_Ratio_UU.
-		@param PA_Ratio_UU PA_Ratio_UU	  */
+		@param PA_Ratio_UU PA_Ratio_UU
+	*/
 	public void setPA_Ratio_UU (String PA_Ratio_UU)
 	{
 		set_Value (COLUMNNAME_PA_Ratio_UU, PA_Ratio_UU);
@@ -191,7 +225,7 @@ public class X_PA_Ratio extends PO implements I_PA_Ratio, I_Persistent
 
 	/** Get PA_Ratio_UU.
 		@return PA_Ratio_UU	  */
-	public String getPA_Ratio_UU () 
+	public String getPA_Ratio_UU()
 	{
 		return (String)get_Value(COLUMNNAME_PA_Ratio_UU);
 	}

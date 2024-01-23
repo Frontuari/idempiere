@@ -32,7 +32,6 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.event.OpenEvent;
 import org.zkoss.zk.ui.util.Clients;
-import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Grid;
@@ -45,7 +44,7 @@ import org.zkoss.zul.Window;
 import org.zkoss.zul.Window.Mode;
 
 /**
- * 
+ * Some static UI helper methods
  * @author Low Heng Sin
  *
  */
@@ -56,18 +55,20 @@ public final class LayoutUtils {
 	/**
 	 * @param layout
 	 */
-	public static void sendDeferLayoutEvent(Borderlayout layout, int timeout) {
-		StringBuilder content = new StringBuilder();		
-		content.append("ad_deferRenderBorderLayout('")
-			   .append(layout.getUuid())
-			   .append("',").append(timeout).append(");");
-		
-		AuScript as = new AuScript(null, content.toString());
-		Clients.response("deferRenderBorderLayout", as);		
+	@Deprecated(forRemoval = true, since = "11")
+	public static void sendDeferLayoutEvent(org.zkoss.zul.Borderlayout layout, int timeout) {
+		/* this is not required anymore */
+//		StringBuilder content = new StringBuilder();
+//		content.append("ad_deferRenderBorderLayout('")
+//			   .append(layout.getUuid())
+//			   .append("',").append(timeout).append(");");
+//
+//		AuScript as = new AuScript(null, content.toString());
+//		Clients.response("deferRenderBorderLayout", as);
 	}
 	
 	/**
-	 * 
+	 * append cls to target's sclass property
 	 * @param cls
 	 * @param target
 	 */
@@ -81,7 +82,7 @@ public final class LayoutUtils {
 	 * 
 	 * @param cls
 	 * @param target
-	 * @return boolean
+	 * @return true if target's sclass property contain cls
 	 */
 	public static boolean hasSclass(String cls, HtmlBasedComponent target) {
 		String sclass = target.getSclass();
@@ -92,9 +93,9 @@ public final class LayoutUtils {
 	}	
 	
 	/**
-	 * 
+	 * create right align label (wrapped in div)
 	 * @param label
-	 * @return wrapped label
+	 * @return right align label (wrapped in div)
 	 */
 	public static Component makeRightAlign(Label label) {
 		Div div = new Div();
@@ -104,28 +105,41 @@ public final class LayoutUtils {
 		return div;
 	}
 
+	/**
+	 * open popup window overlapping ref component
+	 * @param ref
+	 * @param window
+	 */
 	public static void openPopupWindow(Component ref, Window window) {
 		openPopupWindow(ref, window, 0);
 	}
 	
 	/**
-	 * open popup window overlapping the ref component
+	 * open popup window overlapping ref component
 	 * @param ref
 	 * @param window
+	 * @param delayMs
 	 */
 	public static void openPopupWindow(Component ref, Window window, int delayMs) {
 		openPopupWindow(ref, window, "overlap", delayMs);
 	}
 	
+	/**
+	 * open popup window relative to ref component
+	 * @param ref
+	 * @param window
+	 * @param position Refer to https://www.zkoss.org/javadoc/latest/jsdoc/_global_/jqzk.html#position-_global_.Dimension-_global_.String-_global_.Map-
+	 */
 	public static void openPopupWindow(Component ref, Window window, String position) {
 		openPopupWindow(ref, window, position, 0);
 	}
 	
 	/**
-	 * open popup window relative to the ref component
+	 * open popup window relative to ref component
 	 * @param ref
 	 * @param window
-	 * @param position
+	 * @param position Refer to https://www.zkoss.org/javadoc/latest/jsdoc/_global_/jqzk.html#position-_global_.Dimension-_global_.String-_global_.Map-
+	 * @param delayMs
 	 */
 	public static void openPopupWindow(Component ref, Window window, String position, int delayMs) {
 		if (window.getPage() == null)
@@ -134,7 +148,7 @@ public final class LayoutUtils {
 		if (delayMs > 0) {
 			script.append("setTimeout(function() { ");
 		}
-		script.append("_idempiere_popup_window('#")
+		script.append("idempiere.show_popup_window('#")
 			.append(ref.getUuid())
 			.append("','#")
 			.append(window.getUuid())
@@ -151,16 +165,16 @@ public final class LayoutUtils {
 	}
 	
 	/**
-	 * open popup window relative to the ref component
+	 * open overlapped window (mode overlapped) relative to ref component
 	 * @param ref
 	 * @param window
-	 * @param position
+	 * @param position Refer to https://www.zkoss.org/javadoc/latest/jsdoc/_global_/jqzk.html#position-_global_.Dimension-_global_.String-_global_.Map-
 	 */
 	public static void openOverlappedWindow(Component ref, Window window, String position) {
 		if (window.getPage() == null)
 			window.setPage(ref.getPage());
 		StringBuilder script = new StringBuilder();
-		script.append("_idempiere_popup_window('#")
+		script.append("idempiere.show_popup_window('#")
 			.append(ref.getUuid())
 			.append("','#")
 			.append(window.getUuid())
@@ -172,14 +186,14 @@ public final class LayoutUtils {
 	}
 	
 	/**
-	 * position opened window relative to the ref component
+	 * position opened window relative to ref component
 	 * @param ref
 	 * @param window
-	 * @param position
+	 * @param position Refer to https://www.zkoss.org/javadoc/latest/jsdoc/_global_/jqzk.html#position-_global_.Dimension-_global_.String-_global_.Map-
 	 */
 	public static void positionWindow(Component ref, Window window, String position) {
 		StringBuilder script = new StringBuilder();
-		script.append("_idempiere_popup_window('#")
+		script.append("idempiere.show_popup_window('#")
 			.append(ref.getUuid())
 			.append("','#")
 			.append(window.getUuid())
@@ -188,16 +202,37 @@ public final class LayoutUtils {
 			.append("');");
 		Clients.response("_openPopupWindow_", new AuScript(window, script.toString()));
 	}
-	
+
 	/**
-	 * open popup window relative to the ref component
+	 * position component relative to ref component
+	 * @param ref
+	 * @param component
+	 * @param position Refer to https://www.zkoss.org/javadoc/latest/jsdoc/_global_/jqzk.html#position-_global_.Dimension-_global_.String-_global_.Map-
+	 */
+	public static void positionComponent(Component ref, Component component, String position) {
+		StringBuilder script = new StringBuilder();
+		script.append("(function() {let w = zk('#")
+			.append(component.getUuid())
+			.append("'); ")
+			.append("let ref=zk.Widget.$('#")
+			.append(ref.getUuid())
+			.append("'); ")
+			.append("w.position(")
+			.append("ref.$n(),'")
+			.append(position)
+			.append("');})()");
+		Clients.response("_positionComponent_", new AuScript(component, script.toString()));
+	}
+
+	/**
+	 * open embedded window relative to ref component
 	 * @param ref
 	 * @param window
-	 * @param position
+	 * @param position Refer to https://www.zkoss.org/javadoc/latest/jsdoc/_global_/jqzk.html#position-_global_.Dimension-_global_.String-_global_.Map-
 	 */
 	public static void openEmbeddedWindow(Component ref, Window window, String position) {
 		StringBuilder script = new StringBuilder();
-		script.append("_idempiere_popup_window('#")
+		script.append("idempiere.show_popup_window('#")
 			.append(ref.getUuid())
 			.append("','#")
 			.append(window.getUuid())
@@ -206,11 +241,30 @@ public final class LayoutUtils {
 			.append("');");
 		window.setVisible(true);
 		window.setMode(Mode.EMBEDDED);
-		Clients.response("_openPopupWindow_", new AuScript(window, script.toString()));
+		Clients.response("_openEmbeddedWindow_", new AuScript(window, script.toString()));
 	}
 	
 	/**
-	 * 
+	 * open highlighted window relative to ref component
+	 * @param ref
+	 * @param window
+	 * @param position Refer to https://www.zkoss.org/javadoc/latest/jsdoc/_global_/jqzk.html#position-_global_.Dimension-_global_.String-_global_.Map-
+	 */
+	public static void openHighlightedWindow(Component ref, Window window, String position) {
+		StringBuilder script = new StringBuilder();
+		script.append("idempiere.show_popup_window('#")
+			.append(ref.getUuid())
+			.append("','#")
+			.append(window.getUuid())
+			.append("','")
+			.append(position)
+			.append("');");
+		window.setMode(Mode.HIGHLIGHTED);
+		Clients.response("_openHighlightedWindow_", new AuScript(window, script.toString()));
+	}
+	
+	/**
+	 * Force redraw of component
 	 * @param component
 	 */
 	public static void redraw(AbstractComponent component) {
@@ -239,6 +293,11 @@ public final class LayoutUtils {
 		return true;
 	}
 
+	/**
+	 * Remove cls from target's sclass property
+	 * @param cls
+	 * @param target
+	 */
 	public static void removeSclass(String cls, HtmlBasedComponent target) {
 		String sclass = target.getSclass();
 		if (Util.isEmpty(sclass))
@@ -259,17 +318,18 @@ public final class LayoutUtils {
 	public static final int OVERLAP_SELF = 4;
 	
 	/**
-	 * show window with a mask below. mask over tabPanel, all window or only over a control, dependency ownModel flag.
-	 * when ownModel == {@link #OVERLAP_SELF}, window show overlap childOfOwn, 
-	 * 					when childOfOwn isn't implement {@link ISupportMask} make new {@link Mask} object to make mask layout
-	 *                	ownModel == {@link #OVERLAP_ALL_PAGE}, window show overlap all page
-	 *                  ownModel == {@link #OVERLAP_TAB_PANEL}, window show overlap tabPanel
-	 *                  ownModel == {@link #OVERLAP_PARENT}, search near parent of childOfOwn implement {@link ISupportMask} if not exist user as OVERLAP_ALL_PAGE
+	 * show window with a mask below. Depends on ownModel flag, mask is shown over tabPanel, all window or over a component.
+	 * <pre>
+	 * when ownModel is
+	 * - {@link #OVERLAP_SELF}, mask childOfOwn. if childOfOwn doesn't implement {@link ISupportMask}, make new {@link Mask} object to mask it
+	 * - {@link #OVERLAP_ALL_PAGE}, window show overlap all page
+	 * - {@link #OVERLAP_TAB_PANEL}, window show overlap tabPanel
+	 * - {@link #OVERLAP_PARENT}, search nearest parent of childOfOwn that implement {@link ISupportMask}, if not found use as OVERLAP_ALL_PAGE
+	 * </pre>
 	 * @param window 
-	 * @param childOfOwn  
-	 * @param ownModel
-	 * @return when show success return IMask object, it is own window, use {@link ISupportMask#hideMask()} to hiden mask. 
-	 * other return null. with case return null (show over childOfOwn or parent of childOfOwn but childOfOwn or parent of childOfOwn isn't implement {@link ISupportMask}), please consider use {@link #showOverlapWithMask(Component, Component)}  
+	 * @param childOfOwn Component below window
+	 * @param ownModel OVERLAP_TAB_PANEL, OVERLAP_ALL_PAGE, OVERLAP_PARENT or OVERLAP_SELF
+	 * @return when show success return ISupportMask object, use {@link ISupportMask#hideMask()} to hide mask. 
 	 */
 	public static ISupportMask showWindowWithMask(Window window, Component childOfOwn, int ownModel){
 		ISupportMask ownWindow = null;
@@ -296,22 +356,29 @@ public final class LayoutUtils {
 	}
 	
 	/**
-	 * Show window in center of component get from {@link}
+	 * Show window in center of mask
 	 * @param window
 	 * @param mask
 	 */
 	protected static void showWindowWithMask(Window window, ISupportMask mask){
 		mask.showMask();
 		mask.getMaskComponent().appendChild(window);
+		
+		StringBuilder script = new StringBuilder("(function(){let w=zk.Widget.$('#");
+		script.append(mask.getMaskComponent().getUuid()).append("');");
+		script.append("let d=zk.Widget.$('#").append(window.getUuid()).append("');w.busy=d;");
+		script.append("})()");
+		Clients.response(new AuScript(script.toString()));
+		
 		LayoutUtils.openOverlappedWindow(mask.getMaskComponent(), window, "middle_center");
 	}
 	
 	/**
-	 * Show window over ownWindow with a mask, use when ownWindow isn't implement {@link ISupportMask}
+	 * Show window over ownWindow with a mask, use when ownWindow doesn't implement {@link ISupportMask}
 	 * @param window
 	 * @param ownWindow
 	 * @param mask if mask = null, make new and return it
-	 * @return {@link Mask} objec for hiden mask when close window.
+	 * @return {@link Mask} object for hidden mask when close window.
 	 */
 	public static Mask showWindowWithMask(Window window, Component ownWindow, Mask mask){
 		if (mask == null){
@@ -326,28 +393,29 @@ public final class LayoutUtils {
 	}
 	
 	/**
-	 * find parent control of child control, parent must implement {@link ISupportMask}
+	 * find nearest parent of child component that implement {@link ISupportMask}.<br/>
 	 * if parentClass != null, parent class must extends parentClass
 	 * @param child
-	 * @param ownModel
-	 * @return
+	 * @param parentClass
+	 * @return {@link ISupportMask}
 	 */
 	public static ISupportMask findMaskParent (Component child, Class<?> parentClass){
 		Component parent = child;
 		ISupportMask trueParent = null;		
-		while ((parent = parent.getParent()) != null){
+		while (parent != null) {
 			if (ISupportMask.class.isInstance(parent)){
 				if (parentClass == null || parentClass.isInstance(parent)){						
 					trueParent = (ISupportMask)parent;
 					break;
 				}
 			}
+			parent = parent.getParent();
 		}
 		return trueParent;
 	}
 	
 	/**
-	 * Compact grid to limit (for e.g, to max of 2 column)
+	 * Compact grid to limit (for e.g, to max of 2 column).<br/>
 	 * Note: doesn't handle row span
 	 * @param grid
 	 * @param limit
@@ -402,12 +470,17 @@ public final class LayoutUtils {
 		}
 	}
 	
+	/**
+	 * Expand number of grid column to min (for e.g, to min of 2 column)
+	 * @param grid
+	 * @param min
+	 */
 	public static void expandTo(Grid grid, int min) {
 		expandTo(grid, min, false);
 	}
 	
 	/**
-	 * Expand grid to min (for e.g, to min of 2 column)
+	 * Expand grid to min (for e.g, to min of 2 column).<br/>
 	 * Note: doesn't handle row span
 	 * @param grid
 	 * @param min
@@ -461,6 +534,7 @@ public final class LayoutUtils {
 		}
 	}
 	
+	/** Event listener to add/remove slide from target component's sclass property **/
 	private static final EventListener<OpenEvent> addSlideEventListener = (OpenEvent evt) -> {
 		if (evt.isOpen())
 			LayoutUtils.removeSclass("slide", (HtmlBasedComponent) evt.getTarget());
@@ -477,7 +551,7 @@ public final class LayoutUtils {
 	}
 	
 	/**
-	 * find popup ancestor of comp
+	 * find first Popup ancestor of comp
 	 * @param comp
 	 * @return {@link Popup} if comp or one of its ancestor is Popup
 	 */
@@ -492,7 +566,7 @@ public final class LayoutUtils {
 	}
 
 	/**
-	 * call popup.detach when it is close
+	 * Auto call popup.detach when popup is close
 	 * @param popup
 	 */
 	public static void autoDetachOnClose(Popup popup) {
@@ -501,5 +575,20 @@ public final class LayoutUtils {
 				popup.detach();
 			}
 		});
+	}
+
+	/**
+	 * Make target same width as ref using client side script
+	 * @param target
+	 * @param ref
+	 */
+	public static void sameWidth(HtmlBasedComponent target, HtmlBasedComponent ref) {
+		StringBuilder script = new StringBuilder()
+				.append("(function(){let t=zk.Widget.$('#").append(target.getUuid()).append("');")
+				.append("let r=zk.Widget.$('#").append(ref.getUuid()).append("');")
+				.append("jq(t).css({'width':").append("jq(r).width()+'px'});")
+				.append("t.setWidth(\"").append("jq(r).width()+'px'\");");
+		script.append("})()");
+		Clients.response("_sameWidth_", new AuScript(target, script.toString()));
 	}
 }

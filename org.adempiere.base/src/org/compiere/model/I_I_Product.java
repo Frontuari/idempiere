@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for I_Product
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_I_Product 
 {
@@ -44,8 +44,8 @@ public interface I_I_Product
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +53,12 @@ public interface I_I_Product
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -78,12 +78,12 @@ public interface I_I_Product
     /** Column name C_BPartner_ID */
     public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
 
-	/** Set Business Partner .
+	/** Set Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public void setC_BPartner_ID (int C_BPartner_ID);
 
-	/** Get Business Partner .
+	/** Get Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public int getC_BPartner_ID();
@@ -162,6 +162,19 @@ public interface I_I_Product
 
 	public org.compiere.model.I_C_UOM getC_UOM() throws RuntimeException;
 
+    /** Column name CustomsTariffNumber */
+    public static final String COLUMNNAME_CustomsTariffNumber = "CustomsTariffNumber";
+
+	/** Set Customs Tariff Number.
+	  * Customs Tariff Number, usually the HS-Code
+	  */
+	public void setCustomsTariffNumber (String CustomsTariffNumber);
+
+	/** Get Customs Tariff Number.
+	  * Customs Tariff Number, usually the HS-Code
+	  */
+	public String getCustomsTariffNumber();
+
     /** Column name DeliveryTime_Promised */
     public static final String COLUMNNAME_DeliveryTime_Promised = "DeliveryTime_Promised";
 
@@ -239,6 +252,24 @@ public interface I_I_Product
 	  * Additional information for a Document
 	  */
 	public String getDocumentNote();
+
+    /** Column name Group1 */
+    public static final String COLUMNNAME_Group1 = "Group1";
+
+	/** Set Group1	  */
+	public void setGroup1 (String Group1);
+
+	/** Get Group1	  */
+	public String getGroup1();
+
+    /** Column name Group2 */
+    public static final String COLUMNNAME_Group2 = "Group2";
+
+	/** Set Group2	  */
+	public void setGroup2 (String Group2);
+
+	/** Get Group2	  */
+	public String getGroup2();
 
     /** Column name Help */
     public static final String COLUMNNAME_Help = "Help";
@@ -352,6 +383,21 @@ public interface I_I_Product
 	  * Manufacturer of the Product
 	  */
 	public String getManufacturer();
+
+    /** Column name M_AttributeSet_ID */
+    public static final String COLUMNNAME_M_AttributeSet_ID = "M_AttributeSet_ID";
+
+	/** Set Attribute Set.
+	  * Product Attribute Set
+	  */
+	public void setM_AttributeSet_ID (int M_AttributeSet_ID);
+
+	/** Get Attribute Set.
+	  * Product Attribute Set
+	  */
+	public int getM_AttributeSet_ID();
+
+	public org.compiere.model.I_M_AttributeSet getM_AttributeSet() throws RuntimeException;
 
     /** Column name M_Product_Category_ID */
     public static final String COLUMNNAME_M_Product_Category_ID = "M_Product_Category_ID";

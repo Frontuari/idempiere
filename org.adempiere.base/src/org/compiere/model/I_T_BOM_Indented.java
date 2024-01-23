@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for T_BOM_Indented
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_T_BOM_Indented 
 {
@@ -44,8 +44,8 @@ public interface I_T_BOM_Indented
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +53,12 @@ public interface I_T_BOM_Indented
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -256,12 +256,12 @@ public interface I_T_BOM_Indented
     public static final String COLUMNNAME_QtyBOM = "QtyBOM";
 
 	/** Set Quantity.
-	  * Indicate the Quantity  use in this BOM
+	  * Indicate the Quantity use in this BOM
 	  */
 	public void setQtyBOM (BigDecimal QtyBOM);
 
 	/** Get Quantity.
-	  * Indicate the Quantity  use in this BOM
+	  * Indicate the Quantity use in this BOM
 	  */
 	public BigDecimal getQtyBOM();
 

@@ -18,12 +18,14 @@ import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import org.compiere.model.MJournal;
+import org.compiere.model.MProcessPara;
 
 /**
  *  Copy GL Journal/Lines
  *
  *	@author Carlos Ruiz
  */
+@org.adempiere.base.annotation.Process
 public class CopyFromJournalDoc extends SvrProcess
 {
 	private int		m_GL_Journal_ID = 0;
@@ -42,7 +44,7 @@ public class CopyFromJournalDoc extends SvrProcess
 			else if (name.equals("GL_Journal_ID"))
 				m_GL_Journal_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

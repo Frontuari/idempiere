@@ -192,7 +192,7 @@ public class ImageElement extends PrintElement
 
 	/**
 	 *	Create Image from Attachment or Column
-	 * 	@param record_ID_ID record id from printformat or column
+	 * 	@param record_ID record id from printformat or column
 	 * 	@param isAttachment flag to indicate if is attachment or is a column from DB
 	 */
 	public ImageElement(int record_ID, boolean isAttachment)
@@ -273,8 +273,7 @@ public class ImageElement extends PrintElement
 	 */
 	private void loadAttachment(int AD_PrintFormatItem_ID)
 	{
-		MAttachment attachment = MAttachment.get(Env.getCtx(), 
-			MPrintFormatItem.Table_ID, AD_PrintFormatItem_ID);
+		MAttachment attachment = MAttachment.get(Env.getCtx(), MPrintFormatItem.Table_ID, AD_PrintFormatItem_ID, null, null);
 		if (attachment == null)
 		{
 			log.log(Level.WARNING, "No Attachment - AD_PrintFormatItem_ID=" + AD_PrintFormatItem_ID);
@@ -299,7 +298,7 @@ public class ImageElement extends PrintElement
 
 	/**************************************************************************
 	 * 	Calculate Image Size.
-	 * 	Set p_width & p_height
+	 * 	Set p_width and p_height
 	 * 	@return true if calculated
 	 */
 	protected boolean calculateSize()
@@ -359,7 +358,7 @@ public class ImageElement extends PrintElement
 	/**
 	 * Get image scale factor.
 	 * 
-	 * @author teo_sarca - [ 1673548 ] Image is not scaled in a report table cell
+	 * author teo_sarca - [ 1673548 ] Image is not scaled in a report table cell
 	 * @return scale factor
 	 */
 	public double getScaleFactor() {

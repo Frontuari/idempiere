@@ -27,6 +27,7 @@ import org.compiere.util.KeyNamePair;
 import org.compiere.util.Language;
 import org.compiere.util.Msg;
 import org.compiere.util.NamePair;
+import org.compiere.util.Util;
 
 /**
  *	Print Data Element
@@ -43,6 +44,7 @@ public class PrintDataElement implements Serializable
 
 	/**
 	 *	Print Data Element Constructor
+	 *  @param AD_PrintFormatItem_ID
 	 *  @param columnName name
 	 *  @param value display value
 	 *  @param displayType optional displayType
@@ -50,10 +52,11 @@ public class PrintDataElement implements Serializable
 	 *  @param isPageBreak if true force page break
 	 *  @param foreignColumnName name foreign
 	 */
-	public PrintDataElement (String columnName, Serializable value, int displayType, boolean isPKey, boolean isPageBreak, String format, String foreignColumnName)
+	public PrintDataElement (int AD_PrintFormatItem_ID, String columnName, Serializable value, int displayType, boolean isPKey, boolean isPageBreak, String format, String foreignColumnName)
 	{
 		if (columnName == null)
 			throw new IllegalArgumentException("PrintDataElement - Name cannot be null");
+		m_AD_PrintFormatItem_ID = AD_PrintFormatItem_ID;
 		m_columnName = columnName;
 		m_value = value;
 		m_displayType = displayType;
@@ -63,28 +66,30 @@ public class PrintDataElement implements Serializable
 		m_foreignColumnName = foreignColumnName;
 	}	//	PrintDataElement
 
-	public PrintDataElement(String columnName, Serializable value, int displayType, String pattern, String foreignColumnName)
+	public PrintDataElement(int AD_PrintFormatItem_ID, String columnName, Serializable value, int displayType, String pattern, String foreignColumnName)
 	{
-		this (columnName, value, displayType, false, false, pattern, foreignColumnName);
+		this (AD_PrintFormatItem_ID, columnName, value, displayType, false, false, pattern, foreignColumnName);
 	}	//	PrintDataElement
 	
 	/**
 	 *	Print Data Element Constructor
+	 *  @param AD_PrintFormatItem_ID
 	 *  @param columnName name
 	 *  @param value display value
 	 *  @param pattern Number/date format pattern
 	 *  @param displayType optional displayType
 	 */
-	public PrintDataElement(String columnName, Serializable value, int displayType, String pattern)
+	public PrintDataElement(int AD_PrintFormatItem_ID, String columnName, Serializable value, int displayType, String pattern)
 	{
-		this (columnName, value, displayType, false, false, pattern, null);
+		this (AD_PrintFormatItem_ID, columnName, value, displayType, false, false, pattern, null);
 	}	//	PrintDataElement
 
-	public PrintDataElement (String columnName, Serializable value, int displayType, boolean isPKey, boolean isPageBreak, String format)
+	public PrintDataElement (int AD_PrintFormatItem_ID, String columnName, Serializable value, int displayType, boolean isPKey, boolean isPageBreak, String format)
 	{
-		this(columnName, value, displayType, isPKey, isPageBreak, format, null);
+		this(AD_PrintFormatItem_ID, columnName, value, displayType, isPKey, isPageBreak, format, null);
 	}
 
+	private int m_AD_PrintFormatItem_ID;
 	/**	Data Name			*/
 	private String 		m_columnName;
 	/** Data Value			*/
@@ -107,8 +112,18 @@ public class PrintDataElement implements Serializable
 	public static final String	XML_ATTRIBUTE_NAME = "name";
 	/**	XML Attribute Key			*/
 	public static final String	XML_ATTRIBUTE_KEY = "key";
-
-
+	/**	XML Attribute PrintFormatItem Id			*/
+	public static final String	XML_ATTRIBUTE_PRINTFORMATITEM_ID = "printformatitem-id";
+	
+	/**
+	 * 
+	 * @return AD_PrintFormatItem_ID
+	 */
+	public int getAD_PrintFormatItem_ID()
+	{
+		return m_AD_PrintFormatItem_ID;
+	}
+	
 	/**
 	 * 	Get Name
 	 * 	@return name
@@ -131,7 +146,7 @@ public class PrintDataElement implements Serializable
 
 	/**
 	 * 	Set ForeignName
-	 * 	@return name
+	 * @param foreignColumnName
 	 */
 	public void setForeignColumnName(String foreignColumnName) {
 		m_foreignColumnName = foreignColumnName;
@@ -147,10 +162,18 @@ public class PrintDataElement implements Serializable
 	}	//	getValue
 
 	/**
+	 * Set Node Value
+	 * @param value
+	 */
+	public void setValue(Serializable value) {
+		this.m_value = value;
+	}
+
+	/**
 	 * 	Get Function Value
 	 * 	@return length or numeric value
 	 */
-	public BigDecimal getFunctionValue()
+	public Serializable getFunctionValue()
 	{
 		if (m_value == null)
 			return Env.ZERO;
@@ -170,6 +193,10 @@ public class PrintDataElement implements Serializable
 				return Env.ZERO;
 		}
 
+		// Timestamp
+		if (m_value instanceof Timestamp)
+			return m_value;
+		
 		//	Return Length
 		String s = m_value.toString();
 		return new BigDecimal(s.length());
@@ -282,6 +309,8 @@ public class PrintDataElement implements Serializable
 			return "";
 		if (m_value instanceof NamePair)
 			return ((NamePair)m_value).getID();
+		if (m_value instanceof String && Util.isUUID((String) m_value))
+			return (String) m_value;
 		return "";
 	}	//	getValueKey
 
@@ -305,6 +334,14 @@ public class PrintDataElement implements Serializable
 		return m_displayType;
 	}	//	getDisplayType
 
+	/**
+	 * 	Set Display Type
+	 */
+	public void setDisplayType(int displayType)
+	{
+		this.m_displayType = displayType;
+	}	//	setDisplayType
+	
 	/**
 	 * 	Is Value numeric
 	 * 	@return true if value is a numeric

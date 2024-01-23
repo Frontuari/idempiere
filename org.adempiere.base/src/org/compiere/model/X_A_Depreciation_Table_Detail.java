@@ -24,21 +24,64 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for A_Depreciation_Table_Detail
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciation_Table_Detail, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="A_Depreciation_Table_Detail")
+public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciation_Table_Detail, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_A_Depreciation_Table_Detail (Properties ctx, int A_Depreciation_Table_Detail_ID, String trxName)
     {
       super (ctx, A_Depreciation_Table_Detail_ID, trxName);
       /** if (A_Depreciation_Table_Detail_ID == 0)
+        {
+			setA_Depreciation_Rate (Env.ZERO);
+			setA_Depreciation_Table_Code (null);
+			setA_Depreciation_Table_Detail_ID (0);
+			setA_Period (0);
+			setProcessed (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Depreciation_Table_Detail (Properties ctx, int A_Depreciation_Table_Detail_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, A_Depreciation_Table_Detail_ID, trxName, virtualColumns);
+      /** if (A_Depreciation_Table_Detail_ID == 0)
+        {
+			setA_Depreciation_Rate (Env.ZERO);
+			setA_Depreciation_Table_Code (null);
+			setA_Depreciation_Table_Detail_ID (0);
+			setA_Period (0);
+			setProcessed (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Depreciation_Table_Detail (Properties ctx, String A_Depreciation_Table_Detail_UU, String trxName)
+    {
+      super (ctx, A_Depreciation_Table_Detail_UU, trxName);
+      /** if (A_Depreciation_Table_Detail_UU == null)
+        {
+			setA_Depreciation_Rate (Env.ZERO);
+			setA_Depreciation_Table_Code (null);
+			setA_Depreciation_Table_Detail_ID (0);
+			setA_Period (0);
+			setProcessed (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Depreciation_Table_Detail (Properties ctx, String A_Depreciation_Table_Detail_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, A_Depreciation_Table_Detail_UU, trxName, virtualColumns);
+      /** if (A_Depreciation_Table_Detail_UU == null)
         {
 			setA_Depreciation_Rate (Env.ZERO);
 			setA_Depreciation_Table_Code (null);
@@ -55,7 +98,7 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
     }
 
     /** AccessLevel
-      * @return 7 - System - Client - Org 
+      * @return 7 - System - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -77,7 +120,8 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
     }
 
 	/** Set Rate.
-		@param A_Depreciation_Rate Rate	  */
+		@param A_Depreciation_Rate Rate
+	*/
 	public void setA_Depreciation_Rate (BigDecimal A_Depreciation_Rate)
 	{
 		set_Value (COLUMNNAME_A_Depreciation_Rate, A_Depreciation_Rate);
@@ -85,7 +129,7 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
 
 	/** Get Rate.
 		@return Rate	  */
-	public BigDecimal getA_Depreciation_Rate () 
+	public BigDecimal getA_Depreciation_Rate()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_A_Depreciation_Rate);
 		if (bd == null)
@@ -94,7 +138,8 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
 	}
 
 	/** Set Depreciation Code.
-		@param A_Depreciation_Table_Code Depreciation Code	  */
+		@param A_Depreciation_Table_Code Depreciation Code
+	*/
 	public void setA_Depreciation_Table_Code (String A_Depreciation_Table_Code)
 	{
 		set_ValueNoCheck (COLUMNNAME_A_Depreciation_Table_Code, A_Depreciation_Table_Code);
@@ -102,24 +147,25 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
 
 	/** Get Depreciation Code.
 		@return Depreciation Code	  */
-	public String getA_Depreciation_Table_Code () 
+	public String getA_Depreciation_Table_Code()
 	{
 		return (String)get_Value(COLUMNNAME_A_Depreciation_Table_Code);
 	}
 
 	/** Set Depreciation Table Detail.
-		@param A_Depreciation_Table_Detail_ID Depreciation Table Detail	  */
+		@param A_Depreciation_Table_Detail_ID Depreciation Table Detail
+	*/
 	public void setA_Depreciation_Table_Detail_ID (int A_Depreciation_Table_Detail_ID)
 	{
-		if (A_Depreciation_Table_Detail_ID < 1) 
+		if (A_Depreciation_Table_Detail_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_A_Depreciation_Table_Detail_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_A_Depreciation_Table_Detail_ID, Integer.valueOf(A_Depreciation_Table_Detail_ID));
 	}
 
 	/** Get Depreciation Table Detail.
 		@return Depreciation Table Detail	  */
-	public int getA_Depreciation_Table_Detail_ID () 
+	public int getA_Depreciation_Table_Detail_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_A_Depreciation_Table_Detail_ID);
 		if (ii == null)
@@ -130,13 +176,14 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), String.valueOf(getA_Depreciation_Table_Detail_ID()));
     }
 
 	/** Set A_Depreciation_Table_Detail_UU.
-		@param A_Depreciation_Table_Detail_UU A_Depreciation_Table_Detail_UU	  */
+		@param A_Depreciation_Table_Detail_UU A_Depreciation_Table_Detail_UU
+	*/
 	public void setA_Depreciation_Table_Detail_UU (String A_Depreciation_Table_Detail_UU)
 	{
 		set_Value (COLUMNNAME_A_Depreciation_Table_Detail_UU, A_Depreciation_Table_Detail_UU);
@@ -144,13 +191,14 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
 
 	/** Get A_Depreciation_Table_Detail_UU.
 		@return A_Depreciation_Table_Detail_UU	  */
-	public String getA_Depreciation_Table_Detail_UU () 
+	public String getA_Depreciation_Table_Detail_UU()
 	{
 		return (String)get_Value(COLUMNNAME_A_Depreciation_Table_Detail_UU);
 	}
 
 	/** Set Asset Period.
-		@param A_Period Asset Period	  */
+		@param A_Period Asset Period
+	*/
 	public void setA_Period (int A_Period)
 	{
 		set_Value (COLUMNNAME_A_Period, Integer.valueOf(A_Period));
@@ -158,7 +206,7 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
 
 	/** Get Asset Period.
 		@return Asset Period	  */
-	public int getA_Period () 
+	public int getA_Period()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_A_Period);
 		if (ii == null)
@@ -173,7 +221,8 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
 	/** Rate = RT */
 	public static final String A_TABLE_RATE_TYPE_Rate = "RT";
 	/** Set Type.
-		@param A_Table_Rate_Type Type	  */
+		@param A_Table_Rate_Type Type
+	*/
 	public void setA_Table_Rate_Type (String A_Table_Rate_Type)
 	{
 
@@ -182,15 +231,14 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
 
 	/** Get Type.
 		@return Type	  */
-	public String getA_Table_Rate_Type () 
+	public String getA_Table_Rate_Type()
 	{
 		return (String)get_Value(COLUMNNAME_A_Table_Rate_Type);
 	}
 
 	/** Set Processed.
-		@param Processed 
-		The document has been processed
-	  */
+		@param Processed The document has been processed
+	*/
 	public void setProcessed (boolean Processed)
 	{
 		set_Value (COLUMNNAME_Processed, Boolean.valueOf(Processed));
@@ -199,13 +247,13 @@ public class X_A_Depreciation_Table_Detail extends PO implements I_A_Depreciatio
 	/** Get Processed.
 		@return The document has been processed
 	  */
-	public boolean isProcessed () 
+	public boolean isProcessed()
 	{
 		Object oo = get_Value(COLUMNNAME_Processed);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;

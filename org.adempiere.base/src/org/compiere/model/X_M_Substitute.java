@@ -19,24 +19,61 @@ package org.compiere.model;
 
 import java.sql.ResultSet;
 import java.util.Properties;
-import org.compiere.util.KeyNamePair;
+import org.compiere.util.ValueNamePair;
 
 /** Generated Model for M_Substitute
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_Substitute extends PO implements I_M_Substitute, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_Substitute")
+public class X_M_Substitute extends PO implements I_M_Substitute, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_Substitute (Properties ctx, int M_Substitute_ID, String trxName)
     {
       super (ctx, M_Substitute_ID, trxName);
       /** if (M_Substitute_ID == 0)
+        {
+			setM_Product_ID (0);
+			setName (null);
+			setSubstitute_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_Substitute (Properties ctx, int M_Substitute_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_Substitute_ID, trxName, virtualColumns);
+      /** if (M_Substitute_ID == 0)
+        {
+			setM_Product_ID (0);
+			setName (null);
+			setSubstitute_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_Substitute (Properties ctx, String M_Substitute_UU, String trxName)
+    {
+      super (ctx, M_Substitute_UU, trxName);
+      /** if (M_Substitute_UU == null)
+        {
+			setM_Product_ID (0);
+			setName (null);
+			setSubstitute_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_Substitute (Properties ctx, String M_Substitute_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_Substitute_UU, trxName, virtualColumns);
+      /** if (M_Substitute_UU == null)
         {
 			setM_Product_ID (0);
 			setName (null);
@@ -51,7 +88,7 @@ public class X_M_Substitute extends PO implements I_M_Substitute, I_Persistent
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -68,14 +105,13 @@ public class X_M_Substitute extends PO implements I_M_Substitute, I_Persistent
     public String toString()
     {
       StringBuilder sb = new StringBuilder ("X_M_Substitute[")
-        .append(get_ID()).append(",Name=").append(getName()).append("]");
+        .append(get_UUID()).append(",Name=").append(getName()).append("]");
       return sb.toString();
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -84,32 +120,32 @@ public class X_M_Substitute extends PO implements I_M_Substitute, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	public org.compiere.model.I_M_Product getM_Product() throws RuntimeException
-    {
-		return (org.compiere.model.I_M_Product)MTable.get(getCtx(), org.compiere.model.I_M_Product.Table_Name)
-			.getPO(getM_Product_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_M_Product)MTable.get(getCtx(), org.compiere.model.I_M_Product.Table_ID)
+			.getPO(getM_Product_ID(), get_TrxName());
+	}
 
 	/** Set Product.
-		@param M_Product_ID 
-		Product, Service, Item
-	  */
+		@param M_Product_ID Product, Service, Item
+	*/
 	public void setM_Product_ID (int M_Product_ID)
 	{
-		if (M_Product_ID < 1) 
+		if (M_Product_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_Product_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_Product_ID, Integer.valueOf(M_Product_ID));
 	}
 
 	/** Get Product.
 		@return Product, Service, Item
 	  */
-	public int getM_Product_ID () 
+	public int getM_Product_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_Product_ID);
 		if (ii == null)
@@ -118,7 +154,8 @@ public class X_M_Substitute extends PO implements I_M_Substitute, I_Persistent
 	}
 
 	/** Set M_Substitute_UU.
-		@param M_Substitute_UU M_Substitute_UU	  */
+		@param M_Substitute_UU M_Substitute_UU
+	*/
 	public void setM_Substitute_UU (String M_Substitute_UU)
 	{
 		set_Value (COLUMNNAME_M_Substitute_UU, M_Substitute_UU);
@@ -126,15 +163,14 @@ public class X_M_Substitute extends PO implements I_M_Substitute, I_Persistent
 
 	/** Get M_Substitute_UU.
 		@return M_Substitute_UU	  */
-	public String getM_Substitute_UU () 
+	public String getM_Substitute_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_Substitute_UU);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -143,40 +179,40 @@ public class X_M_Substitute extends PO implements I_M_Substitute, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
 
-    /** Get Record ID/ColumnName
-        @return ID/ColumnName pair
+    /** Get Record UU/ColumnName
+        @return UU/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public ValueNamePair getValueNamePair()
     {
-        return new KeyNamePair(get_ID(), getName());
+        return new ValueNamePair(get_UUID(), getName());
     }
 
 	public org.compiere.model.I_M_Product getSubstitute() throws RuntimeException
-    {
-		return (org.compiere.model.I_M_Product)MTable.get(getCtx(), org.compiere.model.I_M_Product.Table_Name)
-			.getPO(getSubstitute_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_M_Product)MTable.get(getCtx(), org.compiere.model.I_M_Product.Table_ID)
+			.getPO(getSubstitute_ID(), get_TrxName());
+	}
 
 	/** Set Substitute.
-		@param Substitute_ID 
-		Entity which can be used in place of this entity
-	  */
+		@param Substitute_ID Entity which can be used in place of this entity
+	*/
 	public void setSubstitute_ID (int Substitute_ID)
 	{
-		if (Substitute_ID < 1) 
+		if (Substitute_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_Substitute_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_Substitute_ID, Integer.valueOf(Substitute_ID));
 	}
 
 	/** Get Substitute.
 		@return Entity which can be used in place of this entity
 	  */
-	public int getSubstitute_ID () 
+	public int getSubstitute_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Substitute_ID);
 		if (ii == null)

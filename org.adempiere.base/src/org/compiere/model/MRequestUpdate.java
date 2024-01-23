@@ -26,14 +26,24 @@ import java.util.Properties;
  *  
  *  @author Teo Sarca
  *  		<li>FR [ 2884541 ] MRequestUpdate should detect automatically the fields
- *  			https://sourceforge.net/tracker/?func=detail&aid=2884541&group_id=176962&atid=879335
+ *  			https://sourceforge.net/p/adempiere/feature-requests/864/
  */
 public class MRequestUpdate extends X_R_RequestUpdate
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -8862921042436867124L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param R_RequestUpdate_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MRequestUpdate(Properties ctx, String R_RequestUpdate_UU, String trxName) {
+        super(ctx, R_RequestUpdate_UU, trxName);
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -41,8 +51,7 @@ public class MRequestUpdate extends X_R_RequestUpdate
 	 *	@param R_RequestUpdate_ID id
 	 *	@param trxName trx
 	 */
-	public MRequestUpdate (Properties ctx, int R_RequestUpdate_ID,
-		String trxName)
+	public MRequestUpdate (Properties ctx, int R_RequestUpdate_ID, String trxName)
 	{
 		super (ctx, R_RequestUpdate_ID, trxName);
 	}	//	MRequestUpdate
@@ -92,7 +101,7 @@ public class MRequestUpdate extends X_R_RequestUpdate
 	
 	/**
 	 * 	Get Name of creator
-	 *	@return name
+	 *	@return created by name
 	 */
 	public String getCreatedByName()
 	{
@@ -101,8 +110,8 @@ public class MRequestUpdate extends X_R_RequestUpdate
 	}	//	getCreatedByName
 
 	/**
-	 * 	Get Confidential Entry Text (for jsp)
-	 *	@return text
+	 * 	Get Confidential Entry Name
+	 *	@return Confidential Entry Name
 	 */
 	public String getConfidentialEntryText()
 	{
@@ -114,6 +123,7 @@ public class MRequestUpdate extends X_R_RequestUpdate
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		if (getConfidentialTypeEntry() == null)

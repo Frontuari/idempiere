@@ -25,8 +25,8 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
+ * Holder for OSGI service. Implemented using {@link ServiceTracker}.
  * @author hengsin
- *
  */
 public class DynamicServiceHolder<T> implements IServiceHolder<T>, IServicesHolder<T> {
 
@@ -37,8 +37,10 @@ public class DynamicServiceHolder<T> implements IServiceHolder<T>, IServicesHold
 	 */
 	public DynamicServiceHolder(ServiceTracker<T, T> tracker) {
 		serviceTracker = tracker;
-		if (serviceTracker.getTrackingCount() == -1)
-			serviceTracker.open();
+		synchronized (serviceTracker) {
+			if (serviceTracker.getTrackingCount() == -1)
+				serviceTracker.open();
+		}
 	}
 
 	@Override

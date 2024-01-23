@@ -19,6 +19,11 @@ package org.compiere.process;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import org.compiere.util.DB;
+import org.compiere.util.Util;
 
 
 /**
@@ -32,10 +37,11 @@ import java.sql.Timestamp;
  */
 public class ProcessInfoParameter implements Serializable
 {
+
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -8571973325856537109L;
+	private static final long serialVersionUID = -5396796617617359891L;
 
 	/**
 	 *  Construct Parameter
@@ -47,11 +53,26 @@ public class ProcessInfoParameter implements Serializable
 	 */
 	public ProcessInfoParameter (String parameterName, Object parameter, Object parameter_To, String info, String info_To)
 	{
+		this(parameterName, parameter, parameter_To, info, info_To, false);
+	}   //  ProcessInfoParameter
+	
+	/**
+	 *  Construct Parameter
+	 *  @param parameterName parameter name
+	 *  @param parameter parameter
+	 *  @param parameter_To to parameter
+	 *  @param info info
+	 *  @param info_To to info
+	 *  @param isNotClause is not clause
+	 */
+	public ProcessInfoParameter (String parameterName, Object parameter, Object parameter_To, String info, String info_To, boolean isNotClause)
+	{
 		setParameterName (parameterName);
 		setParameter (parameter);
 		setParameter_To (parameter_To);
 		setInfo (info);
 		setInfo_To (info_To);
+		setIsNotClause(isNotClause);
 	}   //  ProcessInfoParameter
 
 	private String 	m_ParameterName;
@@ -59,6 +80,7 @@ public class ProcessInfoParameter implements Serializable
 	private	Object	m_Parameter_To;
 	private String	m_Info = "";
 	private String 	m_Info_To = "";
+	private boolean m_IsNotClause;
 
 	/**
 	 * 	String Representation
@@ -199,6 +221,18 @@ public class ProcessInfoParameter implements Serializable
 
 	
 	/**
+	 * Method getParameter To as String
+	 * @return Object
+	 */
+	public String getParameter_ToAsString()
+	{
+		if (m_Parameter_To == null)
+			return null;
+		return m_Parameter_To.toString();
+	}	//	getParameter_ToAsString
+	
+	
+	/**
 	 * Method getParameter as String
 	 * @return Object
 	 */
@@ -209,6 +243,19 @@ public class ProcessInfoParameter implements Serializable
 		return m_Parameter.toString();
 	}	//	getParameterAsString
 	
+	/**
+	 * Method getParameter To as BigDecimal
+	 * @return Object
+	 */
+	public BigDecimal getParameter_ToAsBigDecimal ()
+	{
+		if (m_Parameter_To == null)
+			return null;
+		if (m_Parameter_To instanceof BigDecimal)
+			return (BigDecimal) m_Parameter_To;
+		return new BigDecimal(m_Parameter_To.toString());
+	}	//	getParameter_ToAsBigDecimal
+
 	/**
 	 * Method getParameter as BigDecimal
 	 * @return Object
@@ -229,6 +276,14 @@ public class ProcessInfoParameter implements Serializable
 	public String getParameterName ()
 	{
 		return m_ParameterName;
+	}
+	
+	/**
+	 * Method isNotClause
+	 * @return boolean
+	 */
+	public boolean isNotClause() {
+		return m_IsNotClause;
 	}
 
 	/**
@@ -281,5 +336,143 @@ public class ProcessInfoParameter implements Serializable
 	{
 		m_ParameterName = ParameterName;
 	}
+	
+	/**
+	 * Method setIsNotClause
+	 * @param IsNotClause boolean
+	 */
+	public void setIsNotClause(boolean IsNotClause) {
+		this.m_IsNotClause = IsNotClause;
+	}
 
+	/**
+	 * Return the value of the parameter as a comma separated integer string. Validate every value is an integer and throws NumberFormatException if one of the value is not a valid integer.
+	 * @return String
+	 */
+	public String getParameterAsCSVInt() {
+		return getParameterAsCSVInt(getParameterAsString());
+	}
+
+	/**
+	 * Return the value of the parameter To as a comma separated integer string. Validate every value is an integer and throws NumberFormatException if one of the value is not a valid integer.
+	 * @return String
+	 */
+	public String getParameter_ToAsCSVInt() {
+		return getParameterAsCSVInt(getParameter_ToAsString());
+	}
+
+	/**
+	 * Return the value of the parameter as a validated String (all values between commas must be integer)
+	 * @return String
+	 */
+	private String getParameterAsCSVInt(String param) {
+
+		if (Util.isEmpty(param))
+			return "";
+
+		String[] strarr = param.split(",");
+
+		for (String par : strarr)
+			Integer.valueOf(par);
+
+		return param;
+	}
+
+	/**
+	 * Return the value of the parameter as a String with all values between commas surrounded by quotes
+	 * @return String
+	 */
+	public String getParameterAsCSVString() {
+		return getParameterAsCSVString(getParameterAsString());
+	}
+
+	/**
+	 * Return the value of the parameter as a String with all values between commas surrounded by quotes
+	 * @return String
+	 */
+	public String getParameter_ToAsCSVString() {
+		return getParameterAsCSVString(getParameter_ToAsString());
+	}
+
+	/**
+	 * Return the value of the parameter as a String with all values between commas surrounded by quotes
+	 * @return String
+	 */
+	private String getParameterAsCSVString(String param) {
+		if (Util.isEmpty(param))
+			return "";
+
+		String[] strarr = ((String) param).split(",");
+
+		StringBuilder whereValidated = new StringBuilder();
+		for (String par : strarr) {
+			if (whereValidated.length() > 0)
+				whereValidated.append(",");
+			whereValidated.append(DB.TO_STRING(par));
+		}
+
+		return whereValidated.toString();
+	}
+
+	/**
+	 * Return the value of the parameter as an array of int. Validate every value is an integer and throws NumberFormatException if one of the value is not a valid integer.
+	 * @return array of int
+	 */
+	public int[] getParameterAsIntArray() {
+		return getParameterAsIntArray(getParameterAsString());
+	}
+
+	/**
+	 * Return the value of the parameter To as an array of int. Validate every value is an integer and throws NumberFormatException if one of the value is not a valid integer.
+	 * @return array of int
+	 */
+	public int[] getParameterToAsIntArray() {
+		return getParameterAsIntArray(getParameter_ToAsString());
+	}
+
+	/**
+	 * Return the value of the parameter as an array of int. Validate every value is an integer and throws NumberFormatException if one of the value is not a valid integer.
+	 * @return array of int
+	 */
+	private int[] getParameterAsIntArray(String param) {
+
+		if (Util.isEmpty(param))
+			return new int[0];
+
+		return Arrays.stream(param.split(",")).mapToInt(Integer::parseInt).toArray();  
+	}
+
+	/**
+	 * Return the value of the parameter as an array of String.
+	 * @return array of String
+	 */
+	public String[] getParameterAsStringArray() {
+		return getParameterAsStringArray(getParameterAsString());
+	}
+
+	/**
+	 * Return the value of the parameter To as an array of String.
+	 * @return array of String
+	 */
+	public String[] getParameterToAsStringArray() {
+		return getParameterAsStringArray(getParameter_ToAsString());
+	}
+
+	/**
+	 * Return the value of the parameter as an array of String.
+	 * @return array of String
+	 */
+	private String[] getParameterAsStringArray(String param) {
+
+		ArrayList<String> list = new ArrayList<String>();
+
+		if (!Util.isEmpty(param)) {
+			for (String par : param.split(","))
+				list.add(par);
+		}
+
+		String[] retValue = new String[list.size()];
+		list.toArray(retValue);
+		return retValue;
+	}
 }   //  ProcessInfoParameter

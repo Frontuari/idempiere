@@ -22,21 +22,64 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for M_ChangeNotice
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_ChangeNotice")
+public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_ChangeNotice (Properties ctx, int M_ChangeNotice_ID, String trxName)
     {
       super (ctx, M_ChangeNotice_ID, trxName);
       /** if (M_ChangeNotice_ID == 0)
+        {
+			setIsApproved (false);
+// N
+			setM_ChangeNotice_ID (0);
+			setName (null);
+			setProcessed (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_ChangeNotice (Properties ctx, int M_ChangeNotice_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_ChangeNotice_ID, trxName, virtualColumns);
+      /** if (M_ChangeNotice_ID == 0)
+        {
+			setIsApproved (false);
+// N
+			setM_ChangeNotice_ID (0);
+			setName (null);
+			setProcessed (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_ChangeNotice (Properties ctx, String M_ChangeNotice_UU, String trxName)
+    {
+      super (ctx, M_ChangeNotice_UU, trxName);
+      /** if (M_ChangeNotice_UU == null)
+        {
+			setIsApproved (false);
+// N
+			setM_ChangeNotice_ID (0);
+			setName (null);
+			setProcessed (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_ChangeNotice (Properties ctx, String M_ChangeNotice_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_ChangeNotice_UU, trxName, virtualColumns);
+      /** if (M_ChangeNotice_UU == null)
         {
 			setIsApproved (false);
 // N
@@ -53,7 +96,7 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -75,9 +118,8 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -86,15 +128,14 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Detail Information.
-		@param DetailInfo 
-		Additional Detail Information
-	  */
+		@param DetailInfo Additional Detail Information
+	*/
 	public void setDetailInfo (String DetailInfo)
 	{
 		set_Value (COLUMNNAME_DetailInfo, DetailInfo);
@@ -103,15 +144,14 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 	/** Get Detail Information.
 		@return Additional Detail Information
 	  */
-	public String getDetailInfo () 
+	public String getDetailInfo()
 	{
 		return (String)get_Value(COLUMNNAME_DetailInfo);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -120,15 +160,14 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Approved.
-		@param IsApproved 
-		Indicates if this document requires approval
-	  */
+		@param IsApproved Indicates if this document requires approval
+	*/
 	public void setIsApproved (boolean IsApproved)
 	{
 		set_Value (COLUMNNAME_IsApproved, Boolean.valueOf(IsApproved));
@@ -137,34 +176,33 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 	/** Get Approved.
 		@return Indicates if this document requires approval
 	  */
-	public boolean isApproved () 
+	public boolean isApproved()
 	{
 		Object oo = get_Value(COLUMNNAME_IsApproved);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Change Notice.
-		@param M_ChangeNotice_ID 
-		Bill of Materials (Engineering) Change Notice (Version)
-	  */
+		@param M_ChangeNotice_ID Bill of Materials (Engineering) Change Notice (Version)
+	*/
 	public void setM_ChangeNotice_ID (int M_ChangeNotice_ID)
 	{
-		if (M_ChangeNotice_ID < 1) 
+		if (M_ChangeNotice_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_ChangeNotice_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_ChangeNotice_ID, Integer.valueOf(M_ChangeNotice_ID));
 	}
 
 	/** Get Change Notice.
 		@return Bill of Materials (Engineering) Change Notice (Version)
 	  */
-	public int getM_ChangeNotice_ID () 
+	public int getM_ChangeNotice_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_ChangeNotice_ID);
 		if (ii == null)
@@ -173,7 +211,8 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 	}
 
 	/** Set M_ChangeNotice_UU.
-		@param M_ChangeNotice_UU M_ChangeNotice_UU	  */
+		@param M_ChangeNotice_UU M_ChangeNotice_UU
+	*/
 	public void setM_ChangeNotice_UU (String M_ChangeNotice_UU)
 	{
 		set_Value (COLUMNNAME_M_ChangeNotice_UU, M_ChangeNotice_UU);
@@ -181,15 +220,14 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 
 	/** Get M_ChangeNotice_UU.
 		@return M_ChangeNotice_UU	  */
-	public String getM_ChangeNotice_UU () 
+	public String getM_ChangeNotice_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_ChangeNotice_UU);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -198,7 +236,7 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -206,15 +244,14 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Processed.
-		@param Processed 
-		The document has been processed
-	  */
+		@param Processed The document has been processed
+	*/
 	public void setProcessed (boolean Processed)
 	{
 		set_Value (COLUMNNAME_Processed, Boolean.valueOf(Processed));
@@ -223,20 +260,21 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 	/** Get Processed.
 		@return The document has been processed
 	  */
-	public boolean isProcessed () 
+	public boolean isProcessed()
 	{
 		Object oo = get_Value(COLUMNNAME_Processed);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Process Now.
-		@param Processing Process Now	  */
+		@param Processing Process Now
+	*/
 	public void setProcessing (boolean Processing)
 	{
 		set_Value (COLUMNNAME_Processing, Boolean.valueOf(Processing));
@@ -244,13 +282,13 @@ public class X_M_ChangeNotice extends PO implements I_M_ChangeNotice, I_Persiste
 
 	/** Get Process Now.
 		@return Process Now	  */
-	public boolean isProcessing () 
+	public boolean isProcessing()
 	{
 		Object oo = get_Value(COLUMNNAME_Processing);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;

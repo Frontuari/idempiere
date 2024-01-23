@@ -37,6 +37,7 @@ import org.adempiere.webui.event.WTableModelListener;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.minigrid.ColumnInfo;
 import org.compiere.minigrid.IDColumn;
+import org.compiere.model.MBPartner;
 import org.compiere.model.MQuery;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -122,10 +123,12 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener<Event>
 	};
 
 	/**
-	 *	Standard Constructor
-	 *  @param  queryvalue   Query value Name or Value if contains numbers
-	 *  @param isSOTrx  if false, query vendors only
-	 *  @param whereClause where clause
+	 * Standard Constructor
+	 * @param queryValue   Query value Name or Value if contains numbers
+	 * @param windowNo
+	 * @param isSOTrx  if false, query vendors only
+	 * @param multipleSelection
+	 * @param whereClause where clause
 	 */
 	public InfoBPartnerPanel(String queryValue,int windowNo, boolean isSOTrx,boolean multipleSelection, String whereClause)
 	{		
@@ -134,9 +137,14 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener<Event>
 
 	/**
 	 *	Standard Constructor
-	 *  @param  queryvalue   Query value Name or Value if contains numbers
-	 *  @param isSOTrx  if false, query vendors only
-	 *  @param whereClause where clause
+	 */
+	/**
+	 * @param queryValue   Query value Name or Value if contains numbers
+	 * @param windowNo
+	 * @param isSOTrx  if false, query vendors only
+	 * @param multipleSelection
+	 * @param whereClause where clause
+	 * @param lookup
 	 */
 	public InfoBPartnerPanel(String queryValue,int windowNo, boolean isSOTrx,boolean multipleSelection, String whereClause, boolean lookup)
 	{
@@ -503,7 +511,7 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener<Event>
                 C_BPartner_Location_ID = ((KeyNamePair)data).getKey();
         }
         //  publish for Callout to read
-        Integer ID = getSelectedRowKey();
+        Integer ID = getIntSelectedRowKey(MBPartner.Table_ID);
         Env.setContext(Env.getCtx(), p_WindowNo, Env.TAB_INFO, "C_BPartner_ID", ID == null ? "0" : ID.toString());
         Env.setContext(Env.getCtx(), p_WindowNo, Env.TAB_INFO, "AD_User_ID", String.valueOf(AD_User_ID));
         Env.setContext(Env.getCtx(), p_WindowNo, Env.TAB_INFO, "C_BPartner_Location_ID", String.valueOf(C_BPartner_Location_ID));
@@ -517,7 +525,7 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener<Event>
 	protected void showHistory()
 	{
 		log.info("");
-		Integer C_BPartner_ID = getSelectedRowKey();
+		Integer C_BPartner_ID = getIntSelectedRowKey(MBPartner.Table_ID);
 		if (C_BPartner_ID == null)
 			return;
 		InvoiceHistory ih = new InvoiceHistory (this, C_BPartner_ID.intValue(), 
@@ -541,7 +549,7 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener<Event>
 	public void zoom()
 	{
 		log.info( "InfoBPartner.zoom");
-		Integer C_BPartner_ID = getSelectedRowKey();
+		Integer C_BPartner_ID = getIntSelectedRowKey(MBPartner.Table_ID);
 		if (C_BPartner_ID == null)
 			return;
 	//	AEnv.zoom(MBPartner.Table_ID, C_BPartner_ID.intValue(), true);	//	SO

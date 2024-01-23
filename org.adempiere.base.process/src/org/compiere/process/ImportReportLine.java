@@ -24,6 +24,7 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.DBException;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.DB;
 
 /**
@@ -32,6 +33,7 @@ import org.compiere.util.DB;
  * 	@author 	Jorg Janke
  * 	@version 	$Id: ImportReportLine.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class ImportReportLine extends SvrProcess
 {
 	/**	Client to be imported to		*/
@@ -62,7 +64,7 @@ public class ImportReportLine extends SvrProcess
 			else if (name.equals("DeleteOldImported"))
 				m_deleteOldImported = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		if (m_DateValue == null)
 			m_DateValue = new Timestamp (System.currentTimeMillis());
@@ -278,13 +280,10 @@ public class ImportReportLine extends SvrProcess
 			.append("SELECT ?,PA_ReportLineSet_ID,")
 			.append("AD_Client_ID,AD_Org_ID,'Y',getDate(),CreatedBy,getDate(),UpdatedBy,")
 			.append("Name,SeqNo,IsPrinted,IsSummary,LineType ")
-			//jz + "FROM I_ReportLine "
-			// + "WHERE PA_ReportLineSet_ID=? AND Name=? AND ROWNUM=1"		//	#2..3
 			.append("FROM I_ReportLine ")
 			.append("WHERE I_ReportLine_ID=(SELECT MAX(I_ReportLine_ID) ")		
 			.append("FROM I_ReportLine ")
 			.append("WHERE PA_ReportLineSet_ID=? AND Name=? ")		//	#2..3
-			//jz + clientCheck, get_TrxName());
 			.append(clientCheck).append(")");
 			pstmt_insertLine = DB.prepareStatement(dbpst.toString(), get_TrxName());
 
@@ -381,20 +380,6 @@ public class ImportReportLine extends SvrProcess
 					.append(clientCheck);
 			pstmt_insertSource = DB.prepareStatement(dbpst.toString(), get_TrxName());
 
-			//	Update ReportSource
-			//jz 
-			/*
-			String sqlt="UPDATE PA_ReportSource "
-				+ "SET (ElementType,C_ElementValue_ID,Updated,UpdatedBy)="
-				+ " (SELECT 'AC',C_ElementValue_ID,getDate(),UpdatedBy"
-				+ " FROM I_ReportLine"
-				+ " WHERE I_ReportLine_ID=?) "
-				+ "WHERE PA_ReportSource_ID=?"
-				+ clientCheck;
-			PreparedStatement pstmt_updateSource = DB.prepareStatement
-				(sqlt, get_TrxName());
-				*/
-
 			// Delete ReportSource - afalcone 22/02/2007 - F.R. [ 1642250 ] Import ReportLine / Very Slow Reports
 			dbpst = new StringBuilder("DELETE FROM PA_ReportSource ")
 					.append("WHERE C_ElementValue_ID IS NULL") 
@@ -450,14 +435,11 @@ public class ImportReportLine extends SvrProcess
 						.append(" WHERE I_ReportLine_ID=").append(I_ReportLine_ID).append(") ")
 						.append("WHERE PA_ReportSource_ID=").append(PA_ReportSource_ID).append(" ")
 						.append(clientCheck);
-					PreparedStatement pstmt_updateSource = DB.prepareStatement
-						(sqlt.toString(), get_TrxName());
-					//pstmt_updateSource.setInt(1, I_ReportLine_ID);
-					//pstmt_updateSource.setInt(2, PA_ReportSource_ID);
+					PreparedStatement pstmt_updateSource = null;
 					try
 					{
+						pstmt_updateSource = DB.prepareStatement(sqlt.toString(), get_TrxName());
 						no = pstmt_updateSource.executeUpdate();
-						//no = DB.executeUpdate(sqlt, get_TrxName());
 						if (log.isLoggable(Level.FINEST)) log.finest("Update ReportSource = " + no + ", I_ReportLine_ID=" + I_ReportLine_ID + ", PA_ReportSource_ID=" + PA_ReportSource_ID);
 						noUpdateSource++;
 					}
@@ -506,6 +488,8 @@ public class ImportReportLine extends SvrProcess
 			pstmt_insertSource = null;
 			DB.close(pstmt_setImported);
 			pstmt_setImported = null;
+			DB.close(pstmt_deleteSource);
+			pstmt_deleteSource = null;
 		}
 
 		//	Set Error to indicator to not imported

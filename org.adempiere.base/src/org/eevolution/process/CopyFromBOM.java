@@ -19,6 +19,7 @@ package org.eevolution.process;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.AdempiereSystemError;
@@ -27,13 +28,13 @@ import org.eevolution.model.MPPProductBOM;
 import org.eevolution.model.MPPProductBOMLine;
 
 /**
- *	CopyFromBOM Process
- *	Copies BOM Lines from Selected BOM to the Current BOM
- *	The BOM being copied to must have no pre-existing BOM Lines
+ *	Process to copy BOM Lines from Selected BOM to the Current BOM.<br/>
+ *	The BOM being copied to must have no pre-existing BOM Lines.
  *
  *  @author Tony Snook
  *  @version $Id: CopyFromBOM.java,v 1.0 2008/07/04 05:24:03 tspc Exp $
  */
+@org.adempiere.base.annotation.Process
 public class CopyFromBOM extends SvrProcess {
 	/**					*/
 	private int	p_Record_ID = 0;
@@ -44,6 +45,7 @@ public class CopyFromBOM extends SvrProcess {
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
+	@Override
 	protected void prepare()
 	{
 		ProcessInfoParameter[] para = getParameter();
@@ -55,11 +57,12 @@ public class CopyFromBOM extends SvrProcess {
 			else if (name.equals("PP_Product_BOM_ID"))
 				p_PP_Product_BOM_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_Record_ID = getRecord_ID();
 	} //	prepare
 
+	@Override
 	protected String doIt() throws Exception
 	{
 		if (log.isLoggable(Level.INFO)) log.info("From PP_Product_BOM_ID=" + p_PP_Product_BOM_ID + " to " + p_Record_ID);

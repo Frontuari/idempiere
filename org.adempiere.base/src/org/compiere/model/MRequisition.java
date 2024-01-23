@@ -32,6 +32,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
+import org.compiere.util.Util;
 
 /**
  *	Requisition Model
@@ -40,7 +41,7 @@ import org.compiere.util.TimeUtil;
  *
  *  @author victor.perez@e-evolution.com, e-Evolution http://www.e-evolution.com
  * 			<li> FR [ 2520591 ] Support multiples calendar for Org 
- *			@see http://sourceforge.net/tracker2/?func=detail&atid=879335&aid=2520591&group_id=176962 
+ *			@see https://sourceforge.net/p/adempiere/feature-requests/631/
  *  @version $Id: MRequisition.java,v 1.2 2006/07/30 00:51:05 jjanke Exp $
  *  @author red1
  *  		<li>FR [ 2214883 ] Remove SQL code and Replace for Query  
@@ -50,9 +51,21 @@ import org.compiere.util.TimeUtil;
 public class MRequisition extends X_M_Requisition implements DocAction
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 898606565778668659L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param M_Requisition_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MRequisition(Properties ctx, String M_Requisition_UU, String trxName) {
+        super(ctx, M_Requisition_UU, trxName);
+		if (Util.isEmpty(M_Requisition_UU))
+			setInitialDefaults();
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -63,22 +76,23 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	{
 		super (ctx, M_Requisition_ID, trxName);
 		if (M_Requisition_ID == 0)
-		{
-		//	setDocumentNo (null);
-		//	setAD_User_ID (0);
-		//	setM_PriceList_ID (0);
-		//	setM_Warehouse_ID(0);
-			setDateDoc(new Timestamp(System.currentTimeMillis()));
-			setDateRequired (new Timestamp(System.currentTimeMillis()));
-			setDocAction (DocAction.ACTION_Complete);	// CO
-			setDocStatus (DocAction.STATUS_Drafted);		// DR
-			setPriorityRule (PRIORITYRULE_Medium);	// 5
-			setTotalLines (Env.ZERO);
-			setIsApproved (false);
-			setPosted (false);
-			setProcessed (false);
-		}
+			setInitialDefaults();
 	}	//	MRequisition
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setDateDoc(new Timestamp(System.currentTimeMillis()));
+		setDateRequired (new Timestamp(System.currentTimeMillis()));
+		setDocAction (DocAction.ACTION_Complete);	// CO
+		setDocStatus (DocAction.STATUS_Drafted);		// DR
+		setPriorityRule (PRIORITYRULE_Medium);	// 5
+		setTotalLines (Env.ZERO);
+		setIsApproved (false);
+		setPosted (false);
+		setProcessed (false);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -94,8 +108,8 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	private MRequisitionLine[]		m_lines = null;
 	
 	/**
-	 * 	Get Lines
-	 *	@return array of lines
+	 * 	Get Requisition Lines
+	 *	@return array of requisition lines
 	 */
 	public MRequisitionLine[] getLines()
 	{
@@ -104,13 +118,11 @@ public class MRequisition extends X_M_Requisition implements DocAction
 			return m_lines;
 		}
 		
-		//red1 - FR: [ 2214883 ] Remove SQL code and Replace for Query  
  	 	final String whereClause = I_M_RequisitionLine.COLUMNNAME_M_Requisition_ID+"=?";
 	 	List <MRequisitionLine> list = new Query(getCtx(), I_M_RequisitionLine.Table_Name, whereClause, get_TrxName())
 			.setParameters(get_ID())
-			.setOrderBy(I_M_RequisitionLine.COLUMNNAME_Line)
+			.setOrderBy(I_M_RequisitionLine.COLUMNNAME_Line+","+I_M_RequisitionLine.COLUMNNAME_M_RequisitionLine_ID)
 			.list();
-	 	//  red1 - end -
 
 		m_lines = new MRequisitionLine[list.size ()];
 		list.toArray (m_lines);
@@ -121,6 +133,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder ("MRequisition[");
@@ -134,6 +147,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Get Document Info
 	 *	@return document info
 	 */
+	@Override
 	public String getDocumentInfo()
 	{
 		return Msg.getElement(getCtx(), "M_Requisition_ID") + " " + getDocumentNo();
@@ -143,6 +157,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Create PDF
 	 *	@return File or null
 	 */
+	@Override
 	public File createPDF ()
 	{
 		try
@@ -160,14 +175,11 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	/**
 	 * 	Create PDF file
 	 *	@param file output file
-	 *	@return file if success
+	 *	@return not implemented, always return null
 	 */
 	public File createPDF (File file)
 	{
-	//	ReportEngine re = ReportEngine.get (getCtx(), ReportEngine.INVOICE, getC_Invoice_ID());
-	//	if (re == null)
-			return null;
-	//	return re.getPDF(file);
+		return null;
 	}	//	createPDF
 
 	/**
@@ -187,6 +199,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		if (getM_PriceList_ID() == 0)
@@ -202,11 +215,12 @@ public class MRequisition extends X_M_Requisition implements DocAction
 		return true;
 	}
 
-	/**************************************************************************
+	/**
 	 * 	Process document
 	 *	@param processAction document action
 	 *	@return true if performed
 	 */
+	@Override
 	public boolean processIt (String processAction)
 	{
 		m_processMsg = null;
@@ -223,6 +237,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Unlock Document.
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean unlockIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("unlockIt - " + toString());
@@ -234,6 +249,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Invalidate Document
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean invalidateIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("invalidateIt - " + toString());
@@ -244,6 +260,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 *	Prepare Document
 	 * 	@return new status (In Progress or Invalid) 
 	 */
+	@Override
 	public String prepareIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info(toString());
@@ -301,6 +318,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Approve Document
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean  approveIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("approveIt - " + toString());
@@ -312,6 +330,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Reject Approval
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean rejectIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("rejectIt - " + toString());
@@ -323,6 +342,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Complete Document
 	 * 	@return new status (Complete, In Progress, Invalid, Waiting ..)
 	 */
+	@Override
 	public String completeIt()
 	{
 		//	Re-Check
@@ -381,6 +401,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Same as Close.
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean voidIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("voidIt - " + toString());
@@ -405,6 +426,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Cancel not delivered Qunatities
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean closeIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("closeIt - " + toString());
@@ -456,8 +478,9 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	
 	/**
 	 * 	Reverse Correction
-	 * 	@return true if success 
+	 * 	@return not implemented, always return false 
 	 */
+	@Override
 	public boolean reverseCorrectIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("reverseCorrectIt - " + toString());
@@ -475,9 +498,10 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	}	//	reverseCorrectionIt
 	
 	/**
-	 * 	Reverse Accrual - none
-	 * 	@return true if success 
+	 * 	Reverse Accrual
+	 * 	@return not implemented, always return false 
 	 */
+	@Override
 	public boolean reverseAccrualIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("reverseAccrualIt - " + toString());
@@ -498,6 +522,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Re-activate
 	 * 	@return true if success 
 	 */
+	@Override
 	public boolean reActivateIt()
 	{
 		if (log.isLoggable(Level.INFO)) log.info("reActivateIt - " + toString());
@@ -506,7 +531,6 @@ public class MRequisition extends X_M_Requisition implements DocAction
 		if (m_processMsg != null)
 			return false;
 
-	//	setProcessed(false);
 		if (! reverseCorrectIt())
 			return false;
 
@@ -518,10 +542,11 @@ public class MRequisition extends X_M_Requisition implements DocAction
 		return true;
 	}	//	reActivateIt
 	
-	/*************************************************************************
+	/**
 	 * 	Get Summary
 	 *	@return Summary of Document
 	 */
+	@Override
 	public String getSummary()
 	{
 		StringBuilder sb = new StringBuilder();
@@ -542,6 +567,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Get Process Message
 	 *	@return clear text error message
 	 */
+	@Override
 	public String getProcessMsg()
 	{
 		return m_processMsg;
@@ -551,6 +577,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Get Document Owner
 	 *	@return AD_User_ID
 	 */
+	@Override
 	public int getDoc_User_ID()
 	{
 		return getAD_User_ID();
@@ -560,6 +587,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Get Document Currency
 	 *	@return C_Currency_ID
 	 */
+	@Override
 	public int getC_Currency_ID()
 	{
 		MPriceList pl = MPriceList.get(getCtx(), getM_PriceList_ID(), get_TrxName());
@@ -570,6 +598,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	 * 	Get Document Approval Amount
 	 *	@return amount
 	 */
+	@Override
 	public BigDecimal getApprovalAmt()
 	{
 		return getTotalLines();
@@ -585,7 +614,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 	}	//	getUserName
 
 	/**
-	 * 	Document Status is Complete or Closed
+	 * 	Document Status is Complete, Closed or Reverse
 	 *	@return true if CO, CL or RE
 	 */
 	public boolean isComplete()

@@ -23,21 +23,64 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for C_PaymentBatch
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_PaymentBatch")
+public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_PaymentBatch (Properties ctx, int C_PaymentBatch_ID, String trxName)
     {
       super (ctx, C_PaymentBatch_ID, trxName);
       /** if (C_PaymentBatch_ID == 0)
+        {
+			setC_PaymentBatch_ID (0);
+			setC_PaymentProcessor_ID (0);
+			setName (null);
+			setProcessed (false);
+			setProcessing (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_PaymentBatch (Properties ctx, int C_PaymentBatch_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_PaymentBatch_ID, trxName, virtualColumns);
+      /** if (C_PaymentBatch_ID == 0)
+        {
+			setC_PaymentBatch_ID (0);
+			setC_PaymentProcessor_ID (0);
+			setName (null);
+			setProcessed (false);
+			setProcessing (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_PaymentBatch (Properties ctx, String C_PaymentBatch_UU, String trxName)
+    {
+      super (ctx, C_PaymentBatch_UU, trxName);
+      /** if (C_PaymentBatch_UU == null)
+        {
+			setC_PaymentBatch_ID (0);
+			setC_PaymentProcessor_ID (0);
+			setName (null);
+			setProcessed (false);
+			setProcessing (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_PaymentBatch (Properties ctx, String C_PaymentBatch_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_PaymentBatch_UU, trxName, virtualColumns);
+      /** if (C_PaymentBatch_UU == null)
         {
 			setC_PaymentBatch_ID (0);
 			setC_PaymentProcessor_ID (0);
@@ -54,7 +97,7 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
     }
 
     /** AccessLevel
-      * @return 1 - Org 
+      * @return 1 - Org
       */
     protected int get_AccessLevel()
     {
@@ -76,21 +119,20 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
     }
 
 	/** Set Payment Batch.
-		@param C_PaymentBatch_ID 
-		Payment batch for EFT
-	  */
+		@param C_PaymentBatch_ID Payment batch for EFT
+	*/
 	public void setC_PaymentBatch_ID (int C_PaymentBatch_ID)
 	{
-		if (C_PaymentBatch_ID < 1) 
+		if (C_PaymentBatch_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_PaymentBatch_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_PaymentBatch_ID, Integer.valueOf(C_PaymentBatch_ID));
 	}
 
 	/** Get Payment Batch.
 		@return Payment batch for EFT
 	  */
-	public int getC_PaymentBatch_ID () 
+	public int getC_PaymentBatch_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_PaymentBatch_ID);
 		if (ii == null)
@@ -99,7 +141,8 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
 	}
 
 	/** Set C_PaymentBatch_UU.
-		@param C_PaymentBatch_UU C_PaymentBatch_UU	  */
+		@param C_PaymentBatch_UU C_PaymentBatch_UU
+	*/
 	public void setC_PaymentBatch_UU (String C_PaymentBatch_UU)
 	{
 		set_Value (COLUMNNAME_C_PaymentBatch_UU, C_PaymentBatch_UU);
@@ -107,32 +150,32 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
 
 	/** Get C_PaymentBatch_UU.
 		@return C_PaymentBatch_UU	  */
-	public String getC_PaymentBatch_UU () 
+	public String getC_PaymentBatch_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_PaymentBatch_UU);
 	}
 
 	public org.compiere.model.I_C_PaymentProcessor getC_PaymentProcessor() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_PaymentProcessor)MTable.get(getCtx(), org.compiere.model.I_C_PaymentProcessor.Table_Name)
-			.getPO(getC_PaymentProcessor_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_PaymentProcessor)MTable.get(getCtx(), org.compiere.model.I_C_PaymentProcessor.Table_ID)
+			.getPO(getC_PaymentProcessor_ID(), get_TrxName());
+	}
 
 	/** Set Payment Processor.
-		@param C_PaymentProcessor_ID 
-		Payment processor for electronic payments
-	  */
+		@param C_PaymentProcessor_ID Payment processor for electronic payments
+	*/
 	public void setC_PaymentProcessor_ID (int C_PaymentProcessor_ID)
 	{
-		if (C_PaymentProcessor_ID < 1) 
+		if (C_PaymentProcessor_ID < 1)
 			set_Value (COLUMNNAME_C_PaymentProcessor_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_PaymentProcessor_ID, Integer.valueOf(C_PaymentProcessor_ID));
 	}
 
 	/** Get Payment Processor.
 		@return Payment processor for electronic payments
 	  */
-	public int getC_PaymentProcessor_ID () 
+	public int getC_PaymentProcessor_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_PaymentProcessor_ID);
 		if (ii == null)
@@ -141,9 +184,8 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
 	}
 
 	/** Set Document No.
-		@param DocumentNo 
-		Document sequence number of the document
-	  */
+		@param DocumentNo Document sequence number of the document
+	*/
 	public void setDocumentNo (String DocumentNo)
 	{
 		set_Value (COLUMNNAME_DocumentNo, DocumentNo);
@@ -152,7 +194,7 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
 	/** Get Document No.
 		@return Document sequence number of the document
 	  */
-	public String getDocumentNo () 
+	public String getDocumentNo()
 	{
 		return (String)get_Value(COLUMNNAME_DocumentNo);
 	}
@@ -160,15 +202,14 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getDocumentNo());
     }
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -177,15 +218,14 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
 
 	/** Set Processed.
-		@param Processed 
-		The document has been processed
-	  */
+		@param Processed The document has been processed
+	*/
 	public void setProcessed (boolean Processed)
 	{
 		set_Value (COLUMNNAME_Processed, Boolean.valueOf(Processed));
@@ -194,20 +234,21 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
 	/** Get Processed.
 		@return The document has been processed
 	  */
-	public boolean isProcessed () 
+	public boolean isProcessed()
 	{
 		Object oo = get_Value(COLUMNNAME_Processed);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Process Now.
-		@param Processing Process Now	  */
+		@param Processing Process Now
+	*/
 	public void setProcessing (boolean Processing)
 	{
 		set_Value (COLUMNNAME_Processing, Boolean.valueOf(Processing));
@@ -215,20 +256,21 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
 
 	/** Get Process Now.
 		@return Process Now	  */
-	public boolean isProcessing () 
+	public boolean isProcessing()
 	{
 		Object oo = get_Value(COLUMNNAME_Processing);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Processing date.
-		@param ProcessingDate Processing date	  */
+		@param ProcessingDate Processing date
+	*/
 	public void setProcessingDate (Timestamp ProcessingDate)
 	{
 		set_Value (COLUMNNAME_ProcessingDate, ProcessingDate);
@@ -236,7 +278,7 @@ public class X_C_PaymentBatch extends PO implements I_C_PaymentBatch, I_Persiste
 
 	/** Get Processing date.
 		@return Processing date	  */
-	public Timestamp getProcessingDate () 
+	public Timestamp getProcessingDate()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_ProcessingDate);
 	}

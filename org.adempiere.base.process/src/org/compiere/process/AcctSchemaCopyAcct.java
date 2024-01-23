@@ -24,6 +24,7 @@ import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAcctSchemaDefault;
 import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MAcctSchemaGL;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereSystemError;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.KeyNamePair;
@@ -34,6 +35,7 @@ import org.compiere.util.KeyNamePair;
  *  @author Jorg Janke
  *  @version $Id: AcctSchemaCopyAcct.java,v 1.3 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class AcctSchemaCopyAcct extends SvrProcess
 {
 	private int		p_SourceAcctSchema_ID = 0;
@@ -53,7 +55,7 @@ public class AcctSchemaCopyAcct extends SvrProcess
 			else if (name.equals("C_AcctSchema_ID"))
 				p_SourceAcctSchema_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_TargetAcctSchema_ID = getRecord_ID();
 	}	//	prepare

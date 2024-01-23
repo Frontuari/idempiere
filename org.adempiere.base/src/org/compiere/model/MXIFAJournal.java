@@ -13,21 +13,19 @@ public class MXIFAJournal extends X_I_FAJournal
 	 * 
 	 */
 	private static final long serialVersionUID = -1173588601522240768L;
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param I_FAJournal_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MXIFAJournal(Properties ctx, String I_FAJournal_UU, String trxName) {
+        super(ctx, I_FAJournal_UU, trxName);
+    }
+
 	public MXIFAJournal (Properties ctx, int I_FAJournal_ID, String trxName)
 	{
 		super (ctx, I_FAJournal_ID, trxName);
-		// if (I_FAJournal_ID == 0)
-		// {
-		//	setIsDepreciated (false);
-		//	setIsFullyDepreciated (false);
-		//	setValue (null);
-		//	setName (null);
-		//	setIsInPosession (false);
-		//	setIsOwned (false);
-		//	setA_Asset_Group_ID (0);
-		//	setIsDisposed (false);
-		//	setM_AttributeSetInstance_ID(0);
-		// }
 	}	//	MXIFAJournal
 
 	/**

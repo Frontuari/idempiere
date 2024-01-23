@@ -22,15 +22,16 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for AD_ModelValidator
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_ModelValidator")
+public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_ModelValidator (Properties ctx, int AD_ModelValidator_ID, String trxName)
@@ -40,7 +41,49 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
         {
 			setAD_ModelValidator_ID (0);
 			setEntityType (null);
-// @SQL=select get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) from dual
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setModelValidationClass (null);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_ModelValidator (Properties ctx, int AD_ModelValidator_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_ModelValidator_ID, trxName, virtualColumns);
+      /** if (AD_ModelValidator_ID == 0)
+        {
+			setAD_ModelValidator_ID (0);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setModelValidationClass (null);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_ModelValidator (Properties ctx, String AD_ModelValidator_UU, String trxName)
+    {
+      super (ctx, AD_ModelValidator_UU, trxName);
+      /** if (AD_ModelValidator_UU == null)
+        {
+			setAD_ModelValidator_ID (0);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setModelValidationClass (null);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_ModelValidator (Properties ctx, String AD_ModelValidator_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_ModelValidator_UU, trxName, virtualColumns);
+      /** if (AD_ModelValidator_UU == null)
+        {
+			setAD_ModelValidator_ID (0);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
 			setModelValidationClass (null);
 			setName (null);
         } */
@@ -53,7 +96,7 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
     }
 
     /** AccessLevel
-      * @return 4 - System 
+      * @return 4 - System
       */
     protected int get_AccessLevel()
     {
@@ -75,18 +118,19 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
     }
 
 	/** Set Model Validator.
-		@param AD_ModelValidator_ID Model Validator	  */
+		@param AD_ModelValidator_ID Model Validator
+	*/
 	public void setAD_ModelValidator_ID (int AD_ModelValidator_ID)
 	{
-		if (AD_ModelValidator_ID < 1) 
+		if (AD_ModelValidator_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_ModelValidator_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_ModelValidator_ID, Integer.valueOf(AD_ModelValidator_ID));
 	}
 
 	/** Get Model Validator.
 		@return Model Validator	  */
-	public int getAD_ModelValidator_ID () 
+	public int getAD_ModelValidator_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_ModelValidator_ID);
 		if (ii == null)
@@ -95,7 +139,8 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 	}
 
 	/** Set AD_ModelValidator_UU.
-		@param AD_ModelValidator_UU AD_ModelValidator_UU	  */
+		@param AD_ModelValidator_UU AD_ModelValidator_UU
+	*/
 	public void setAD_ModelValidator_UU (String AD_ModelValidator_UU)
 	{
 		set_Value (COLUMNNAME_AD_ModelValidator_UU, AD_ModelValidator_UU);
@@ -103,15 +148,14 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 
 	/** Get AD_ModelValidator_UU.
 		@return AD_ModelValidator_UU	  */
-	public String getAD_ModelValidator_UU () 
+	public String getAD_ModelValidator_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_ModelValidator_UU);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -120,7 +164,7 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
@@ -128,9 +172,8 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 	/** EntityType AD_Reference_ID=389 */
 	public static final int ENTITYTYPE_AD_Reference_ID=389;
 	/** Set Entity Type.
-		@param EntityType 
-		Dictionary Entity Type; Determines ownership and synchronization
-	  */
+		@param EntityType Dictionary Entity Type; Determines ownership and synchronization
+	*/
 	public void setEntityType (String EntityType)
 	{
 
@@ -140,15 +183,14 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 	/** Get Entity Type.
 		@return Dictionary Entity Type; Determines ownership and synchronization
 	  */
-	public String getEntityType () 
+	public String getEntityType()
 	{
 		return (String)get_Value(COLUMNNAME_EntityType);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -157,13 +199,14 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Model Validation Class.
-		@param ModelValidationClass Model Validation Class	  */
+		@param ModelValidationClass Model Validation Class
+	*/
 	public void setModelValidationClass (String ModelValidationClass)
 	{
 		set_Value (COLUMNNAME_ModelValidationClass, ModelValidationClass);
@@ -171,15 +214,14 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 
 	/** Get Model Validation Class.
 		@return Model Validation Class	  */
-	public String getModelValidationClass () 
+	public String getModelValidationClass()
 	{
 		return (String)get_Value(COLUMNNAME_ModelValidationClass);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -188,7 +230,7 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -196,15 +238,14 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Sequence.
-		@param SeqNo 
-		Method of ordering records; lowest number comes first
-	  */
+		@param SeqNo Method of ordering records; lowest number comes first
+	*/
 	public void setSeqNo (int SeqNo)
 	{
 		set_Value (COLUMNNAME_SeqNo, Integer.valueOf(SeqNo));
@@ -213,7 +254,7 @@ public class X_AD_ModelValidator extends PO implements I_AD_ModelValidator, I_Pe
 	/** Get Sequence.
 		@return Method of ordering records; lowest number comes first
 	  */
-	public int getSeqNo () 
+	public int getSeqNo()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_SeqNo);
 		if (ii == null)

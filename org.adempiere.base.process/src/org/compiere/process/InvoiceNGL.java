@@ -31,6 +31,7 @@ import org.compiere.model.MInvoice;
 import org.compiere.model.MJournal;
 import org.compiere.model.MJournalLine;
 import org.compiere.model.MOrg;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.Query;
 import org.compiere.model.X_T_InvoiceGL;
 import org.compiere.util.DB;
@@ -38,12 +39,13 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 
 /**
- * 	Invoice Not realized Gain & Loss.
+ * 	Invoice Not realized Gain and Loss.
  * 	The actual data shown is T_InvoiceGL_v
  *  @author Jorg Janke
  *  @version $Id: InvoiceNGL.java,v 1.3 2006/08/04 03:53:59 jjanke Exp $
  *  FR: [ 2214883 ] Remove SQL code and Replace for Query - red1
  */
+@org.adempiere.base.annotation.Process
 public class InvoiceNGL extends SvrProcess
 {
 	/**	Mandatory Acct Schema			*/
@@ -89,7 +91,7 @@ public class InvoiceNGL extends SvrProcess
 			else if (name.equals("C_DocTypeReval_ID"))
 				p_C_DocTypeReval_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

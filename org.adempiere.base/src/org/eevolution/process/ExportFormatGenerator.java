@@ -23,6 +23,7 @@ import org.compiere.model.I_EXP_Format;
 import org.compiere.model.MColumn;
 import org.compiere.model.MEXPFormat;
 import org.compiere.model.MEXPFormatLine;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.MWindow;
@@ -32,14 +33,13 @@ import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 
-
-
 /**
  *	Create a Export Format from a Window
  *	
  *  @author Victor Perez www.e-evolution.com
  *  @version $Id: ExportFormatGenerator.java,v 1.0 
  */
+@org.adempiere.base.annotation.Process
 public class ExportFormatGenerator extends SvrProcess
 {
 
@@ -74,7 +74,7 @@ public class ExportFormatGenerator extends SvrProcess
 				p_IsInsertRecord = "Y".equals(para.getParameter());
 			}	
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para);
 		}
 	}	//	prepare
 

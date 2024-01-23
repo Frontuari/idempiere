@@ -28,7 +28,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Properties;
 
+import org.adempiere.util.ServerContext;
 import org.compiere.Adempiere;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MClientInfo;
@@ -71,6 +73,8 @@ public abstract class AbstractTestCase {
 	 * @param testInfo
 	 */
 	protected void init(TestInfo testInfo) {
+		ServerContext.setCurrentInstance(new Properties());
+		
 		String trxName = Trx.createTrxName(getClass().getName()+"_");
 		trx = Trx.get(trxName, true);
 		trx.start();
@@ -100,8 +104,8 @@ public abstract class AbstractTestCase {
 		Env.setContext(Env.getCtx(), Env.AD_USER_ID, loginDetails.getUserId());
 		Env.setContext(Env.getCtx(), Env.AD_ROLE_ID, loginDetails.getRoleId());
 		Env.setContext(Env.getCtx(), Env.M_WAREHOUSE_ID, loginDetails.getWarehouseId());
-		Env.setContext(Env.getCtx(), "#LanguageName", loginDetails.getLoginLanguage().getName());
-		Env.setContext(Env.getCtx(), "#Date", loginDetails.getLoginDate());
+		Env.setContext(Env.getCtx(), Env.LANGUAGE_NAME, loginDetails.getLoginLanguage().getName());
+		Env.setContext(Env.getCtx(), Env.DATE, loginDetails.getLoginDate());
 		
 		Env.verifyLanguage(Env.getCtx(), getLanguage());
     	Env.setContext(Env.getCtx(), Env.LANGUAGE, getLanguage().getAD_Language());
@@ -110,9 +114,9 @@ public abstract class AbstractTestCase {
 		
 		if (loginDetails.getRoleId() > 0) {
 			if (MRole.getDefault(Env.getCtx(), false).isShowAcct())
-				Env.setContext(Env.getCtx(), "#ShowAcct", "Y");
+				Env.setContext(Env.getCtx(), Env.SHOW_ACCOUNTING, "Y");
 			else
-				Env.setContext(Env.getCtx(), "#ShowAcct", "N");
+				Env.setContext(Env.getCtx(), Env.SHOW_ACCOUNTING, "N");
 		}
 		
 		/** Define AcctSchema , Currency, HasAlias **/
@@ -147,8 +151,9 @@ public abstract class AbstractTestCase {
 	 * tear down for each test method
 	 */
 	protected void tearDown() {
-		if (trx != null && trx.isActive()) {
-			trx.rollback();
+		if (trx != null) {
+			if (trx.isActive())
+				trx.rollback();
 			trx.close();
 		}
 	}
@@ -224,6 +229,5 @@ public abstract class AbstractTestCase {
 	 * shutdown for class
 	 */
 	static void shutdown() {
-		Adempiere.stop();
 	}
 }

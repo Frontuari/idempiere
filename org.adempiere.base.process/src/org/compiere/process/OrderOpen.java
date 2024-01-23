@@ -19,6 +19,7 @@ package org.compiere.process;
 import java.util.logging.Level;
 
 import org.compiere.model.MOrder;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereSystemError;
  
 /**
@@ -27,6 +28,7 @@ import org.compiere.util.AdempiereSystemError;
  *  @author Jorg Janke
  *  @version $Id: OrderOpen.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class OrderOpen extends SvrProcess
 {
 	/**	The Order				*/
@@ -46,7 +48,7 @@ public class OrderOpen extends SvrProcess
 			else if (name.equals("C_Order_ID"))
 				p_C_Order_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

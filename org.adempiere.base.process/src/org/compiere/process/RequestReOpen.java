@@ -18,6 +18,7 @@ package org.compiere.process;
 
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRequest;
 import org.compiere.util.AdempiereUserError;
 
@@ -28,6 +29,7 @@ import org.compiere.util.AdempiereUserError;
  *  @author Jorg Janke
  *  @version $Id: RequestReOpen.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class RequestReOpen extends SvrProcess
 {
 	/** Request					*/
@@ -47,7 +49,7 @@ public class RequestReOpen extends SvrProcess
 			else if (name.equals("R_Request_ID"))
 				p_R_Request_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

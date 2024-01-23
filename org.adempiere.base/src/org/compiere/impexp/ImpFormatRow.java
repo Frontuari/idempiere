@@ -37,7 +37,7 @@ import org.compiere.util.Util;
  *
  *  @author Jorg Janke
  *  @author Trifon Trifonov, Catura AG (www.catura.de)
- *				<li>FR [ 3010957 ] Custom Separator Character, http://sourceforge.net/tracker/?func=detail&aid=3010957&group_id=176962&atid=879335 </li>
+ *				<li>FR [ 3010957 ] Custom Separator Character, https://sourceforge.net/p/adempiere/feature-requests/975/ </li>
  *  @version $Id: ImpFormatRow.java,v 1.2 2006/07/30 00:51:05 jjanke Exp $
  *  
  *  globalqss: integrate Teo Sarca bug fix [ 1623817 ] Minor bug on importing calendar date
@@ -93,8 +93,9 @@ public final class ImpFormatRow
 	private String				m_constantValue = "";
 	private boolean				m_constantIsString = true;
 	//
-	private Callout				m_callout = null;
-	private String				m_method = null;
+	private Callout[]			m_callout = null;
+	private String[]			m_method = null;
+	private String				importprefix = "";
 	//
 	private SimpleDateFormat	m_dformat = null;
 	private int					m_maxLength = 0;
@@ -179,7 +180,7 @@ public final class ImpFormatRow
 
 	/**
 	 *	Name
-	 *  @param Name name
+	 *  @param name name
 	 */
 	public void setName (String name)
 	{
@@ -210,7 +211,6 @@ public final class ImpFormatRow
 		else
 			throw new IllegalArgumentException("DataType must be S/D/N/C");
 	}   //  setDataType
-
 
 	/**
 	 *  Data Type
@@ -266,9 +266,10 @@ public final class ImpFormatRow
 	 *  @param divideBy100 divide number by 100
 	 *  @param constantValue constant value
 	 *  @param callout Java callout
+	 *  @param importprefix Prefix to be added if value is not null or empty
 	 */
 	public void setFormatInfo (String dataFormat, String decimalPoint, boolean divideBy100,
-		String constantValue, String callout)
+		String constantValue, String callout, String importprefix)
 	{
 		if (dataFormat == null)
 			m_dataFormat = "";
@@ -304,25 +305,36 @@ public final class ImpFormatRow
 		//	callout
 		if (callout != null)
 		{
-			int methodStart = callout.lastIndexOf('.');
-			try
-			{
-				if (methodStart != -1)      //  no class
+			String[] callouts = callout.split(";");
+			m_callout = new Callout[callouts.length];
+			m_method = new String[callouts.length];
+			for (int i = 0; i < callouts.length; i++) {
+				int methodStart = callouts[i].trim().lastIndexOf('.');
+				try
 				{
-					Class<?> cClass = Class.forName(callout.substring(0,methodStart));
-					m_callout = (Callout)cClass.getDeclaredConstructor().newInstance();
-					m_method = callout.substring(methodStart+1);
+					if (methodStart != -1)      //  no class
+					{
+						Class<?> cClass = Class.forName(callouts[i].trim().substring(0,methodStart));
+						m_callout[i] = (Callout)cClass.getDeclaredConstructor().newInstance();
+						m_method[i] = callouts[i].trim().substring(methodStart+1);
+					}
+				}
+				catch (Exception e)
+				{
+					throw new AdempiereException(e);
+				}
+				if (m_callout.length == 0 || m_method == null || m_method.length == 0)
+				{
+					log.log(Level.SEVERE, "MTab.setFormatInfo - Invalid Callout " + callout);
+					m_callout = null;
 				}
 			}
-			catch (Exception e)
-			{
-				log.log(Level.SEVERE, "MTab.setFormatInfo - " + e.toString());
-			}
-			if (m_callout == null || m_method == null || m_method.length() == 0)
-			{
-				log.log(Level.SEVERE, "MTab.setFormatInfo - Invalid Callout " + callout);
-				m_callout = null;
-			}
+		}
+		//import prefix
+		if (importprefix != null) {
+			this.importprefix = importprefix;
+		} else {
+			this.importprefix = "";
 		}
 	}   //  setFormatInfo
 
@@ -364,7 +376,7 @@ public final class ImpFormatRow
 
 	/**
 	 *	Set maximum length for Strings (truncated).
-	 * 	Ignored, if 0
+	 * 	Ignored, if 0.
 	 * 	@param maxLength max length
 	 */
 	public void setMaxLength (int maxLength)
@@ -373,7 +385,7 @@ public final class ImpFormatRow
 	}	//	setMaxLength
 
 	
-	/*************************************************************************
+	/**
 	 *	Parse value.
 	 * 	Field content in [] are treated as comments
 	 *  @param info data item
@@ -398,11 +410,12 @@ public final class ImpFormatRow
 		else
 			retValue = parseString (info);
 		//
-		if (m_callout != null)
+		if (m_callout != null && m_callout.length > 0)
 		{
 			try
 			{
-				retValue = m_callout.convert (m_method, retValue);
+				for (int i = 0; i < m_callout.length; i++)
+					retValue = m_callout[i].convert (m_method[i], retValue);
 			}
 			catch (Exception e)
 			{
@@ -411,10 +424,9 @@ public final class ImpFormatRow
 		}
 		//
 		if (retValue == null)
-			retValue = "";
-		return retValue.trim();
+			retValue = "";		
+		return (retValue.trim().length() > 0 ? importprefix : "") + retValue.trim();
 	}	//	parse
-
 	
 	/**
 	 *	Return date as YYYY-MM-DD HH24:MI:SS	(JDBC Timestamp format w/o milliseconds)
@@ -455,9 +467,11 @@ public final class ImpFormatRow
 	}	//	parseNumber
 
 	/**
-	 *	Return String.
+	 *  <pre>
+	 *  Return String.
 	 *  - clean ' and backslash
 	 *  - check max length
+	 *  </pre>
 	 *  @param info data
 	 *  @return info with in SQL format
 	 */

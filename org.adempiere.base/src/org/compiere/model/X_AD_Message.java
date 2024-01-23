@@ -22,15 +22,16 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for AD_Message
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_Message extends PO implements I_AD_Message, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_Message")
+public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_Message (Properties ctx, int AD_Message_ID, String trxName)
@@ -40,7 +41,55 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
         {
 			setAD_Message_ID (0);
 			setEntityType (null);
-// @SQL=select get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) from dual
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setMsgText (null);
+			setMsgType (null);
+// I
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Message (Properties ctx, int AD_Message_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_Message_ID, trxName, virtualColumns);
+      /** if (AD_Message_ID == 0)
+        {
+			setAD_Message_ID (0);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setMsgText (null);
+			setMsgType (null);
+// I
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Message (Properties ctx, String AD_Message_UU, String trxName)
+    {
+      super (ctx, AD_Message_UU, trxName);
+      /** if (AD_Message_UU == null)
+        {
+			setAD_Message_ID (0);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setMsgText (null);
+			setMsgType (null);
+// I
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Message (Properties ctx, String AD_Message_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_Message_UU, trxName, virtualColumns);
+      /** if (AD_Message_UU == null)
+        {
+			setAD_Message_ID (0);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
 			setMsgText (null);
 			setMsgType (null);
 // I
@@ -55,7 +104,7 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
     }
 
     /** AccessLevel
-      * @return 4 - System 
+      * @return 4 - System
       */
     protected int get_AccessLevel()
     {
@@ -77,21 +126,20 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
     }
 
 	/** Set Message.
-		@param AD_Message_ID 
-		System Message
-	  */
+		@param AD_Message_ID System Message
+	*/
 	public void setAD_Message_ID (int AD_Message_ID)
 	{
-		if (AD_Message_ID < 1) 
+		if (AD_Message_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_Message_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_Message_ID, Integer.valueOf(AD_Message_ID));
 	}
 
 	/** Get Message.
 		@return System Message
 	  */
-	public int getAD_Message_ID () 
+	public int getAD_Message_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Message_ID);
 		if (ii == null)
@@ -100,7 +148,8 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 	}
 
 	/** Set AD_Message_UU.
-		@param AD_Message_UU AD_Message_UU	  */
+		@param AD_Message_UU AD_Message_UU
+	*/
 	public void setAD_Message_UU (String AD_Message_UU)
 	{
 		set_Value (COLUMNNAME_AD_Message_UU, AD_Message_UU);
@@ -108,7 +157,7 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 
 	/** Get AD_Message_UU.
 		@return AD_Message_UU	  */
-	public String getAD_Message_UU () 
+	public String getAD_Message_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_Message_UU);
 	}
@@ -116,9 +165,8 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 	/** EntityType AD_Reference_ID=389 */
 	public static final int ENTITYTYPE_AD_Reference_ID=389;
 	/** Set Entity Type.
-		@param EntityType 
-		Dictionary Entity Type; Determines ownership and synchronization
-	  */
+		@param EntityType Dictionary Entity Type; Determines ownership and synchronization
+	*/
 	public void setEntityType (String EntityType)
 	{
 
@@ -128,15 +176,14 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 	/** Get Entity Type.
 		@return Dictionary Entity Type; Determines ownership and synchronization
 	  */
-	public String getEntityType () 
+	public String getEntityType()
 	{
 		return (String)get_Value(COLUMNNAME_EntityType);
 	}
 
 	/** Set Message Text.
-		@param MsgText 
-		Textual Informational, Menu or Error Message
-	  */
+		@param MsgText Textual Informational, Menu or Error Message
+	*/
 	public void setMsgText (String MsgText)
 	{
 		set_Value (COLUMNNAME_MsgText, MsgText);
@@ -145,15 +192,14 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 	/** Get Message Text.
 		@return Textual Informational, Menu or Error Message
 	  */
-	public String getMsgText () 
+	public String getMsgText()
 	{
 		return (String)get_Value(COLUMNNAME_MsgText);
 	}
 
 	/** Set Message Tip.
-		@param MsgTip 
-		Additional tip or help for this message
-	  */
+		@param MsgTip Additional tip or help for this message
+	*/
 	public void setMsgTip (String MsgTip)
 	{
 		set_Value (COLUMNNAME_MsgTip, MsgTip);
@@ -162,7 +208,7 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 	/** Get Message Tip.
 		@return Additional tip or help for this message
 	  */
-	public String getMsgTip () 
+	public String getMsgTip()
 	{
 		return (String)get_Value(COLUMNNAME_MsgTip);
 	}
@@ -176,9 +222,8 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 	/** Menu = M */
 	public static final String MSGTYPE_Menu = "M";
 	/** Set Message Type.
-		@param MsgType 
-		Type of message (Informational, Menu or Error)
-	  */
+		@param MsgType Type of message (Informational, Menu or Error)
+	*/
 	public void setMsgType (String MsgType)
 	{
 
@@ -188,15 +233,14 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 	/** Get Message Type.
 		@return Type of message (Informational, Menu or Error)
 	  */
-	public String getMsgType () 
+	public String getMsgType()
 	{
 		return (String)get_Value(COLUMNNAME_MsgType);
 	}
 
 	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
+		@param Value Search key for the record in the format required - must be unique
+	*/
 	public void setValue (String Value)
 	{
 		set_Value (COLUMNNAME_Value, Value);
@@ -205,7 +249,7 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
 	/** Get Search Key.
 		@return Search key for the record in the format required - must be unique
 	  */
-	public String getValue () 
+	public String getValue()
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}
@@ -213,7 +257,7 @@ public class X_AD_Message extends PO implements I_AD_Message, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getValue());
     }

@@ -22,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,12 +32,18 @@ import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
 
+import org.adempiere.base.sso.ISSOPrincipalService;
+import org.adempiere.base.sso.SSOUtils;
+import org.adempiere.exceptions.DBException;
 import org.compiere.Adempiere;
 import org.compiere.db.CConnection;
 import org.compiere.model.I_M_Warehouse;
 import org.compiere.model.MAcctSchema;
+import org.compiere.model.MClient;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MCountry;
+import org.compiere.model.MMFARegisteredDevice;
+import org.compiere.model.MMFARegistration;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MSystem;
@@ -45,8 +52,9 @@ import org.compiere.model.MTree_Base;
 import org.compiere.model.MUser;
 import org.compiere.model.MUserPreference;
 import org.compiere.model.ModelValidationEngine;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
-
+import org.compiere.model.SystemIDs;
 
 /**
  *	Login Manager
@@ -54,21 +62,30 @@ import org.compiere.model.Query;
  *  @author Jorg Janke
  *  @author victor.perez@e-evolution.com, e-Evolution http://www.e-evolution.com
  *		<li>Incorrect global Variable when you use multi Account Schema
- *			http://sourceforge.net/tracker/?func=detail&atid=879335&aid=2531597&group_id=176962
+ *			https://sourceforge.net/p/adempiere/bugs/1713/
  *  @author teo.sarca@gmail.com
  *  	<li>BF [ 2867246 ] Do not show InTrazit WHs on login
- *  		https://sourceforge.net/tracker/?func=detail&aid=2867246&group_id=176962&atid=879332
+ *  		https://sourceforge.net/p/adempiere/bugs/2136/
  *  @version $Id: Login.java,v 1.6 2006/10/02 05:19:06 jjanke Exp $
  */
 public class Login
 {
 	private String loginErrMsg;
 	private boolean isPasswordExpired;
+	private boolean isSSOLogin = false;
 
+	/**
+	 * Get login error message
+	 * @return login error message
+	 */
 	public String getLoginErrMsg() {
 		return loginErrMsg;
 	}
 	
+	/**
+	 * Is user password has expire
+	 * @return true if user password has expire
+	 */
 	public boolean isPasswordExpired() {
 		return isPasswordExpired;
 	}
@@ -78,6 +95,7 @@ public class Login
 	 *	@param isClient client session
 	 *	@return Context
 	 */
+	@Deprecated
 	public static Properties initTest (boolean isClient)
 	{
 	//	logger.entering("Env", "initTest");
@@ -87,7 +105,7 @@ public class Login
 		Properties ctx = Env.getCtx();
 		Login login = new Login(ctx);
 		KeyNamePair[] roles = login.getRoles(CConnection.get(),
-			"System", "System", true);
+			"SuperUser", "System", true);
 		//  load role
 		if (roles != null && roles.length > 0)
 		{
@@ -107,14 +125,14 @@ public class Login
 			}
 		}
 		//
-		Env.setContext(ctx, "#Date", "2000-01-01");
+		Env.setContext(ctx, Env.DATE, "2000-01-01");
 	//	logger.exiting("Env", "initTest");
 		return ctx;
 	}   //  testInit
 
 	/**
-	 *  Java Version Test
-	 *  @param isClient client connection
+	 *  Java Version Test, only use for client environment
+	 *  @param isClient client environment
 	 *  @return true if Java Version is OK
 	 */
 	public static boolean isJavaOK (boolean isClient)
@@ -137,10 +155,8 @@ public class Login
 			log.severe(msg.toString());
 		return false;
 	}   //  isJavaOK
-
 	
-	/**************************************************************************
-	 * 	Login
+	/**
 	 * 	@param ctx context
 	 */
 	public Login (Properties ctx)
@@ -170,6 +186,7 @@ public class Login
 	 * The error (NoDatabase, UserPwdError, DBLogin) is saved in the log
 	 * @deprecated
 	 */
+	@Deprecated(since = "2", forRemoval = true)
 	protected KeyNamePair[] getRoles (CConnection cc,
 		String app_user, String app_pwd, boolean force)
 	{
@@ -204,8 +221,9 @@ public class Login
 	 *  @param app_user Principal
 	 *  @return role array or null if in error.
 	 *  The error (NoDatabase, UserPwdError, DBLogin) is saved in the log
-	 *  @deprecated use public KeyNamePair[] getRoles(String app_user, KeyNamePair client)
+	 *  @deprecated use {@link #getRoles(String, KeyNamePair)}
 	 */
+	@Deprecated(since = "2", forRemoval = true)
 	public KeyNamePair[] getRoles (Principal app_user)
 	{
 		if (app_user == null)
@@ -224,8 +242,9 @@ public class Login
 	 *  @param app_pwd password
 	 *  @return role array or null if in error.
 	 *  The error (NoDatabase, UserPwdError, DBLogin) is saved in the log
-	 *  @deprecated use public KeyNamePair[] getRoles(String app_user, KeyNamePair client)
+	 *  @deprecated use use {@link #getRoles(String, KeyNamePair)}
 	 */
+	@Deprecated(since = "2", forRemoval = true)
 	public KeyNamePair[] getRoles (String app_user, String app_pwd)
 	{
 		return getRoles (app_user, app_pwd, false);
@@ -238,8 +257,9 @@ public class Login
 	 *  @param force ignore pwd
 	 *  @return role array or null if in error.
 	 *  The error (NoDatabase, UserPwdError, DBLogin) is saved in the log
-	 *  @deprecated use public KeyNamePair[] getRoles(String app_user, KeyNamePair client)
+	 *  @deprecated use {@link #getRoles(String, KeyNamePair)}
 	 */
+	@Deprecated(since = "2", forRemoval = true)
 	private KeyNamePair[] getRoles (String app_user, String app_pwd, boolean force)
 	{
 		if (log.isLoggable(Level.INFO)) log.info("User=" + app_user);
@@ -369,10 +389,10 @@ public class Login
 				if (!rs.next())		//	no record found
 					if (force)
 					{
-						Env.setContext(m_ctx, "#AD_User_Name", "System");
-						Env.setContext(m_ctx, "#AD_User_ID", "0");
-						Env.setContext(m_ctx, "#AD_User_Description", "System Forced Login");
-						Env.setContext(m_ctx, "#User_Level", "S  ");  	//	Format 'SCO'
+						Env.setContext(m_ctx, Env.AD_USER_NAME, "SuperUser");
+						Env.setContext(m_ctx, Env.AD_USER_ID, SystemIDs.USER_SUPERUSER);
+						Env.setContext(m_ctx, "#AD_User_Description", "SuperUser Forced Login");
+						Env.setContext(m_ctx, Env.USER_LEVEL, "S  ");  	//	Format 'SCO'
 						Env.setContext(m_ctx, "#User_Client", "0");		//	Format c1, c2, ...
 						Env.setContext(m_ctx, "#User_Org", "0"); 		//	Format o1, o2, ...
 						retValue = new KeyNamePair[] {new KeyNamePair(0, "System Administrator")};
@@ -384,9 +404,9 @@ public class Login
 						return null;
 					}
 
-				Env.setContext(m_ctx, "#AD_User_Name", app_user);
-				Env.setContext(m_ctx, "#AD_User_ID", rs.getInt(1));
-				Env.setContext(m_ctx, "#SalesRep_ID", rs.getInt(1));
+				Env.setContext(m_ctx, Env.AD_USER_NAME, app_user);
+				Env.setContext(m_ctx, Env.AD_USER_ID, rs.getInt(1));
+				Env.setContext(m_ctx, Env.SALESREP_ID, rs.getInt(1));
 
 				if (Ini.isClient())
 				{
@@ -409,7 +429,7 @@ public class Login
 					}
 					if (valid) { 
 						int AD_Role_ID = rs.getInt(2);
-						if (AD_Role_ID == 0)
+						if (AD_Role_ID == SystemIDs.ROLE_SYSTEM)
 							Env.setContext(m_ctx, "#SysAdmin", "Y");
 						String Name = rs.getString(3);
 						KeyNamePair p = new KeyNamePair(AD_Role_ID, Name);
@@ -441,14 +461,13 @@ public class Login
 		//long ms = System.currentTimeMillis () - start;
 		return retValue;
 	}	//	getRoles
-
 	
-	/**************************************************************************
-	 *  Load Clients.
+	/**
+	 *  Get Clients.
 	 *  <p>
 	 *  Sets Role info in context and loads its clients
 	 *  @param  role    role information
-	 *  @return list of valid client KeyNodePairs or null if in error
+	 *  @return list of valid client KeyNamePairs or null if has error
 	 */
 	public KeyNamePair[] getClients (KeyNamePair role)
 	{
@@ -458,12 +477,10 @@ public class Login
 		loginErrMsg = null;
 		isPasswordExpired = false;
 
-	//	s_log.fine("loadClients - Role: " + role.toStringX());
-
 		ArrayList<KeyNamePair> list = new ArrayList<KeyNamePair>();
 		KeyNamePair[] retValue = null;
 		String sql = "SELECT DISTINCT r.UserLevel, r.ConnectionProfile, "	//	1/2
-			+ " c.AD_Client_ID,c.Name "						//	3/4 
+			+ " c.AD_Client_ID,c.Name,r.RoleType,r.IsClientAdministrator "						//	3/4/5/6 
 			+ "FROM AD_Role r" 
 			+ " INNER JOIN AD_Client c ON (r.AD_Client_ID=c.AD_Client_ID) "
 			+ "WHERE r.AD_Role_ID=?"		//	#1
@@ -471,7 +488,7 @@ public class Login
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		//	get Role details
+		//	get clients
 		try
 		{
 			pstmt = DB.prepareStatement(sql, null);
@@ -485,11 +502,13 @@ public class Login
 			}
 
 			//  Role Info
-			Env.setContext(m_ctx, "#AD_Role_ID", role.getKey());
-			Env.setContext(m_ctx, "#AD_Role_Name", role.getName());
+			Env.setContext(m_ctx, Env.AD_ROLE_ID, role.getKey());
+			Env.setContext(m_ctx, Env.AD_ROLE_NAME, role.getName());
+			Env.setContext(m_ctx, Env.AD_ROLE_TYPE, rs.getString("RoleType"));
+			Env.setContext(m_ctx, Env.IS_CLIENT_ADMIN, rs.getString("IsClientAdministrator"));
 			Ini.setProperty(Ini.P_ROLE, role.getName());
 			//	User Level
-			Env.setContext(m_ctx, "#User_Level", rs.getString(1));  	//	Format 'SCO'
+			Env.setContext(m_ctx, Env.USER_LEVEL, rs.getString(1));  	//	Format 'SCO'
 			
 			//  load Clients
 			do
@@ -519,28 +538,27 @@ public class Login
 	}   //  getClients
 
 	/**
-	 *  Load Organizations.
+	 *  Get Organizations.
 	 *  <p>
-	 *  Sets Client info in context and loads its organization, the role has access to
-	 *  @param  client    client information
+	 *  Sets Client info in context and loads organizations that the role has access to
+	 *  @param  rol role
 	 *  @return list of valid Org KeyNodePairs or null if in error
 	 */
 	public KeyNamePair[] getOrgs (KeyNamePair rol)
 	{
 		if (rol == null)
-			throw new IllegalArgumentException("Rol missing");
-		if (Env.getContext(m_ctx,"#AD_Client_ID").length() == 0)	//	could be number 0
+			throw new IllegalArgumentException("Role missing");
+		if (Env.getContext(m_ctx,Env.AD_CLIENT_ID).length() == 0)	//	could be number 0
 			throw new UnsupportedOperationException("Missing Context #AD_Client_ID");
 		
-		int AD_Client_ID = Env.getContextAsInt(m_ctx,"#AD_Client_ID");
-		int AD_User_ID = Env.getContextAsInt(m_ctx, "#AD_User_ID");
-	//	s_log.fine("Client: " + client.toStringX() + ", AD_Role_ID=" + AD_Role_ID);
+		int AD_Client_ID = Env.getContextAsInt(m_ctx,Env.AD_CLIENT_ID);
+		int AD_User_ID = Env.getContextAsInt(m_ctx, Env.AD_USER_ID);
 
 		//	get Client details for role
 		ArrayList<KeyNamePair> list = new ArrayList<KeyNamePair>();
 		KeyNamePair[] retValue = null;
 		//
-		String sql = " SELECT DISTINCT r.UserLevel, r.ConnectionProfile,o.AD_Org_ID,o.Name,o.IsSummary "
+		String sql = " SELECT DISTINCT r.UserLevel, r.ConnectionProfile,o.AD_Org_ID,o.Name,o.IsSummary,r.RoleType,r.IsClientAdministrator "
 				+" FROM AD_Org o"
 				+" INNER JOIN AD_Role r on (r.AD_Role_ID=?)"
 				+" INNER JOIN AD_Client c on (c.AD_Client_ID=?)"
@@ -551,7 +569,7 @@ public class Login
 				+" WHERE ra.AD_Role_ID=r.AD_Role_ID AND ra.IsActive='Y')) "
 				+" OR (r.IsUseUserOrgAccess='Y' AND o.AD_Org_ID IN (SELECT AD_Org_ID FROM AD_User_OrgAccess ua" 
 				+" WHERE ua.AD_User_ID=?"
-				+" AND ua.IsActive='Y')))" 
+				+" AND ua.IsActive='Y'))) " 
 				+ "ORDER BY o.Name";
 		//
 		PreparedStatement pstmt = null;
@@ -571,11 +589,13 @@ public class Login
 				return null;
 			}
 			//  Role Info
-			Env.setContext(m_ctx, "#AD_Role_ID", rol.getKey());
-			Env.setContext(m_ctx, "#AD_Role_Name", rol.getName());
+			Env.setContext(m_ctx, Env.AD_ROLE_ID, rol.getKey());
+			Env.setContext(m_ctx, Env.AD_ROLE_NAME, rol.getName());
+			Env.setContext(m_ctx, Env.AD_ROLE_TYPE, rs.getString("RoleType"));
+			Env.setContext(m_ctx, Env.IS_CLIENT_ADMIN, rs.getString("IsClientAdministrator"));
 			Ini.setProperty(Ini.P_ROLE, rol.getName());
 			//	User Level
-			Env.setContext(m_ctx, "#User_Level", rs.getString(1));  	//	Format 'SCO'
+			Env.setContext(m_ctx, Env.USER_LEVEL, rs.getString(1));  	//	Format 'SCO'
 			//  load Orgs
 			
 			do{
@@ -623,10 +643,10 @@ public class Login
 	}   //  getOrgs
 
 	/**
-	 * 	Get Orgs - Add Summary Org
-	 *	@param list list
+	 * 	Get Orgs - Add child Org of Summary Org
+	 *	@param list list to add to
 	 *	@param Summary_Org_ID summary org
-	 *	@param Summary_Name name
+	 *	@param Summary_Name name of summary org, for logging purpose only
 	 *	@param role role
 	 *	@see org.compiere.model.MRole#loadOrgAccessAdd
 	 */
@@ -661,7 +681,6 @@ public class Login
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
-				//int AD_Client_ID = rs.getInt(1);
 				int AD_Org_ID = rs.getInt(2);
 				String Name = rs.getString(3);
 				boolean summary = "Y".equals(rs.getString(4));
@@ -687,9 +706,8 @@ public class Login
 		}
 	}	//	getOrgAddSummary
 
-	
 	/**
-	 *  Load Warehouses
+	 * Get Warehouses
 	 * @param org organization
 	 * @return Array of Warehouse Info
 	 */
@@ -698,13 +716,11 @@ public class Login
 		if (org == null)
 			throw new IllegalArgumentException("Org missing");
 
-	//	s_log.info("loadWarehouses - Org: " + org.toStringX());
-
 		ArrayList<KeyNamePair> list = new ArrayList<KeyNamePair>();
 		KeyNamePair[] retValue = null;
 		String sql = "SELECT M_Warehouse_ID, Name FROM M_Warehouse "
 			+ "WHERE AD_Org_ID=? AND IsActive='Y' "
-			+ " AND "+I_M_Warehouse.COLUMNNAME_IsInTransit+"='N' " // do not show in tranzit warehouses - teo_sarca [ 2867246 ]
+			+ " AND "+I_M_Warehouse.COLUMNNAME_IsInTransit+"='N' " // do not show in transit warehouses - teo_sarca [ 2867246 ]
 			+ "ORDER BY Name";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -751,8 +767,8 @@ public class Login
 
 	/**
 	 * 	Validate Login
-	 *	@param org log-in org
-	 *	@return error message
+	 *	@param org login org
+	 *	@return error message or null
 	 */
 	public String validateLogin (KeyNamePair org)
 	{
@@ -774,6 +790,8 @@ public class Login
 			if (AD_Client_ID != 0 && MSysConfig.getBooleanValue(MSysConfig.SYSTEM_IN_MAINTENANCE_MODE, false, AD_Client_ID))
 				return Msg.getMsg(m_ctx, "SystemInMaintenance");
 		}
+		
+		Env.setPredefinedVariables(Env.getCtx(), -1, MRole.getDefault().getPredefinedContextVariables());
 
 		return null;
 	}	//	validateLogin
@@ -830,7 +848,7 @@ public class Login
 		long today = System.currentTimeMillis();
 		if (timestamp != null)
 			today = timestamp.getTime();
-		Env.setContext(m_ctx, "#Date", new java.sql.Timestamp(today));
+		Env.setContext(m_ctx, Env.DATE, new java.sql.Timestamp(today));
 
 		//	Optional Printer
 		if (printerName == null)
@@ -839,25 +857,26 @@ public class Login
 		Ini.setProperty(Ini.P_PRINTER, printerName);
 		
 		//	Load Role Info
-		MRole.getDefault(m_ctx, true);	
+		MRole.getDefault(m_ctx, false);	
 
 		//	Other
 		loadUserPreferences();
 		
 		if (MRole.getDefault(m_ctx, false).isShowAcct())
-			Env.setContext(m_ctx, "#ShowAcct", Ini.getProperty(Ini.P_SHOW_ACCT));
+			Env.setContext(m_ctx, Env.SHOW_ACCOUNTING, Ini.getProperty(Ini.P_SHOW_ACCT));
 		else
-			Env.setContext(m_ctx, "#ShowAcct", "N");
-		Env.setContext(m_ctx, "#ShowTrl", Ini.getProperty(Ini.P_SHOW_TRL));
-		Env.setContext(m_ctx, "#ShowAdvanced", MRole.getDefault().isAccessAdvanced());
+			Env.setContext(m_ctx, Env.SHOW_ACCOUNTING, "N");
+		Env.setContext(m_ctx, Env.SHOW_TRANSLATION, Ini.getProperty(Ini.P_SHOW_TRL));
+		Env.setContext(m_ctx, Env.SHOW_ADVANCED, MRole.getDefault().isAccessAdvanced());
 
 		String retValue = "";
-		int AD_Client_ID = Env.getContextAsInt(m_ctx, "#AD_Client_ID");
+		int AD_Client_ID = Env.getContextAsInt(m_ctx, Env.AD_CLIENT_ID);
 		int AD_Org_ID =  org.getKey();
 
 		//	Other Settings
 		Env.setContext(m_ctx, "#YYYY", "Y");
-		Env.setContext(m_ctx, "#StdPrecision", 2);
+		Env.setContext(m_ctx, Env.DEVELOPER_MODE, Util.isDeveloperMode() ? "Y" : "N");
+		Env.setContext(m_ctx, Env.STANDARD_PRECISION, 2);
 
 		//	AccountSchema Info (first)
 		String sql = "SELECT * "
@@ -885,9 +904,9 @@ public class Login
 			{
 				//	Accounting Info
 				C_AcctSchema_ID = rs.getInt("C_AcctSchema_ID");
-				Env.setContext(m_ctx, "$C_AcctSchema_ID", C_AcctSchema_ID);
-				Env.setContext(m_ctx, "$C_Currency_ID", rs.getInt("C_Currency_ID"));
-				Env.setContext(m_ctx, "$HasAlias", rs.getString("HasAlias"));
+				Env.setContext(m_ctx, Env.C_ACCTSCHEMA_ID, C_AcctSchema_ID);
+				Env.setContext(m_ctx, Env.C_CURRENCY_ID, rs.getInt("C_Currency_ID"));
+				Env.setContext(m_ctx, Env.HAS_ALIAS, rs.getString("HasAlias"));
 			}
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
@@ -908,9 +927,9 @@ public class Login
 						else 
 						{
 							C_AcctSchema_ID = as.getC_AcctSchema_ID();
-							Env.setContext(m_ctx, "$C_AcctSchema_ID", C_AcctSchema_ID);
-							Env.setContext(m_ctx, "$C_Currency_ID", as.getC_Currency_ID());
-							Env.setContext(m_ctx, "$HasAlias", as.isHasAlias());
+							Env.setContext(m_ctx, Env.C_ACCTSCHEMA_ID, C_AcctSchema_ID);
+							Env.setContext(m_ctx, Env.C_CURRENCY_ID, as.getC_Currency_ID());
+							Env.setContext(m_ctx, Env.HAS_ALIAS, as.isHasAlias());
 							break;
 						}
 					}
@@ -999,14 +1018,14 @@ public class Login
 			rs = null; pstmt = null;
 		}
 		//	Country
-		Env.setContext(m_ctx, "#C_Country_ID", MCountry.getDefault().getC_Country_ID());
+		Env.setContext(m_ctx, Env.C_COUNTRY_ID, MCountry.getDefault().getC_Country_ID());
 		// Call ModelValidators afterLoadPreferences - teo_sarca FR [ 1670025 ]
 		ModelValidationEngine.get().afterLoadPreferences(m_ctx);
 		return retValue;
 	}	//	loadPreferences
 	
 	/**
-	 * Load preferences based on user
+	 * Load user preferences
 	 */
 	public void loadUserPreferences(){
 		MUserPreference userPreference = MUserPreference.getUserPreference(Env.getAD_User_ID(m_ctx), Env.getAD_Client_ID(m_ctx));
@@ -1023,32 +1042,25 @@ public class Login
 		if (TableName.startsWith("AD_Window")
 			|| TableName.startsWith("AD_PrintFormat")
 			|| TableName.startsWith("AD_Workflow")
+			|| TableName.equals("AD_StorageProvider")
 			|| TableName.startsWith("M_Locator") )
 			return;
 		String value = null;
 		//
-		String sql = "SELECT " + ColumnName + " FROM " + TableName	//	most specific first
-			+ " WHERE IsDefault='Y' AND IsActive='Y' ORDER BY AD_Client_ID DESC, AD_Org_ID DESC";
-		sql = MRole.getDefault(m_ctx, false).addAccessSQL(sql, 
+		StringBuilder sqlb = new StringBuilder("SELECT ")
+			.append(ColumnName).append(" FROM ").append(TableName)	//	most specific first
+			.append(" WHERE IsDefault='Y' AND IsActive='Y' ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ")
+			.append(ColumnName);
+		String sql = MRole.getDefault(m_ctx, false).addAccessSQL(sqlb.toString(), 
 			TableName, MRole.SQL_NOTQUALIFIED, MRole.SQL_RO);
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement(sql, null);
-			rs = pstmt.executeQuery();
-			if (rs.next())
-				value = rs.getString(1);
+			value = DB.getSQLValueString(value, sql);
 		}
-		catch (SQLException e)
+		catch (DBException e)
 		{
 			log.log(Level.SEVERE, TableName + " (" + sql + ")", e);
 			return;
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null; pstmt = null;
 		}
 		//	Set Context Value
 		if (value != null && value.length() != 0)
@@ -1235,24 +1247,45 @@ public class Login
 	 * 	Get SSO Principal
 	 *	@return principal
 	 */
+	@Deprecated
 	public Principal getPrincipal()
 	{
 		return null;
 	}	//	getPrincipal
 
+	/**
+	 * Get clients
+	 * @param app_user login id
+	 * @param app_pwd login password
+	 * @return list of accessible client
+	 */
 	public KeyNamePair[] getClients(String app_user, String app_pwd) {
 		return getClients(app_user, app_pwd, null);
 	}
 
 	/**
+	 * Validate Client Login. Sets Context with login info.
+	 * 
+	 * @param app_user  user id
+	 * @param app_pwd   password
+	 * @param roleTypes comma separated list of the role types allowed to login
+	 *                  (NULL can be added)
+	 * @return client array or null if in error.
+	 */
+	public KeyNamePair[] getClients(String app_user, String app_pwd, String roleTypes) {
+		return getClients(app_user, app_pwd, roleTypes, null);
+	}
+
+	/**
 	 *  Validate Client Login.
-	 *  Sets Context with login info
+	 *  Sets Context with login info.
 	 *  @param app_user user id
 	 *  @param app_pwd password
 	 *  @param roleTypes comma separated list of the role types allowed to login (NULL can be added)
+	 *  @param token validate the user with a token for SSO login.
 	 *  @return client array or null if in error.
 	 */
-	public KeyNamePair[] getClients(String app_user, String app_pwd, String roleTypes) {
+	public KeyNamePair[] getClients(String app_user, String app_pwd, String roleTypes, Object token) {
 		if (log.isLoggable(Level.INFO)) log.info("User=" + app_user);
 
 		if (Util.isEmpty(app_user))
@@ -1263,11 +1296,21 @@ public class Login
 
 		//	Authentication
 		boolean authenticated = false;
+		try
+		{
+			isSSOLogin = token != null && SSOUtils.getSSOPrincipalService() != null && SSOUtils.getSSOPrincipalService().getUserName(token).equalsIgnoreCase(app_user);
+		}
+		catch (ParseException e)
+		{
+			log.warning("Parsing failed: " + e.getLocalizedMessage());
+			isSSOLogin = false;
+		}
+
 		MSystem system = MSystem.get(m_ctx);
 		if (system == null)
 			throw new IllegalStateException("No System Info");
 
-		if (app_pwd == null || app_pwd.length() == 0)
+		if (!isSSOLogin && (app_pwd == null || app_pwd.length() == 0))
 		{
 			log.warning("No Apps Password");
 			return null;
@@ -1276,13 +1319,35 @@ public class Login
 		loginErrMsg = null;
 		isPasswordExpired = false;
 
-		if (system.isLDAP())
+		if (!isSSOLogin && system.isLDAP())
 		{
 			authenticated = system.isLDAP(app_user, app_pwd);
 			if (authenticated) {
 				app_pwd = null;
 			}
 			// if not authenticated, use AD_User as backup (just for non-LDAP users)
+		}
+
+		MClient client = null;
+		if (MSystem.isUseLoginPrefix()) {
+			String app_tenant = Login.getAppTenant(app_user);
+			app_user = Login.getAppUser(app_user);
+			boolean hasTenant = ! Util.isEmpty(app_tenant, true);
+			if (MSystem.isLoginPrefixMandatory() && ! hasTenant) {
+				loginErrMsg = Msg.getMsg(m_ctx, "MissingLoginTenant");
+				return null;
+			}
+			if (Util.isEmpty(app_user, true)) {
+				loginErrMsg = Msg.getMsg(m_ctx, "MissingLoginUser");
+				return null;
+			}
+			if (hasTenant) {
+				client = MClient.getByLoginPrefix(app_tenant);
+				if (client == null) {
+					loginErrMsg = Msg.getMsg(m_ctx, "FailedLogin");
+					return null;
+				}
+			}
 		}
 
 		boolean hash_password = MSysConfig.getBooleanValue(MSysConfig.USER_PASSWORD_HASH, false);
@@ -1296,6 +1361,16 @@ public class Login
 			where.append("EMail=?");
 		else
 			where.append("COALESCE(LDAPUser,Name)=?");
+
+		boolean isSSOEnable = MSysConfig.getBooleanValue(MSysConfig.ENABLE_SSO, false);
+		ISSOPrincipalService ssoPrincipal = SSOUtils.getSSOPrincipalService();
+		where.append("	AND EXISTS (SELECT * FROM AD_User u ")
+						.append("	INNER JOIN	AD_Client c ON (u.AD_Client_ID = c.AD_Client_ID)	")
+						.append("	WHERE (COALESCE(u.AuthenticationType, c.AuthenticationType) IN ");
+		//If Enable_SSO=N then don't allow SSO only users. 
+		where.append((isSSOEnable && ssoPrincipal != null && isSSOLogin) ? " ('SSO', 'AAS') " : " ('APO', 'AAS') ");
+		where.append("	OR COALESCE(u.AuthenticationType, c.AuthenticationType) IS NULL) AND u.AD_User_ID = AD_User.AD_User_ID) ");
+
 		String whereRoleType = MRole.getWhereRoleType(roleTypes, "r");
 		where.append(" AND")
 				.append(" EXISTS (SELECT * FROM AD_User_Roles ur")
@@ -1309,61 +1384,31 @@ public class Login
 				.append("         WHERE c.AD_Client_ID=AD_User.AD_Client_ID")
 				.append("         AND c.IsActive='Y') AND ")
 				.append(" AD_User.IsActive='Y'");
-		
-		List<MUser> users = new Query(m_ctx, MUser.Table_Name, where.toString(), null)
-			.setParameters(app_user)
-			.setOrderBy(MUser.COLUMNNAME_AD_User_ID)
-			.list();
+		if (client != null)
+			where.append(" AND AD_Client_ID IN (0,").append(client.getAD_Client_ID()).append(")");
+		List<MUser> users = null;
+		try {
+			PO.setCrossTenantSafe();
+			users = new Query(m_ctx, MUser.Table_Name, where.toString(), null)
+					.setParameters(app_user)
+					.setOrderBy(MUser.COLUMNNAME_AD_User_ID)
+					.list();
+		} finally {
+			PO.clearCrossTenantSafe();
+		}
 		
 		if (users.size() == 0) {
-			log.saveError("UserPwdError", app_user, false);
+			log.saveError(isSSOLogin ? "UserNotFoundError": "UserPwdError", app_user, false);
 			return null;
 		}
-
+		
+		if (log.isLoggable(Level.FINE)) log.log(Level.FINE ,users.size() + " matched user found for :" + app_user);
 		int MAX_ACCOUNT_LOCK_MINUTES = MSysConfig.getIntValue(MSysConfig.USER_LOCKING_MAX_ACCOUNT_LOCK_MINUTES, 0);
 		int MAX_INACTIVE_PERIOD_DAY = MSysConfig.getIntValue(MSysConfig.USER_LOCKING_MAX_INACTIVE_PERIOD_DAY, 0);
 		int MAX_PASSWORD_AGE = MSysConfig.getIntValue(MSysConfig.USER_LOCKING_MAX_PASSWORD_AGE_DAY, 0);
 		long now = new Date().getTime();
-		for (MUser user : users) {
-			if (MAX_ACCOUNT_LOCK_MINUTES > 0 && user.isLocked() && user.getDateAccountLocked() != null)
-			{
-				long minutes = (now - user.getDateAccountLocked().getTime()) / (1000 * 60);
-				if (minutes > MAX_ACCOUNT_LOCK_MINUTES)
-				{
-					boolean inactive = false;
-					if (MAX_INACTIVE_PERIOD_DAY > 0 && user.getDateLastLogin() != null && !user.isNoExpire())
-					{
-						long days = (now - user.getDateLastLogin().getTime()) / (1000 * 60 * 60 * 24);
-						if (days > MAX_INACTIVE_PERIOD_DAY)
-							inactive = true;
-					}
-					
-					if (!inactive)
-					{
-						user.setIsLocked(false);
-						user.setDateAccountLocked(null);
-						user.setFailedLoginCount(0);
-						Env.setContext(Env.getCtx(), "#AD_Client_ID", user.getAD_Client_ID());
-						if (!user.save())
-							log.severe("Failed to unlock user account");
-					}
-				}					
-			}
-			
-			if (MAX_INACTIVE_PERIOD_DAY > 0 && !user.isLocked() && user.getDateLastLogin() != null && !user.isNoExpire())
-			{
-				long days = (now - user.getDateLastLogin().getTime()) / (1000 * 60 * 60 * 24);
-				if (days > MAX_INACTIVE_PERIOD_DAY)
-				{
-					user.setIsLocked(true);
-					user.setDateAccountLocked(new Timestamp(now));
-					Env.setContext(Env.getCtx(), "#AD_Client_ID", user.getAD_Client_ID());
-					if (!user.save())
-						log.severe("Failed to lock user account");
-				}
-			}
-		}
-		
+		List<MUser> usersAuthenticated = new ArrayList<MUser>();
+		// Perform first validation of user/password to define the authenticated users
 		boolean validButLocked = false;
 		for (MUser user : users) {
 			if (clientsValidated.contains(user.getAD_Client_ID())) {
@@ -1372,8 +1417,8 @@ public class Login
 			}
 			clientsValidated.add(user.getAD_Client_ID());
 			boolean valid = false;
-			// authenticated by ldap
-			if (authenticated) {
+			// authenticated by ldap or sso
+			if (authenticated || isSSOLogin) {
 				valid = true;
 			} else {
 				if (!system.isLDAP() || Util.isEmpty(user.getLDAPUser())) {
@@ -1387,6 +1432,7 @@ public class Login
 			}
 			
 			if (valid ) {
+				usersAuthenticated.add(user);
 				if (user.isLocked())
 				{
 					validButLocked = true;
@@ -1411,14 +1457,21 @@ public class Login
 					}
 				}
 												
-				StringBuilder sql= new StringBuilder("SELECT  DISTINCT cli.AD_Client_ID, cli.Name, u.AD_User_ID, u.Name");
-			      sql.append(" FROM AD_User_Roles ur")
+				StringBuilder sql= new StringBuilder("SELECT  DISTINCT cli.AD_Client_ID, cli.Name, u.AD_User_ID, u.Name")
+			       .append(" FROM AD_User_Roles ur")
+                   .append(" INNER JOIN AD_Role r on (ur.AD_Role_ID=r.AD_Role_ID)")
                    .append(" INNER JOIN AD_User u on (ur.AD_User_ID=u.AD_User_ID)")
                    .append(" INNER JOIN AD_Client cli on (ur.AD_Client_ID=cli.AD_Client_ID)")
                    .append(" WHERE ur.IsActive='Y'")
                    .append(" AND u.IsActive='Y'")
-                   .append(" AND cli.IsActive='Y'")
-                   .append(" AND ur.AD_User_ID=? ORDER BY cli.Name");
+                   .append(" AND cli.IsActive='Y'");
+				if (client != null)
+					sql.append(" AND r.AD_Client_ID=").append(client.getAD_Client_ID());
+				if (! Util.isEmpty(whereRoleType)) {
+					sql.append(" AND ").append(whereRoleType);
+				}
+				sql.append(" AND  cli.AuthenticationType IN ").append((isSSOEnable && ssoPrincipal != null && isSSOLogin) ? " ('SSO', 'AAS') " : " ('APO', 'AAS') ");
+				sql.append(" AND ur.AD_User_ID=? ORDER BY cli.Name");
 			      PreparedStatement pstmt=null;
 			      ResultSet rs=null;
 			      try{
@@ -1447,7 +1500,53 @@ public class Login
 		if (clientList.size() > 0)
 			authenticated=true;
 
+		// Validate locking/inactivity just on authenticated users
+		for (MUser user : usersAuthenticated) {
+			if (MAX_ACCOUNT_LOCK_MINUTES > 0 && user.isLocked() && user.getDateAccountLocked() != null)
+			{
+				long minutes = (now - user.getDateAccountLocked().getTime()) / (1000 * 60);
+				if (minutes > MAX_ACCOUNT_LOCK_MINUTES)
+				{
+					boolean inactive = false;
+					if (MAX_INACTIVE_PERIOD_DAY > 0 && user.getDateLastLogin() != null && !user.isNoExpire())
+					{
+						long days = (now - user.getDateLastLogin().getTime()) / (1000 * 60 * 60 * 24);
+						if (days > MAX_INACTIVE_PERIOD_DAY)
+							inactive = true;
+					}
+
+					if (!inactive)
+					{
+						user.setIsLocked(false);
+						user.setDateAccountLocked(null);
+						user.setFailedLoginCount(0);
+						Env.setContext(Env.getCtx(), Env.AD_CLIENT_ID, user.getAD_Client_ID());
+						if (!user.save())
+							log.severe("Failed to unlock user account");
+					}
+				}
+			}
+
+			if (MAX_INACTIVE_PERIOD_DAY > 0 && !user.isLocked() && user.getDateLastLogin() != null && !user.isNoExpire())
+			{
+				long days = (now - user.getDateLastLogin().getTime()) / (1000 * 60 * 60 * 24);
+				if (days > MAX_INACTIVE_PERIOD_DAY)
+				{
+					user.setIsLocked(true);
+					user.setDateAccountLocked(new Timestamp(now));
+					Env.setContext(Env.getCtx(), Env.AD_CLIENT_ID, user.getAD_Client_ID());
+					if (!user.save())
+						log.severe("Failed to lock user account");
+				}
+			}
+		}
+
 		if (authenticated) {
+			if (usersAuthenticated.size() == 1) {
+				// The user/password combination just belongs to a single user, it's clearly identified here
+				Env.setContext(Env.getCtx(), Env.AD_USER_ID, usersAuthenticated.get(0).getAD_User_ID());
+			}
+
 			if (Ini.isClient())
 			{
 				if (MSystem.isSwingRememberUserAllowed())
@@ -1462,11 +1561,11 @@ public class Login
 			clientList.toArray(retValue);
 			if (log.isLoggable(Level.FINE)) log.fine("User=" + app_user + " - roles #" + retValue.length);
 			
-			for (MUser user : users) 
+			for (MUser user : usersAuthenticated)
 			{
 				user.setFailedLoginCount(0);
 				user.setDateLastLogin(new Timestamp(now));
-				Env.setContext(Env.getCtx(), "#AD_Client_ID", user.getAD_Client_ID());
+				Env.setContext(Env.getCtx(), Env.AD_CLIENT_ID, user.getAD_Client_ID());
 				if (!user.save())
 					log.severe("Failed to update user record with date last login (" + user.getName() + " / clientID = " + user.getAD_Client_ID() + ")");
 			}
@@ -1479,7 +1578,7 @@ public class Login
 		else 
 		{
 			boolean foundLockedAccount = false;
-			for (MUser user : users) 
+			for (MUser user : usersAuthenticated)
 			{
 				if (user.isLocked())
 				{
@@ -1516,7 +1615,7 @@ public class Login
 				user.setFailedLoginCount(count);
 				user.setIsLocked(reachMaxAttempt);
 				user.setDateAccountLocked(user.isLocked() ? new Timestamp(now) : null);
-				Env.setContext(Env.getCtx(), "#AD_Client_ID", user.getAD_Client_ID());
+				Env.setContext(Env.getCtx(), Env.AD_CLIENT_ID, user.getAD_Client_ID());
 				if (!user.save())
 					log.severe("Failed to update user record with increase failed login count");
 			}
@@ -1530,21 +1629,59 @@ public class Login
 		return retValue;
 	}
 
+	/**
+	 * Get the tenant from the login text when using login prefix
+	 * @param app_user
+	 * @return tenant from app_user or null
+	 */
+	private static String getAppTenant(String app_user) {
+		String appTenant = null;
+		if (MSystem.isUseLoginPrefix()) {
+			String separator = MSysConfig.getValue(MSysConfig.LOGIN_PREFIX_SEPARATOR, "/");
+			int idxSep = app_user.indexOf(separator);
+			if (idxSep >= 0)
+				appTenant = app_user.substring(0, idxSep);
+		}
+		return appTenant;
+	}
+
+	/**
+	 * Get the user from the login text
+	 * @param app_user
+	 * @return user id
+	 */
+	public static String getAppUser(String app_user) {
+		String appUser = app_user;
+		if (MSystem.isUseLoginPrefix()) {
+			String separator = MSysConfig.getValue(MSysConfig.LOGIN_PREFIX_SEPARATOR, "/");
+			int idxSep = app_user.indexOf(separator);
+			if (idxSep >= 0)
+				appUser = app_user.substring(idxSep + 1);
+		}
+		return appUser;
+	}
+
+	/**
+	 * Get roles of user
+	 * @param app_user
+	 * @param client
+	 * @return roles of user
+	 */
 	public KeyNamePair[] getRoles(String app_user, KeyNamePair client) {
 		return getRoles(app_user, client, null);
 	}
 	
-	/**************************************************************************
-	 *  Load Roles.
+	/**
+	 *  Get Roles.
 	 *  <p>
-	 *  Sets Client info in context and loads its roles
+	 *  Sets Client info in context and loads its roles.
 	 *  @param  client    client information
 	 *  @param roleTypes comma separated list of the role types allowed to login (NULL can be added)
 	 *  @return list of valid roles KeyNodePairs or null if in error
 	 */
 	public KeyNamePair[] getRoles(String app_user, KeyNamePair client, String roleTypes) {
 		if (client == null)
-			throw new IllegalArgumentException("Client missing");
+			throw new IllegalArgumentException("Tenant missing");
 
 		String whereRoleType = MRole.getWhereRoleType(roleTypes, "r");
 		ArrayList<KeyNamePair> rolesList = new ArrayList<KeyNamePair>();
@@ -1580,7 +1717,7 @@ public class Login
 		{
 			pstmt = DB.prepareStatement(sql.toString(), null);
 			pstmt.setInt(1, client.getKey());
-			pstmt.setString(2, app_user);
+			pstmt.setString(2, getAppUser(app_user));
 			rs = pstmt.executeQuery();
 
 			if (!rs.next())
@@ -1614,22 +1751,25 @@ public class Login
 			rs = null; pstmt = null;
 		}
 		 //Client Info
-		Env.setContext(m_ctx, "#AD_Client_ID", client.getKey());
-		Env.setContext(m_ctx, "#AD_Client_Name", client.getName());
+		Env.setContext(m_ctx, Env.AD_CLIENT_ID, client.getKey());
+		Env.setContext(m_ctx, Env.AD_CLIENT_NAME, client.getName());
 		Ini.setProperty(Ini.P_CLIENT, client.getName());
 		return retValue;
 	}   //  getRoles
 	
-    public KeyNamePair[] getClients() {
-		
-		if (Env.getContext(m_ctx,"#AD_User_ID").length() == 0){
+	/**
+	 * Get clients
+	 * @return clients
+	 */
+    public KeyNamePair[] getClients() {		
+		if (Env.getContext(m_ctx,Env.AD_USER_ID).length() == 0){
 			throw new UnsupportedOperationException("Missing Context #AD_User_ID");
 		}
 		
 		loginErrMsg = null;
 		isPasswordExpired = false;
-		
-		int AD_User_ID = Env.getContextAsInt(m_ctx, "#AD_User_ID");
+		boolean isSSOEnable = MSysConfig.getBooleanValue(MSysConfig.ENABLE_SSO, false);
+		int AD_User_ID = Env.getContextAsInt(m_ctx, Env.AD_USER_ID);
 		KeyNamePair[] retValue = null;
 		ArrayList<KeyNamePair> clientList = new ArrayList<KeyNamePair>();
 		StringBuilder sql= new StringBuilder("SELECT  DISTINCT cli.AD_Client_ID, cli.Name, u.AD_User_ID, u.Name");
@@ -1639,7 +1779,9 @@ public class Login
                          .append(" WHERE ur.IsActive='Y'")
                          .append(" AND cli.IsActive='Y'")
                          .append(" AND u.IsActive='Y'")
-                         .append(" AND u.AD_User_ID=? ORDER BY cli.Name");
+                         .append(" AND u.AD_User_ID=? ")
+						 .append(" AND cli.AuthenticationType IN ").append((isSSOEnable && SSOUtils.getSSOPrincipalService() != null && isSSOLogin) ? " ('SSO', 'AAS') " : " ('APO', 'AAS') ")
+						 .append(" ORDER BY cli.Name");
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
@@ -1665,5 +1807,18 @@ public class Login
 		}
 		return retValue;		
 	}
-	
+
+	/**
+	 * Validate if MFA is required taking into account the registerCookie and the IPAddress
+	 * @param registerCookie
+	 * @return
+	 */
+	public boolean isMFARequired(String registerCookie) {
+		if (registerCookie != null && MMFARegisteredDevice.isValid(registerCookie))
+			return false;
+		if (MMFARegistration.userHasValidRegistration())
+			return true;
+		return false;
+	}
+
 }	//	Login

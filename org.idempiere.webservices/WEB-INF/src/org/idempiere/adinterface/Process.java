@@ -124,9 +124,9 @@ public class Process {
 					if (DisplayType.isDate(para.getAD_Reference_ID()))
 					{
 						if (para.getDefaultValue().indexOf( "@#Date@")>=0) {
-							//Object t = Env.getContextAsDate( cs.getM_ctx(), "#Date" );
-							//String t = Env.getContext( cs.getM_ctx(), "#Date" );
-							String t= cs.dateFormat.format( Env.getContextAsDate( cs.getCtx(), "#Date") );	
+							//Object t = Env.getContextAsDate( cs.getM_ctx(), Env.DATE );
+							//String t = Env.getContext( cs.getM_ctx(), Env.DATE );
+							String t= cs.dateFormat.format( Env.getContextAsDate( cs.getCtx(), Env.DATE) );	
 							
 							p.setDefaultValue( t ); //cs.dateFormat.format( t ));
 						}
@@ -148,9 +148,9 @@ public class Process {
 					if (DisplayType.isDate(para.getAD_Reference_ID()))
 					{						
 						if (para.getDefaultValue2().indexOf( "@#Date@")>=0) {
-							//Object t = Env.getContextAsDate( cs.getM_ctx(), "#Date" );
-							//String t = Env.getContext( cs.getM_ctx(), "#Date" );
-							String t= cs.dateFormat.format( Env.getContextAsDate( cs.getCtx(), "#Date") );
+							//Object t = Env.getContextAsDate( cs.getM_ctx(), Env.DATE );
+							//String t = Env.getContext( cs.getM_ctx(), Env.DATE );
+							String t= cs.dateFormat.format( Env.getContextAsDate( cs.getCtx(), Env.DATE) );
 							p.setDefaultValue2( t ); //cs.dateFormat.format( t ) );
 						}							
 					}
@@ -324,11 +324,13 @@ public class Process {
 		//	Start
 		if (process.isWorkflow())
 		{
+			pInstance.setIsProcessing(true);
+			pInstance.saveEx();
 			try
 			{
 				int AD_Workflow_ID = process.getAD_Workflow_ID();
 				MWorkflow wf = MWorkflow.get (Env.getCtx(), AD_Workflow_ID);
-				MWFProcess wfProcess = wf.startWait(pi);	//	may return null
+				MWFProcess wfProcess = wf.start(pi, (String)null);	//	may return null
 				if(wfProcess != null)
 				{
 					//wynik
@@ -344,6 +346,10 @@ public class Process {
 				r.setLogInfo(pi.getLogInfo(true) );
 				r.setIsError( true );
 				return res;				
+			}
+			finally {
+				pInstance.setIsProcessing(false);
+				pInstance.saveEx();
 			}
 		}
 	
@@ -482,17 +488,20 @@ public class Process {
 	
 	private static MPInstance fillParameter(CompiereService m_cs, DataRow dr, MProcess process, Map<String, Object> requestCtx) throws Exception
 	{
-		MPInstance pInstance = new MPInstance (process, 0);
+		MPInstance pInstance = new MPInstance(Env.getCtx(), process.getAD_Process_ID(), 0, 0, null);
+		pInstance.saveEx();
 		
 		DataField f[] = dr.getFieldArray();
 		HashMap<String,DataField> fmap = new HashMap<String,DataField>();
 		for (int i=0; i<f.length; i++)
 			fmap.put(f[i].getColumn(), f[i]);
 		//
-		MPInstancePara[] iParams = pInstance.getParameters();
-		for (int pi = 0; pi < iParams.length; pi++)
+		MProcessPara[] processParams = pInstance.getProcessParameters();
+		for (int pi = 0; pi < processParams.length; pi++)
 		{
-			MPInstancePara iPara = iParams[pi];
+			MPInstancePara iPara = new MPInstancePara (pInstance, processParams[pi].getSeqNo());
+			iPara.setParameterName(processParams[pi].getColumnName());
+			iPara.setInfo(processParams[pi].getName());
 			String key = iPara.getParameterName();
 			MProcessPara pPara = process.getParameter(key);
 			if (pPara == null)
@@ -541,9 +550,10 @@ public class Process {
 			if (log.isLoggable(Level.FINE)) log.fine("fillParameter - " + key + " = " + valueString);
 			
 			Object value = valueString;
+			Object toValue = valueString2;
 			if (valueString != null && valueString.length() == 0)
 				value = null;
-			if (value != null && (DisplayType.List == displayType ||
+			if (value != null && (DisplayType.isList(displayType) ||
 					DisplayType.TableDir== displayType ||
 					DisplayType.Table== displayType)&& value.equals("-1"))
 				value= null;
@@ -555,6 +565,12 @@ public class Process {
 			}
 			else
 			{
+				if( DisplayType.isText(displayType)
+						&& Util.isEmpty(String.valueOf(value)) 
+						&& Util.isEmpty(String.valueOf(toValue))) {
+					if (log.isLoggable(Level.FINE)) log.fine(pPara.getColumnName() + " - empty string");
+						break;
+				}
 				//	Convert to Type
 				try
 				{
@@ -762,7 +778,6 @@ public class Process {
 	 *  	Called also directly from ProcessDialog, VInOutGen, VInvoiceGen, VPayPrint
 	 * 	@param type document type in ReportEngine
 	 * 	@param Record_ID id
-	 * 	@param IsDirectPrint if true, prints directly - otherwise View
 	 * 	@return true if success
 	 */
 	public static ReportEngine startDocumentPrint (int type, int Record_ID)
@@ -780,9 +795,8 @@ public class Process {
 	
 	/**************************************************************************
 	 *	Start Standard Report.
-	 *  - Get Table Info & submit
+	 *  - Get Table Info and submit
 	 *  @param pi Process Info
-	 *  @param IsDirectPrint if true, prints directly - otherwise View
 	 *  @return true if OK
 	 */
 	static public ReportEngine startStandardReport (ProcessInfo pi)
@@ -801,7 +815,6 @@ public class Process {
 	 * 	Start Check Print.
 	 * 	Find/Create
 	 *	@param C_Payment_ID Payment
-	 * 	@param IsDirectPrint if true, prints directly - otherwise View
 	 * 	@return true if success
 	 */
 	public static ReportEngine startCheckPrint (int C_Payment_ID)

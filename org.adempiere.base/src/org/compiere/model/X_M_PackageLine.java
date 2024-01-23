@@ -24,21 +24,61 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for M_PackageLine
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_PackageLine")
+public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_PackageLine (Properties ctx, int M_PackageLine_ID, String trxName)
     {
       super (ctx, M_PackageLine_ID, trxName);
       /** if (M_PackageLine_ID == 0)
+        {
+			setM_InOutLine_ID (0);
+			setM_Package_ID (0);
+			setM_PackageLine_ID (0);
+			setQty (Env.ZERO);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_PackageLine (Properties ctx, int M_PackageLine_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_PackageLine_ID, trxName, virtualColumns);
+      /** if (M_PackageLine_ID == 0)
+        {
+			setM_InOutLine_ID (0);
+			setM_Package_ID (0);
+			setM_PackageLine_ID (0);
+			setQty (Env.ZERO);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_PackageLine (Properties ctx, String M_PackageLine_UU, String trxName)
+    {
+      super (ctx, M_PackageLine_UU, trxName);
+      /** if (M_PackageLine_UU == null)
+        {
+			setM_InOutLine_ID (0);
+			setM_Package_ID (0);
+			setM_PackageLine_ID (0);
+			setQty (Env.ZERO);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_PackageLine (Properties ctx, String M_PackageLine_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_PackageLine_UU, trxName, virtualColumns);
+      /** if (M_PackageLine_UU == null)
         {
 			setM_InOutLine_ID (0);
 			setM_Package_ID (0);
@@ -54,7 +94,7 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
     }
 
     /** AccessLevel
-      * @return 1 - Org 
+      * @return 1 - Org
       */
     protected int get_AccessLevel()
     {
@@ -76,9 +116,8 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -87,32 +126,32 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	public org.compiere.model.I_M_InOutLine getM_InOutLine() throws RuntimeException
-    {
-		return (org.compiere.model.I_M_InOutLine)MTable.get(getCtx(), org.compiere.model.I_M_InOutLine.Table_Name)
-			.getPO(getM_InOutLine_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_M_InOutLine)MTable.get(getCtx(), org.compiere.model.I_M_InOutLine.Table_ID)
+			.getPO(getM_InOutLine_ID(), get_TrxName());
+	}
 
 	/** Set Shipment/Receipt Line.
-		@param M_InOutLine_ID 
-		Line on Shipment or Receipt document
-	  */
+		@param M_InOutLine_ID Line on Shipment or Receipt document
+	*/
 	public void setM_InOutLine_ID (int M_InOutLine_ID)
 	{
-		if (M_InOutLine_ID < 1) 
+		if (M_InOutLine_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_InOutLine_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_InOutLine_ID, Integer.valueOf(M_InOutLine_ID));
 	}
 
 	/** Get Shipment/Receipt Line.
 		@return Line on Shipment or Receipt document
 	  */
-	public int getM_InOutLine_ID () 
+	public int getM_InOutLine_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_InOutLine_ID);
 		if (ii == null)
@@ -121,26 +160,26 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
 	}
 
 	public org.compiere.model.I_M_Package getM_Package() throws RuntimeException
-    {
-		return (org.compiere.model.I_M_Package)MTable.get(getCtx(), org.compiere.model.I_M_Package.Table_Name)
-			.getPO(getM_Package_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_M_Package)MTable.get(getCtx(), org.compiere.model.I_M_Package.Table_ID)
+			.getPO(getM_Package_ID(), get_TrxName());
+	}
 
 	/** Set Package.
-		@param M_Package_ID 
-		Shipment Package
-	  */
+		@param M_Package_ID Shipment Package
+	*/
 	public void setM_Package_ID (int M_Package_ID)
 	{
-		if (M_Package_ID < 1) 
+		if (M_Package_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_Package_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_Package_ID, Integer.valueOf(M_Package_ID));
 	}
 
 	/** Get Package.
 		@return Shipment Package
 	  */
-	public int getM_Package_ID () 
+	public int getM_Package_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_Package_ID);
 		if (ii == null)
@@ -151,27 +190,26 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), String.valueOf(getM_Package_ID()));
     }
 
 	/** Set Package Line.
-		@param M_PackageLine_ID 
-		The detail content of the Package
-	  */
+		@param M_PackageLine_ID The detail content of the Package
+	*/
 	public void setM_PackageLine_ID (int M_PackageLine_ID)
 	{
-		if (M_PackageLine_ID < 1) 
+		if (M_PackageLine_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_PackageLine_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_PackageLine_ID, Integer.valueOf(M_PackageLine_ID));
 	}
 
 	/** Get Package Line.
 		@return The detail content of the Package
 	  */
-	public int getM_PackageLine_ID () 
+	public int getM_PackageLine_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_PackageLine_ID);
 		if (ii == null)
@@ -180,7 +218,8 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
 	}
 
 	/** Set M_PackageLine_UU.
-		@param M_PackageLine_UU M_PackageLine_UU	  */
+		@param M_PackageLine_UU M_PackageLine_UU
+	*/
 	public void setM_PackageLine_UU (String M_PackageLine_UU)
 	{
 		set_Value (COLUMNNAME_M_PackageLine_UU, M_PackageLine_UU);
@@ -188,29 +227,31 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
 
 	/** Get M_PackageLine_UU.
 		@return M_PackageLine_UU	  */
-	public String getM_PackageLine_UU () 
+	public String getM_PackageLine_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_PackageLine_UU);
 	}
 
 	public org.compiere.model.I_M_PackageMPS getM_PackageMPS() throws RuntimeException
-    {
-		return (org.compiere.model.I_M_PackageMPS)MTable.get(getCtx(), org.compiere.model.I_M_PackageMPS.Table_Name)
-			.getPO(getM_PackageMPS_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_M_PackageMPS)MTable.get(getCtx(), org.compiere.model.I_M_PackageMPS.Table_ID)
+			.getPO(getM_PackageMPS_ID(), get_TrxName());
+	}
 
 	/** Set Package MPS.
-		@param M_PackageMPS_ID Package MPS	  */
+		@param M_PackageMPS_ID Package MPS
+	*/
 	public void setM_PackageMPS_ID (int M_PackageMPS_ID)
 	{
-		if (M_PackageMPS_ID < 1) 
+		if (M_PackageMPS_ID < 1)
 			set_Value (COLUMNNAME_M_PackageMPS_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_M_PackageMPS_ID, Integer.valueOf(M_PackageMPS_ID));
 	}
 
 	/** Get Package MPS.
 		@return Package MPS	  */
-	public int getM_PackageMPS_ID () 
+	public int getM_PackageMPS_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_PackageMPS_ID);
 		if (ii == null)
@@ -219,26 +260,26 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
 	}
 
 	public org.compiere.model.I_M_Product getM_Product() throws RuntimeException
-    {
-		return (org.compiere.model.I_M_Product)MTable.get(getCtx(), org.compiere.model.I_M_Product.Table_Name)
-			.getPO(getM_Product_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_M_Product)MTable.get(getCtx(), org.compiere.model.I_M_Product.Table_ID)
+			.getPO(getM_Product_ID(), get_TrxName());
+	}
 
 	/** Set Product.
-		@param M_Product_ID 
-		Product, Service, Item
-	  */
+		@param M_Product_ID Product, Service, Item
+	*/
 	public void setM_Product_ID (int M_Product_ID)
 	{
-		if (M_Product_ID < 1) 
+		if (M_Product_ID < 1)
 			set_Value (COLUMNNAME_M_Product_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_M_Product_ID, Integer.valueOf(M_Product_ID));
 	}
 
 	/** Get Product.
 		@return Product, Service, Item
 	  */
-	public int getM_Product_ID () 
+	public int getM_Product_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_Product_ID);
 		if (ii == null)
@@ -247,9 +288,8 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
 	}
 
 	/** Set Quantity.
-		@param Qty 
-		Quantity
-	  */
+		@param Qty Quantity
+	*/
 	public void setQty (BigDecimal Qty)
 	{
 		set_Value (COLUMNNAME_Qty, Qty);
@@ -258,7 +298,7 @@ public class X_M_PackageLine extends PO implements I_M_PackageLine, I_Persistent
 	/** Get Quantity.
 		@return Quantity
 	  */
-	public BigDecimal getQty () 
+	public BigDecimal getQty()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_Qty);
 		if (bd == null)

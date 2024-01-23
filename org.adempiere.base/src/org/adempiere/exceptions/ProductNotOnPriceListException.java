@@ -25,22 +25,31 @@ import org.compiere.util.Env;
  * Throw when product price is not found in price list
  * @author teo.sarca@gmail.com
  *			<li>FR [ 2872255 ] Introduce ProductNotOnPriceListException
- *				https://sourceforge.net/tracker/?func=detail&aid=2872255&group_id=176962&atid=879335
+ *				https://sourceforge.net/p/adempiere/feature-requests/841/
  */
 public class ProductNotOnPriceListException extends AdempiereException
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -3505579126676698444L;
 	
 	public static final String AD_Message = "ProductNotOnPriceList";
 	
+	/**
+	 * @param productPricing
+	 * @param documentLineNo
+	 */
 	public ProductNotOnPriceListException(IProductPricing productPricing, int documentLineNo)
 	{
 		super(buildMessage(productPricing, documentLineNo));
 	}
 
+	/**
+	 * @param pp
+	 * @param documentLineNo
+	 * @return error message
+	 */
 	private static final String buildMessage (IProductPricing pp, int documentLineNo)
 	{
 		StringBuilder sb = new StringBuilder();

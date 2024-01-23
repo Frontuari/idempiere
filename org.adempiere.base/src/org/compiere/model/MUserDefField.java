@@ -24,8 +24,10 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutablePOCache;
 import org.idempiere.cache.ImmutablePOSupport;
+import org.idempiere.expression.logic.LogicEvaluator;
 
 
 /**
@@ -43,6 +45,16 @@ public class MUserDefField extends X_AD_UserDef_Field implements ImmutablePOSupp
 	/**	Cache of selected MUserDefField entries 					**/
 	private static ImmutablePOCache<String,MUserDefField> s_cache = new ImmutablePOCache<String,MUserDefField>(Table_Name, 10);
 	
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_UserDef_Field_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MUserDefField(Properties ctx, String AD_UserDef_Field_UU, String trxName) {
+        super(ctx, AD_UserDef_Field_UU, trxName);
+    }
+
 	/**
 	 * 	Standard constructor.
 	 * 	You must implement this constructor for Adempiere Persistency
@@ -198,6 +210,24 @@ public class MUserDefField extends X_AD_UserDef_Field implements ImmutablePOSupp
 			setAD_Val_Rule_ID(0);
 			setIsToolbarButton(null);
 		}
+		
+		//validate logic expression
+		if (newRecord || is_ValueChanged(COLUMNNAME_ReadOnlyLogic)) {
+			if (isActive() && !Util.isEmpty(getReadOnlyLogic(), true) && !getReadOnlyLogic().startsWith("@SQL=")) {
+				LogicEvaluator.validate(getReadOnlyLogic());
+			}
+		}
+		if (newRecord || is_ValueChanged(COLUMNNAME_DisplayLogic)) {
+			if (isActive() && !Util.isEmpty(getDisplayLogic(), true) && !getDisplayLogic().startsWith("@SQL=")) {
+				LogicEvaluator.validate(getDisplayLogic());
+			}
+		}
+		if (newRecord || is_ValueChanged(COLUMNNAME_MandatoryLogic)) {
+			if (isActive() && !Util.isEmpty(getMandatoryLogic(), true) && !getMandatoryLogic().startsWith("@SQL=")) {
+				LogicEvaluator.validate(getMandatoryLogic());
+			}
+		}
+				
 		return true;
 	}
 

@@ -49,6 +49,7 @@ import org.compiere.model.MJournalGeneratorLine;
 import org.compiere.model.MJournalGeneratorSource;
 import org.compiere.model.MJournalLine;
 import org.compiere.model.MPeriod;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
@@ -65,6 +66,7 @@ import org.compiere.util.Msg;
  *
  * 	@author 	Carlos Ruiz - Quality Systems & Solutions - globalqss
  */
+@org.adempiere.base.annotation.Process
 public class GLJournalGenerate extends SvrProcess
 {
 	/**	Processing date from/to */
@@ -88,6 +90,7 @@ public class GLJournalGenerate extends SvrProcess
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
+	@Override
 	protected void prepare()
 	{
 		ProcessInfoParameter[] para = getParameter();
@@ -111,7 +114,7 @@ public class GLJournalGenerate extends SvrProcess
 			else if (name.equals("M_Product_ID"))
 				p_M_Product_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_QSS_JournalGenerator_ID = getRecord_ID();
 	}	//	prepare
@@ -122,6 +125,7 @@ public class GLJournalGenerate extends SvrProcess
 	 *  @return Message
 	 *  @throws Exception
 	 */
+	@Override
 	protected String doIt() throws Exception
 	{
 		if (log.isLoggable(Level.INFO)) log.info("QSS_Journal_Generator_ID=" + p_QSS_JournalGenerator_ID
@@ -537,6 +541,11 @@ public class GLJournalGenerate extends SvrProcess
 		return "@OK@";
 	}	//	doIt
 
+	/**
+	 * @param sourceAmt
+	 * @param amtMultiplier
+	 * @param roundFactor
+	 */
 	private BigDecimal applyMultiplierAndFactor(BigDecimal sourceAmt, BigDecimal amtMultiplier, int roundFactor) {
 		if (amtMultiplier.compareTo(Env.ONE) != 0)
 			sourceAmt = sourceAmt.multiply(amtMultiplier, MathContext.UNLIMITED);

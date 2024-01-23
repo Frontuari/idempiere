@@ -20,6 +20,7 @@ package org.compiere.process;
 import java.util.logging.Level;
 
 import org.compiere.model.MPayment;
+import org.compiere.model.MProcessPara;
 
 
 /**
@@ -28,6 +29,7 @@ import org.compiere.model.MPayment;
  *  @author Jorg Janke
  *  @version $Id: PaymentOnline.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class PaymentOnline extends SvrProcess
 {
 	/**
@@ -38,11 +40,10 @@ public class PaymentOnline extends SvrProcess
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
-			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

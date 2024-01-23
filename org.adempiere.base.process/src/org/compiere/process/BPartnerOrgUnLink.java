@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import org.compiere.model.MBPartner;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.Msg;
 
@@ -29,6 +30,7 @@ import org.compiere.util.Msg;
  *  @author Jorg Janke
  *  @version $Id: BPartnerOrgUnLink.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class BPartnerOrgUnLink extends SvrProcess
 {
 	/** Business Partner		*/
@@ -48,7 +50,7 @@ public class BPartnerOrgUnLink extends SvrProcess
 			else if (name.equals("C_BPartner_ID"))
 				p_C_BPartner_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

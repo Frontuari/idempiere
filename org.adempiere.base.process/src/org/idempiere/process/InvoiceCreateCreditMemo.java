@@ -35,6 +35,7 @@ import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MPeriod;
+import org.compiere.model.MProcessPara;
 import org.compiere.process.DocAction;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
@@ -46,6 +47,7 @@ import org.compiere.util.Msg;
  *	IDEMPIERE-918 Generate credit memo from invoice
  * 	@author 	Carlos Ruiz - globalqss
  */
+@org.adempiere.base.annotation.Process
 public class InvoiceCreateCreditMemo extends SvrProcess {
 	/* The document type for the credit memo */
 	private int p_C_DocType_ID = 0;
@@ -83,7 +85,7 @@ public class InvoiceCreateCreditMemo extends SvrProcess {
 				p_IsCreateAllocation = para.getParameterAsBoolean();
 				break;
 			default:
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para);
 			}
 		}
 		invoice = new MInvoice(getCtx(), getRecord_ID(), get_TrxName());
@@ -159,6 +161,7 @@ public class InvoiceCreateCreditMemo extends SvrProcess {
 			rLine.setPriceLimit(oLine.getPriceLimit());
 			rLine.setPriceEntered(oLine.getPriceEntered());
 			rLine.setC_UOM_ID(oLine.getC_UOM_ID());
+			rLine.setM_AttributeSetInstance_ID(oLine.getM_AttributeSetInstance_ID());
 			if (!rLine.save(get_TrxName())) {
 				throw new AdempiereException("Could not create credit memo line");
 			}

@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.logging.*;
 import org.compiere.model.*;
 import org.compiere.util.*;
+import org.eevolution.model.MPPProductBOM;
+import org.eevolution.model.MPPProductBOMLine;
 
 /**
  * 	Validate BOM
@@ -28,6 +30,7 @@ import org.compiere.util.*;
  *  @author Jorg Janke
  *  @version $Id: BOMVerify.java,v 1.1 2007/07/23 05:34:35 mfuggle Exp $
  */
+@org.adempiere.base.annotation.Process
 public class BOMVerify extends SvrProcess
 {
 	/**	The Product			*/
@@ -64,7 +67,7 @@ public class BOMVerify extends SvrProcess
 			else if (name.equals("IsReValidate"))
 				p_IsReValidate = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		if ( p_M_Product_ID == 0 )
 			p_M_Product_ID = getRecord_ID();
@@ -147,60 +150,82 @@ public class BOMVerify extends SvrProcess
 		if (!product.isBOM())
 			return false;
 		
-	
+		if (validproducts.contains(product))
+			return true;
+		
 		//	Check Old Product BOM Structure
 		if (log.isLoggable(Level.CONFIG)) log.config(product.getName());
 		
 		
-		foundproducts.add(product);
-		MProductBOM[] productsBOMs = MProductBOM.getBOMLines(product);
 		boolean containsinvalid = false;
 		boolean invalid = false;
-		int lines = 0;
-		for (MProductBOM productsBOM : productsBOMs)
+		foundproducts.add(product);
+		List<MPPProductBOM> boms = MPPProductBOM.getProductBOMs(product);
+		for(MPPProductBOM bom : boms)
 		{
-			if (! productsBOM.isActive())
-				continue;
-			lines++;
-			MProduct pp = new MProduct(getCtx(), productsBOM.getM_ProductBOM_ID(), get_TrxName());
-			if (!pp.isBOM()) {
-				if (log.isLoggable(Level.FINER)) log.finer(pp.getName());
-			} else {
-				if (validproducts.contains(pp))
-				{
-					//Do nothing, no need to recheck
-				}
-				if (invalidproducts.contains(pp))
-				{
-					containsinvalid = true;
-				}
-				else if (foundproducts.contains(pp))
-				{
-					invalid = true;
-					if (p_fromButton)
-						addLog(0, null, null, product.getValue() + " recursively contains " + pp.getValue());
-					else
-						addBufferLog(0, null, null, product.getValue() + " recursively contains " + pp.getValue(), MProduct.Table_ID, product.getM_Product_ID());
-				}
-				else
-				{
-					if (!validateProduct(pp))
+			MPPProductBOMLine[] bomLines = bom.getLines();
+			int lines = 0;
+			for (MPPProductBOMLine bomLine : bomLines)
+			{
+				if (!bomLine.isActive())
+					continue;
+				lines++;
+				MProduct pp = new MProduct(getCtx(), bomLine.getM_Product_ID(), get_TrxName());
+				if (!pp.isBOM()) {
+					if (log.isLoggable(Level.FINER)) log.finer(pp.getName());
+				} else {
+					if (validproducts.contains(pp))
+					{
+						//Do nothing, no need to recheck
+						continue;
+					}
+					if (invalidproducts.contains(pp))
 					{
 						containsinvalid = true;
 					}
+					else if (foundproducts.contains(pp))
+					{
+						invalid = true;
+						if (p_fromButton)
+							addLog(0, null, null, Msg.getMsg(getCtx(), "BOMRecursivelyContains", new Object[] {product.getValue(), pp.getValue()}));
+						else
+							addBufferLog(0, null, null, Msg.getMsg(getCtx(), "BOMRecursivelyContains", new Object[] {product.getValue(), pp.getValue()}), MProduct.Table_ID, product.getM_Product_ID());
+					}
+					else
+					{
+						if (!validateProduct(pp))
+						{
+							containsinvalid = true;
+						}
 
+					}
 				}
 			}
+			if (lines == 0) {
+				invalid = true;
+				if (p_fromButton)
+					addLog(0, null, null, Msg.getMsg(getCtx(), "BOMForProductDoesNotHaveLines", new Object[] {bom.getValue(), product.getValue()}));
+				else
+					addBufferLog(0, null, null, Msg.getMsg(getCtx(), "BOMForProductDoesNotHaveLines", new Object[] {bom.getValue(), product.getValue()}), MProduct.Table_ID, product.getM_Product_ID());
+			}
+			if (invalid || containsinvalid)
+				break;
 		}
 
-		if (lines == 0) {
+		if (boms.isEmpty()) {
 			invalid = true;
 			if (p_fromButton)
-				addLog(0, null, null, product.getValue() + " does not have lines");
+				addLog(0, null, null, Msg.getMsg(getCtx(), "BOMMissingForProduct", new Object[] {product.getValue()}));
 			else
-				addBufferLog(0, null, null, product.getValue() + " does not have lines", MProduct.Table_ID, product.getM_Product_ID());
+				addBufferLog(0, null, null, Msg.getMsg(getCtx(), "BOMMissingForProduct", new Object[] {product.getValue()}), MProduct.Table_ID, product.getM_Product_ID());
+		} else if (MPPProductBOM.getDefault(product, get_TrxName()) == null) {
+			invalid = true;
+			if (p_fromButton)
+				addLog(0, null, null, Msg.getMsg(getCtx(), "BOMNoDefaultBOMForProduct", new Object[] {product.getValue()}));
+			else
+				addBufferLog(0, null, null, Msg.getMsg(getCtx(), "BOMNoDefaultBOMForProduct", new Object[] {product.getValue()}), MProduct.Table_ID, product.getM_Product_ID());
 		}
-
+		
 		checkedproducts.add(product);
 		foundproducts.remove(product);
 		if (invalid)

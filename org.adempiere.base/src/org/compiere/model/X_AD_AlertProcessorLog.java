@@ -21,21 +21,58 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for AD_AlertProcessorLog
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_AlertProcessorLog")
+public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_AlertProcessorLog (Properties ctx, int AD_AlertProcessorLog_ID, String trxName)
     {
       super (ctx, AD_AlertProcessorLog_ID, trxName);
       /** if (AD_AlertProcessorLog_ID == 0)
+        {
+			setAD_AlertProcessor_ID (0);
+			setAD_AlertProcessorLog_ID (0);
+			setIsError (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_AlertProcessorLog (Properties ctx, int AD_AlertProcessorLog_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_AlertProcessorLog_ID, trxName, virtualColumns);
+      /** if (AD_AlertProcessorLog_ID == 0)
+        {
+			setAD_AlertProcessor_ID (0);
+			setAD_AlertProcessorLog_ID (0);
+			setIsError (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_AlertProcessorLog (Properties ctx, String AD_AlertProcessorLog_UU, String trxName)
+    {
+      super (ctx, AD_AlertProcessorLog_UU, trxName);
+      /** if (AD_AlertProcessorLog_UU == null)
+        {
+			setAD_AlertProcessor_ID (0);
+			setAD_AlertProcessorLog_ID (0);
+			setIsError (false);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_AlertProcessorLog (Properties ctx, String AD_AlertProcessorLog_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_AlertProcessorLog_UU, trxName, virtualColumns);
+      /** if (AD_AlertProcessorLog_UU == null)
         {
 			setAD_AlertProcessor_ID (0);
 			setAD_AlertProcessorLog_ID (0);
@@ -50,7 +87,7 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -72,26 +109,26 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
     }
 
 	public org.compiere.model.I_AD_AlertProcessor getAD_AlertProcessor() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_AlertProcessor)MTable.get(getCtx(), org.compiere.model.I_AD_AlertProcessor.Table_Name)
-			.getPO(getAD_AlertProcessor_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_AlertProcessor)MTable.get(getCtx(), org.compiere.model.I_AD_AlertProcessor.Table_ID)
+			.getPO(getAD_AlertProcessor_ID(), get_TrxName());
+	}
 
 	/** Set Alert Processor.
-		@param AD_AlertProcessor_ID 
-		Alert Processor/Server Parameter
-	  */
+		@param AD_AlertProcessor_ID Alert Processor/Server Parameter
+	*/
 	public void setAD_AlertProcessor_ID (int AD_AlertProcessor_ID)
 	{
-		if (AD_AlertProcessor_ID < 1) 
+		if (AD_AlertProcessor_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_AlertProcessor_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_AlertProcessor_ID, Integer.valueOf(AD_AlertProcessor_ID));
 	}
 
 	/** Get Alert Processor.
 		@return Alert Processor/Server Parameter
 	  */
-	public int getAD_AlertProcessor_ID () 
+	public int getAD_AlertProcessor_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_AlertProcessor_ID);
 		if (ii == null)
@@ -100,21 +137,20 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 	}
 
 	/** Set Alert Processor Log.
-		@param AD_AlertProcessorLog_ID 
-		Result of the execution of the Alert Processor
-	  */
+		@param AD_AlertProcessorLog_ID Result of the execution of the Alert Processor
+	*/
 	public void setAD_AlertProcessorLog_ID (int AD_AlertProcessorLog_ID)
 	{
-		if (AD_AlertProcessorLog_ID < 1) 
+		if (AD_AlertProcessorLog_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_AlertProcessorLog_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_AlertProcessorLog_ID, Integer.valueOf(AD_AlertProcessorLog_ID));
 	}
 
 	/** Get Alert Processor Log.
 		@return Result of the execution of the Alert Processor
 	  */
-	public int getAD_AlertProcessorLog_ID () 
+	public int getAD_AlertProcessorLog_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_AlertProcessorLog_ID);
 		if (ii == null)
@@ -123,7 +159,8 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 	}
 
 	/** Set AD_AlertProcessorLog_UU.
-		@param AD_AlertProcessorLog_UU AD_AlertProcessorLog_UU	  */
+		@param AD_AlertProcessorLog_UU AD_AlertProcessorLog_UU
+	*/
 	public void setAD_AlertProcessorLog_UU (String AD_AlertProcessorLog_UU)
 	{
 		set_Value (COLUMNNAME_AD_AlertProcessorLog_UU, AD_AlertProcessorLog_UU);
@@ -131,15 +168,14 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 
 	/** Get AD_AlertProcessorLog_UU.
 		@return AD_AlertProcessorLog_UU	  */
-	public String getAD_AlertProcessorLog_UU () 
+	public String getAD_AlertProcessorLog_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_AlertProcessorLog_UU);
 	}
 
 	/** Set Binary Data.
-		@param BinaryData 
-		Binary Data
-	  */
+		@param BinaryData Binary Data
+	*/
 	public void setBinaryData (byte[] BinaryData)
 	{
 		set_Value (COLUMNNAME_BinaryData, BinaryData);
@@ -148,15 +184,14 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 	/** Get Binary Data.
 		@return Binary Data
 	  */
-	public byte[] getBinaryData () 
+	public byte[] getBinaryData()
 	{
 		return (byte[])get_Value(COLUMNNAME_BinaryData);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -165,15 +200,14 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Error.
-		@param IsError 
-		An Error occurred in the execution
-	  */
+		@param IsError An Error occurred in the execution
+	*/
 	public void setIsError (boolean IsError)
 	{
 		set_Value (COLUMNNAME_IsError, Boolean.valueOf(IsError));
@@ -182,22 +216,21 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 	/** Get Error.
 		@return An Error occurred in the execution
 	  */
-	public boolean isError () 
+	public boolean isError()
 	{
 		Object oo = get_Value(COLUMNNAME_IsError);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Reference.
-		@param Reference 
-		Reference for this record
-	  */
+		@param Reference Reference for this record
+	*/
 	public void setReference (String Reference)
 	{
 		set_Value (COLUMNNAME_Reference, Reference);
@@ -206,15 +239,14 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 	/** Get Reference.
 		@return Reference for this record
 	  */
-	public String getReference () 
+	public String getReference()
 	{
 		return (String)get_Value(COLUMNNAME_Reference);
 	}
 
 	/** Set Summary.
-		@param Summary 
-		Textual summary of this request
-	  */
+		@param Summary Textual summary of this request
+	*/
 	public void setSummary (String Summary)
 	{
 		set_Value (COLUMNNAME_Summary, Summary);
@@ -223,15 +255,14 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 	/** Get Summary.
 		@return Textual summary of this request
 	  */
-	public String getSummary () 
+	public String getSummary()
 	{
 		return (String)get_Value(COLUMNNAME_Summary);
 	}
 
 	/** Set Text Message.
-		@param TextMsg 
-		Text Message
-	  */
+		@param TextMsg Text Message
+	*/
 	public void setTextMsg (String TextMsg)
 	{
 		set_Value (COLUMNNAME_TextMsg, TextMsg);
@@ -240,7 +271,7 @@ public class X_AD_AlertProcessorLog extends PO implements I_AD_AlertProcessorLog
 	/** Get Text Message.
 		@return Text Message
 	  */
-	public String getTextMsg () 
+	public String getTextMsg()
 	{
 		return (String)get_Value(COLUMNNAME_TextMsg);
 	}

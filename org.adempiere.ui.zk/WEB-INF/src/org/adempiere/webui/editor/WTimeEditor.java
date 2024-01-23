@@ -14,6 +14,7 @@
 package org.adempiere.webui.editor;
 
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 
@@ -25,11 +26,13 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.window.WFieldRecordInfo;
 import org.compiere.model.GridField;
 import org.compiere.util.CLogger;
+import org.compiere.util.DisplayType;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
 
 /**
- *
+ * Default editor for {@link DisplayType#Time}.<br/>
+ * Implemented with {@link Timebox} component.
  * @author Low Heng Sin
  */
 public class WTimeEditor extends WEditor implements ContextMenuListener
@@ -42,7 +45,7 @@ public class WTimeEditor extends WEditor implements ContextMenuListener
         logger = CLogger.getCLogger(WDateEditor.class);
     }
 
-    private Timestamp oldValue = new Timestamp(0);
+    private Timestamp oldValue = null;
 
     /**
     *
@@ -84,11 +87,11 @@ public class WTimeEditor extends WEditor implements ContextMenuListener
 	 * Constructor for use if a grid field is unavailable
 	 *
 	 * @param label
-	 *            column name (not displayed)
+	 *            field label
 	 * @param description
 	 *            description of component
 	 * @param mandatory
-	 *            whether a selection must be made
+	 *            whether field is mandatory
 	 * @param readonly
 	 *            whether or not the editor is read only
 	 * @param updateable
@@ -101,12 +104,18 @@ public class WTimeEditor extends WEditor implements ContextMenuListener
 		init();
 	}
 
+	/**
+	 * Default constructor
+	 */
 	public WTimeEditor()
 	{
 		this("Time", "Time", false, false, true);
 		init();
-	}   // VDate
+	}   
 
+	/**
+	 * Init component and context menu
+	 */
 	private void init()
 	{
 		getComponent().setCols(10);
@@ -117,16 +126,25 @@ public class WTimeEditor extends WEditor implements ContextMenuListener
 			getComponent().setPlaceholder(gridField.getPlaceholder());
 	}
 	
+	@Override
 	public void onEvent(Event event)
     {
 		if (Events.ON_CHANGE.equalsIgnoreCase(event.getName()) || Events.ON_OK.equalsIgnoreCase(event.getName()))
 		{
 	        Date date = getComponent().getValue();
+	        
 	        Timestamp newValue = null;
 
 	        if (date != null)
 	        {
-	            newValue = new Timestamp(date.getTime());
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(date);
+				cal.set(Calendar.YEAR, 1970);
+				cal.set(Calendar.MONTH, 0);
+				cal.set(Calendar.DAY_OF_MONTH, 1);
+				Date dateIn1970 = new Date(cal.getTimeInMillis());
+				getComponent().setValue(dateIn1970);
+	            newValue = new Timestamp(dateIn1970.getTime());
 	        }
 
 	        if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
@@ -144,18 +162,14 @@ public class WTimeEditor extends WEditor implements ContextMenuListener
     @Override
     public String getDisplay()
     {
-    	// Elaine 2008/07/29
     	return getComponent().getText();
-    	//
     }
 
     @Override
     public Object getValue()
     {
-    	// Elaine 2008/07/25
     	if(getComponent().getValue() == null) return null;
     	return new Timestamp(getComponent().getValue().getTime());
-    	//
     }
 
     @Override
@@ -187,10 +201,10 @@ public class WTimeEditor extends WEditor implements ContextMenuListener
 		return !getComponent().isReadonly();
 	}
 
-
 	@Override
 	public void setReadWrite(boolean readWrite) {
 		getComponent().setReadonly(!readWrite);
+		getComponent().setButtonVisible(readWrite);
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutConfirm;
+import org.compiere.model.MProcessPara;
  
 /**
  *	Create Confirmation From Shipment
@@ -27,6 +28,7 @@ import org.compiere.model.MInOutConfirm;
  *  @author Jorg Janke
  *  @version $Id: InOutCreateConfirm.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class InOutCreateConfirm extends SvrProcess
 {
 	/**	Shipment				*/
@@ -49,7 +51,7 @@ public class InOutCreateConfirm extends SvrProcess
 			else if (name.equals("ConfirmType"))
 				p_ConfirmType = (String)para[i].getParameter();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_M_InOut_ID = getRecord_ID();
 	}	//	prepare

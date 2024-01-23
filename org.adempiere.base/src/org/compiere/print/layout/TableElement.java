@@ -93,7 +93,7 @@ public class TableElement extends PrintElement
 	 *  i.e. Point (-1, -1) is the default for the table
 	 *
 	 *  @param columnHeader array with column headers (Key=ColumnName)
-	 *  @param columnMaxWidth array with column max width - 0=no restrictions - negative=supress if null
+	 *  @param columnMaxWidth array with column max width - 0=no restrictions - negative=suppress if null
 	 *  @param columnMaxHeight array with row max height for a column - 0=no restrictions; -1=one row only
 	 *  @param columnJustification field justification for column
 	 *
@@ -109,7 +109,7 @@ public class TableElement extends PrintElement
 	 *  @param firstPage bounds on first page
 	 *  @param nextPages bounds on following pages
 	 *  @param repeatedColumns repeat first x columns on - X Axis follow pages
-	 *  @param additionalLines map of old colum to below printed column
+	 *  @param additionalLines map of old column to below printed column
 	 *
 	 *  @param rowColFont HashMap with Point as key with Font overwrite
 	 *  @param rowColColor HashMap with Point as key with foreground Color overwrite
@@ -254,7 +254,7 @@ public class TableElement extends PrintElement
 
 	/** first data row number per page	*/
 	private ArrayList<Integer>	m_firstRowOnPage = new ArrayList<Integer>();
-	/** first column number per -> page	*/
+	/** first column number per -&gt; page	*/
 	private ArrayList<Integer>	m_firstColumnOnPage = new ArrayList<Integer>();
 	/** Height of page					*/
 	private ArrayList<Float>	m_pageHeight = new ArrayList<Float>();
@@ -289,7 +289,7 @@ public class TableElement extends PrintElement
 	
 	/**************************************************************************
 	 * 	Layout and Calculate Size.
-	 * 	Set p_width & p_height
+	 * 	Set p_width and p_height
 	 * 	@return true if calculated
 	 */
 	protected boolean calculateSize()
@@ -1259,6 +1259,8 @@ public class TableElement extends PrintElement
 		if (pageYindex >= m_firstRowOnPage.size())  {
 			pageYindex = m_firstRowOnPage.size() - 1;
 		}
+		if (pageYindex<0)
+			return;
 		int firstRow = ((Integer)m_firstRowOnPage.get(pageYindex)).intValue();
 		int nextPageRow = m_data.getRowCount();				//	no of rows
 		if (pageYindex+1 < m_firstRowOnPage.size())
@@ -1720,7 +1722,7 @@ public class TableElement extends PrintElement
             }
             else
             {
-                //  next line is a funcion column -> underline this
+                //  next line is a function column -> underline this
                 boolean nextIsFunction = m_functionRows.contains(Integer.valueOf(row+1));
                 if (nextIsFunction && m_functionRows.contains(Integer.valueOf(row)))
                     nextIsFunction = false;     //  this is a function line too

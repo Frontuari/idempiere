@@ -15,6 +15,7 @@ package org.compiere.db;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.logging.Level;
 
 import javax.sql.RowSet;
@@ -32,6 +33,12 @@ import org.idempiere.db.util.AutoCommitConnectionBroker;
  */
 public class PreparedStatementProxy extends StatementProxy {
 
+	/**
+	 * @param resultSetType
+	 * @param resultSetConcurrency
+	 * @param sql0
+	 * @param trxName
+	 */
 	public PreparedStatementProxy(int resultSetType, int resultSetConcurrency,
 			String sql0, String trxName) {
 		if (sql0 == null || sql0.length() == 0)
@@ -45,13 +52,33 @@ public class PreparedStatementProxy extends StatementProxy {
 		init();
 	} // PreparedStatementProxy
 	
+	/**
+	 * @param resultSetType
+	 * @param resultSetConcurrency
+	 * @param sql0
+	 * @param connection
+	 */
+	public PreparedStatementProxy(int resultSetType, int resultSetConcurrency,
+			String sql0, Connection connection) {
+		if (sql0 == null || sql0.length() == 0)
+			throw new IllegalArgumentException("sql required");
+
+		p_vo = new CStatementVO(resultSetType, resultSetConcurrency, DB
+				.getDatabase().convertStatement(sql0));
+
+		init(connection);
+	} // PreparedStatementProxy
+	
+	/**
+	 * @param vo
+	 */
 	public PreparedStatementProxy(CStatementVO vo)
 	{
 		super(vo);
 	}	//	PreparedStatementProxy
 
 	/**
-	 * Initialise the prepared statement wrapper object
+	 * Initialize the prepared statement wrapper object
 	 */
 	protected void init() {
 		try {
@@ -69,15 +96,34 @@ public class PreparedStatementProxy extends StatementProxy {
 			p_stmt = conn.prepareStatement(p_vo.getSql(), p_vo
 					.getResultSetType(), p_vo.getResultSetConcurrency());
 		} catch (Exception e) {
+			try {
+				this.close();
+			} catch (SQLException e1) {
+				// ignore
+			}
 			log.log(Level.SEVERE, p_vo.getSql(), e);
 			throw new DBException(e);
 		}
 	}
 
+	/**
+	 * Initialize the prepared statement wrapper object
+	 */
+	protected void init(Connection connection) {
+		try {
+			p_stmt = connection.prepareStatement(p_vo.getSql(), p_vo
+					.getResultSetType(), p_vo.getResultSetConcurrency());
+		} catch (Exception e) {
+			log.log(Level.SEVERE, p_vo.getSql(), e);
+			throw new DBException(e);
+		}
+	}
+	
 	@Override
 	protected RowSet getRowSet() 
 	{
-		log.finest("local_getRowSet");
+		if (log.isLoggable(Level.FINE))
+			log.finest("local_getRowSet");
 		
 		RowSet rowSet = null;
 		ResultSet rs = null;

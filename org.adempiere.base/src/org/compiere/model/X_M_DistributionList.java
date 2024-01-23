@@ -24,21 +24,55 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for M_DistributionList
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_DistributionList extends PO implements I_M_DistributionList, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_DistributionList")
+public class X_M_DistributionList extends PO implements I_M_DistributionList, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_DistributionList (Properties ctx, int M_DistributionList_ID, String trxName)
     {
       super (ctx, M_DistributionList_ID, trxName);
       /** if (M_DistributionList_ID == 0)
+        {
+			setM_DistributionList_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_DistributionList (Properties ctx, int M_DistributionList_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_DistributionList_ID, trxName, virtualColumns);
+      /** if (M_DistributionList_ID == 0)
+        {
+			setM_DistributionList_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_DistributionList (Properties ctx, String M_DistributionList_UU, String trxName)
+    {
+      super (ctx, M_DistributionList_UU, trxName);
+      /** if (M_DistributionList_UU == null)
+        {
+			setM_DistributionList_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_DistributionList (Properties ctx, String M_DistributionList_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_DistributionList_UU, trxName, virtualColumns);
+      /** if (M_DistributionList_UU == null)
         {
 			setM_DistributionList_ID (0);
 			setName (null);
@@ -52,7 +86,7 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -74,9 +108,8 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -85,15 +118,14 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -102,27 +134,26 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Distribution List.
-		@param M_DistributionList_ID 
-		Distribution Lists allow to distribute products to a selected list of partners
-	  */
+		@param M_DistributionList_ID Distribution Lists allow to distribute products to a selected list of partners
+	*/
 	public void setM_DistributionList_ID (int M_DistributionList_ID)
 	{
-		if (M_DistributionList_ID < 1) 
+		if (M_DistributionList_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_DistributionList_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_DistributionList_ID, Integer.valueOf(M_DistributionList_ID));
 	}
 
 	/** Get Distribution List.
 		@return Distribution Lists allow to distribute products to a selected list of partners
 	  */
-	public int getM_DistributionList_ID () 
+	public int getM_DistributionList_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_DistributionList_ID);
 		if (ii == null)
@@ -131,7 +162,8 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
 	}
 
 	/** Set M_DistributionList_UU.
-		@param M_DistributionList_UU M_DistributionList_UU	  */
+		@param M_DistributionList_UU M_DistributionList_UU
+	*/
 	public void setM_DistributionList_UU (String M_DistributionList_UU)
 	{
 		set_Value (COLUMNNAME_M_DistributionList_UU, M_DistributionList_UU);
@@ -139,15 +171,14 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
 
 	/** Get M_DistributionList_UU.
 		@return M_DistributionList_UU	  */
-	public String getM_DistributionList_UU () 
+	public String getM_DistributionList_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_DistributionList_UU);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -156,7 +187,7 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -164,13 +195,14 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Process Now.
-		@param Processing Process Now	  */
+		@param Processing Process Now
+	*/
 	public void setProcessing (boolean Processing)
 	{
 		set_Value (COLUMNNAME_Processing, Boolean.valueOf(Processing));
@@ -178,22 +210,21 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
 
 	/** Get Process Now.
 		@return Process Now	  */
-	public boolean isProcessing () 
+	public boolean isProcessing()
 	{
 		Object oo = get_Value(COLUMNNAME_Processing);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Total Ratio.
-		@param RatioTotal 
-		Total of relative weight in a distribution
-	  */
+		@param RatioTotal Total of relative weight in a distribution
+	*/
 	public void setRatioTotal (BigDecimal RatioTotal)
 	{
 		set_Value (COLUMNNAME_RatioTotal, RatioTotal);
@@ -202,7 +233,7 @@ public class X_M_DistributionList extends PO implements I_M_DistributionList, I_
 	/** Get Total Ratio.
 		@return Total of relative weight in a distribution
 	  */
-	public BigDecimal getRatioTotal () 
+	public BigDecimal getRatioTotal()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_RatioTotal);
 		if (bd == null)

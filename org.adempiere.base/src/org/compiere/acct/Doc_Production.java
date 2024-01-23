@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MCostDetail;
 import org.compiere.model.MProduct;
+import org.compiere.model.MProduction;
 import org.compiere.model.MProductionLineMA;
 import org.compiere.model.ProductCost;
 import org.compiere.model.X_M_Production;
@@ -36,7 +37,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 /**
- *  Post Invoice Documents.
+ *  Post {@link MProduction} Documents.
  *  <pre>
  *  Table:              M_Production (325)
  *  Document Types:     MMP
@@ -54,13 +55,14 @@ public class Doc_Production extends Doc
 	 */
 	public Doc_Production (MAcctSchema as, ResultSet rs, String trxName)
 	{
-		super (as, X_M_Production.class, rs, DOCTYPE_MatProduction, trxName);
+		super (as, X_M_Production.class, rs, null, trxName);
 	}   //  Doc_Production
 
 	/**
 	 *  Load Document Details
 	 *  @return error message or null
 	 */
+	@Override
 	protected String loadDocumentDetails()
 	{
 		setC_Currency_ID (NO_CURRENCY);
@@ -81,7 +83,7 @@ public class Doc_Production extends Doc
 	 * @param line
 	 * @param isUsePlan
 	 * @param addMoreQty when you want get value, just pass null
-	 * @return
+	 * @return qty produce for line (include addMoreQty if addMoreQty is not null)
 	 */
 	private BigDecimal manipulateQtyProduced (Map<Integer, BigDecimal> mQtyProduced, X_M_ProductionLine line, Boolean isUsePlan, BigDecimal addMoreQty){
 		BigDecimal qtyProduced = null;
@@ -102,7 +104,7 @@ public class Doc_Production extends Doc
 		return qtyProduced;
 	}
 	/**
-	 *	Load Invoice Line
+	 *	Load production lines
 	 *	@param prod production
 	 *  @return DoaLine Array
 	 */
@@ -112,7 +114,7 @@ public class Doc_Production extends Doc
 		mQtyProduced = new HashMap<>(); 
 		String sqlPL = null;
 		if (prod.isUseProductionPlan()){
-//			Production
+			//	Production Plan
 			//	-- ProductionLine	- the real level
 			sqlPL = "SELECT * FROM "
 							+ " M_ProductionLine pro_line INNER JOIN M_ProductionPlan plan ON pro_line.M_ProductionPlan_id = plan.M_ProductionPlan_id "
@@ -120,7 +122,7 @@ public class Doc_Production extends Doc
 							+ " WHERE pro.M_Production_ID=? "
 							+ " ORDER BY plan.M_ProductionPlan_id, pro_line.Line";
 		}else{
-//			Production
+			//	Production
 			//	-- ProductionLine	- the real level
 			sqlPL = "SELECT * FROM M_ProductionLine pl "
 					+ "WHERE pl.M_Production_ID=? "
@@ -178,6 +180,7 @@ public class Doc_Production extends Doc
 	 *  Get Balance
 	 *  @return Zero (always balanced)
 	 */
+	@Override
 	public BigDecimal getBalance()
 	{
 		BigDecimal retValue = Env.ZERO;
@@ -194,6 +197,7 @@ public class Doc_Production extends Doc
 	 *  @param as account schema
 	 *  @return Fact
 	 */
+	@Override
 	public ArrayList<Fact> createFacts (MAcctSchema as)
 	{
 		//  create Fact Header
@@ -215,6 +219,7 @@ public class Doc_Production extends Doc
 			MProductionLineMA mas[] = MProductionLineMA.get(getCtx(), prodline.get_ID(), getTrxName());
 			MProduct product = (MProduct) prodline.getM_Product();
 			String CostingLevel = product.getCostingLevel(as);
+			String costingMethod = product.getCostingMethod(as);
 
 			if (MAcctSchema.COSTINGLEVEL_BatchLot.equals(CostingLevel) ) 
 			{
@@ -272,21 +277,22 @@ public class Doc_Production extends Doc
 
 			}
 			
+			int stdPrecision = as.getStdPrecision();
 			BigDecimal bomCost = Env.ZERO;	
 			BigDecimal qtyProduced = null;
 			if (line.isProductionBOM())
 			{
 				X_M_ProductionLine endProLine = (X_M_ProductionLine)line.getPO();
-				Object parentEndPro = prod.isUseProductionPlan()?endProLine.getM_ProductionPlan_ID():endProLine.getM_Production_ID();
+				int parentEndPro = prod.isUseProductionPlan()?endProLine.getM_ProductionPlan_ID():endProLine.getM_Production_ID();
 				
 				//	Get BOM Cost - Sum of individual lines				
 				for (int ii = 0; ii < p_lines.length; ii++)
 				{
 					DocLine line0 = p_lines[ii];
 					X_M_ProductionLine bomProLine = (X_M_ProductionLine)line0.getPO();
-					Object parentBomPro = prod.isUseProductionPlan()?bomProLine.getM_ProductionPlan_ID():bomProLine.getM_Production_ID();
+					int parentBomPro = prod.isUseProductionPlan()?bomProLine.getM_ProductionPlan_ID():bomProLine.getM_Production_ID();
 					
-					if (!parentBomPro.equals(parentEndPro))
+					if (parentBomPro != parentEndPro)
 						continue;
 					if (!line0.isProductionBOM()) {
 						MProduct product0 = (MProduct) bomProLine.getM_Product();
@@ -319,7 +325,7 @@ public class Doc_Production extends Doc
 										costMap.put(line0.get_ID()+ "_"+ ma.getM_AttributeSetInstance_ID(),maCost);
 										costs0 = costs0.add(maCost);
 									}						
-									bomCost = bomCost.add(costs0.setScale(2,RoundingMode.HALF_UP));
+									bomCost = bomCost.add(costs0);
 								} 
 								else
 									p_Error = "Failed to post - No Attribute Set for line";
@@ -340,7 +346,7 @@ public class Doc_Production extends Doc
 									costs0 = line0.getProductCosts(as, line0.getAD_Org_ID(), false);
 								}
 								costMap.put(line0.get_ID()+ "_"+ line0.getM_AttributeSetInstance_ID(),costs0);
-								bomCost = bomCost.add(costs0.setScale(2,RoundingMode.HALF_UP));	
+								bomCost = bomCost.add(costs0);
 							}
 							
 						}  
@@ -359,7 +365,7 @@ public class Doc_Production extends Doc
 								costs0 = line0.getProductCosts(as, line0.getAD_Org_ID(), false);
 							}
 							costMap.put(line0.get_ID()+ "_"+ line0.getM_AttributeSetInstance_ID(),costs0);
-							bomCost = bomCost.add(costs0.setScale(2,RoundingMode.HALF_UP));
+							bomCost = bomCost.add(costs0);
 						}
 					}
 				}
@@ -368,7 +374,7 @@ public class Doc_Production extends Doc
 				if (line.getQty().compareTo(qtyProduced) != 0) 
 				{
 					BigDecimal factor = line.getQty().divide(qtyProduced, 12, RoundingMode.HALF_UP);
-					bomCost = bomCost.multiply(factor).setScale(2,RoundingMode.HALF_UP);
+					bomCost = bomCost.multiply(factor);
 				}
 				
 				if (MAcctSchema.COSTINGLEVEL_BatchLot.equals(CostingLevel))
@@ -376,7 +382,7 @@ public class Doc_Production extends Doc
 					//post roll-up  
 					fl = fact.createLine(line, 
 							line.getAccount(ProductCost.ACCTTYPE_P_Asset, as),
-							as.getC_Currency_ID(), bomCost.negate()); 
+							as.getC_Currency_ID(), bomCost.negate().setScale(stdPrecision, RoundingMode.HALF_UP));
 					if (fl == null) 
 					{ 
 						p_Error = "Couldn't post roll-up " + line.getLine() + " - " + line; 
@@ -384,10 +390,9 @@ public class Doc_Production extends Doc
 					}
 					fl.setQty(qtyProduced);				
 				} 
-				else
-				{
-					int precision = as.getStdPrecision();
-					BigDecimal variance = (costs.setScale(precision, RoundingMode.HALF_UP)).subtract(bomCost.negate());
+				else if (MAcctSchema.COSTINGMETHOD_StandardCosting.equals(costingMethod))
+				{					
+					BigDecimal variance = costs.subtract(bomCost.negate()).setScale(stdPrecision, RoundingMode.HALF_UP);
 					// only post variance if it's not zero 
 					if (variance.signum() != 0) 
 					{
@@ -409,9 +414,14 @@ public class Doc_Production extends Doc
 			//  Inventory       DR      CR
 			if (!(line.isProductionBOM() && MAcctSchema.COSTINGLEVEL_BatchLot.equals(CostingLevel)))
 			{
+				BigDecimal factLineAmt = costs;
+				if (line.isProductionBOM() && !(MAcctSchema.COSTINGMETHOD_StandardCosting.equals(costingMethod)))
+				{
+					factLineAmt = bomCost.negate();
+				}
 				fl = fact.createLine(line,
 					line.getAccount(ProductCost.ACCTTYPE_P_Asset, as),
-					as.getC_Currency_ID(), costs);
+					as.getC_Currency_ID(), factLineAmt.setScale(stdPrecision, RoundingMode.HALF_UP));
 				if (fl == null)
 				{
 					p_Error = "No Costs for Line " + line.getLine() + " - " + line;
@@ -473,15 +483,30 @@ public class Doc_Production extends Doc
 				 }
 			} 
 			else
-			{			 
-				if (!MCostDetail.createProduction(as, line.getAD_Org_ID(),
-					line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
-					line.get_ID(), 0,
-					costs, line.getQty(),
-					description, getTrxName()))
+			{		
+				if (line.isProductionBOM() && !(MAcctSchema.COSTINGMETHOD_StandardCosting.equals(costingMethod)))
 				{
-					p_Error = "Failed to create cost detail record";
-					return null;
+					if (!MCostDetail.createProduction(as, line.getAD_Org_ID(),
+							line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
+							line.get_ID(), 0,
+							bomCost.negate(), line.getQty(),
+							description, getTrxName()))
+						{
+							p_Error = "Failed to create cost detail record";
+							return null;
+						}
+				}
+				else
+				{
+					if (!MCostDetail.createProduction(as, line.getAD_Org_ID(),
+						line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
+						line.get_ID(), 0,
+						costs, line.getQty(),
+						description, getTrxName()))
+					{
+						p_Error = "Failed to create cost detail record";
+						return null;
+					}
 				}
 			}
 		}

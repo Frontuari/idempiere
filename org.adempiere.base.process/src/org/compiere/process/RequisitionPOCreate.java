@@ -29,6 +29,7 @@ import org.compiere.model.MCharge;
 import org.compiere.model.MConversionType;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProductPO;
 import org.compiere.model.MRequisition;
@@ -49,11 +50,12 @@ import org.compiere.util.Msg;
  *  @author Teo Sarca, www.arhipac.ro
  *  		<li>BF [ 2609760 ] RequisitionPOCreate not using DateRequired
  *  		<li>BF [ 2605888 ] CreatePOfromRequisition creates more PO than needed
- *  		<li>BF [ 2811718 ] Create PO from Requsition without any parameter teminate in NPE
- *  			http://sourceforge.net/tracker/?func=detail&atid=879332&aid=2811718&group_id=176962
+ *  		<li>BF [ 2811718 ] Create PO from Requisition without any parameter terminate in NPE
+ *  			https://sourceforge.net/p/adempiere/bugs/1954/
  *  		<li>FR [ 2844074  ] Requisition PO Create - more selection fields
- *  			https://sourceforge.net/tracker/?func=detail&aid=2844074&group_id=176962&atid=879335
+ *  			https://sourceforge.net/p/adempiere/feature-requests/796/
  */
+@org.adempiere.base.annotation.Process
 public class RequisitionPOCreate extends SvrProcess
 {
 	/** Org					*/
@@ -131,7 +133,7 @@ public class RequisitionPOCreate extends SvrProcess
 			else if (name.equals("ConsolidateDocument"))
 				p_ConsolidateDocument = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 	

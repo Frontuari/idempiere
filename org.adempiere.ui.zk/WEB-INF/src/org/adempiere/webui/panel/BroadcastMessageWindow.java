@@ -21,6 +21,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.DBException;
 import org.adempiere.model.MBroadcastMessage;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Label;
@@ -31,6 +32,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.idempiere.broadcast.IBroadcastMsgPopup;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
@@ -47,14 +49,14 @@ import org.zkoss.zul.Separator;
 import org.zkoss.zul.South;
 
 /**
- * 
+ * Window to view and acknowledge messages from AD_BroadcastMessage
  * @author Vivek
  * @author Deepak Pansheriya
  *
  */
 public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup,EventListener<Event>{
 	/**
-	 *  
+	 *  generated serial id
 	 */
 	private static final long serialVersionUID = 1849434312706721390L;
 
@@ -63,24 +65,27 @@ public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup
 	public static final int PRESSED_NEXT = 2;
 	public static final int UPDATE_CurrMsg = 0;
 	
+	/** index of current show/render message in {@link #mbMessages} */
 	private int currMsg=0;
 	private Label textMsgNo = null;
 	private Html textMsgContent = null;
 	private North north =null;
+	/** Container for message navigation controls */
 	private Div swDiv =null;
-	private Div sDiv = null;
 	private Button btnPrev = null;
 	private Button btnNext = null;
 	private Checkbox acknowledged = null;
 	private ArrayList<MBroadcastMessage> mbMessages = null;
+	/** AD_BroadcastMessage_ID:Processed */
 	private Hashtable<Integer, Boolean> hashMessages = new Hashtable<Integer, Boolean>();
+	/** Parent of window */
 	private HeaderPanel pnlHead = null;
 	private boolean isTest = false;
 	private boolean initialised = false;
-	/*public BroadcastMessageWindow(){
-		//init();
-	}*/
 	
+	/**
+	 * @param pnlHead
+	 */
 	public BroadcastMessageWindow(HeaderPanel pnlHead) {
 		this.pnlHead = pnlHead;
 		textMsgNo = new Label();
@@ -90,20 +95,29 @@ public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup
 		btnNext = new Button(">");
 	}
 	
+	/**
+	 * Layout window
+	 */
 	private void init() {
-		setTitle(Msg.getMsg(Env.getCtx(),"Message"));
 		Borderlayout layout = new Borderlayout();
 		this.appendChild(layout);
 		addEventListener("onFocus", this);
 		initialised = true;
-		
-		ZKUpdateUtil.setWidth(this, "30%");
-		ZKUpdateUtil.setHeight(this, "30%");
+
+		String percent;
+		if (ClientInfo.isMobile())
+			percent = "50%";
+		else
+			percent = "30%";
+		ZKUpdateUtil.setWidth(this, percent);
+		ZKUpdateUtil.setHeight(this, percent);
 		setPosition("right,bottom");
 		setBorder(true);
 		setShadow(false);
 		doOverlapped();
 		setClosable(true);
+		setSizable(true);
+		setMaximizable(true);
 		
 		north = new North();
 		layout.appendChild(north);
@@ -111,14 +125,16 @@ public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup
 		Center center = new Center();
 		layout.appendChild(center);
 		Div htmlDiv = new Div();
-		//textMsgContent = new Label();
 		htmlDiv.appendChild(textMsgContent);
 		center.setAutoscroll(true);
+		Env.setContext(Env.getCtx(), MBroadcastMessage.CLIENTINFO_BROADCAST_COMPONENT_ID, pnlHead.getUuid());
+		setTitle(mbMessages.get(0));
 		textMsgContent.setContent(mbMessages.get(0).get_Translation(MBroadcastMessage.COLUMNNAME_BroadcastMessage));
 		htmlDiv.setFocus(true);
 		htmlDiv.setStyle("display: table-cell; vertical-align: middle; text-align: center;");
 		Div divAlign = new Div();
-		divAlign.setStyle("color:white; position: absolute; width: 370px; height: 120px; display: table;");
+		divAlign.setStyle("color:white; position: absolute; height: 120px; display: table;");
+
 		htmlDiv.setParent(divAlign);
 		center.appendChild(divAlign);
 		center.setBorder("rounded");
@@ -129,51 +145,36 @@ public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup
 		Hbox southHLayout = new Hbox();
 		south.appendChild(southHLayout);
 		southHLayout.setSpacing("30");
-		ZKUpdateUtil.setWidth(southHLayout, "350px");
+		ZKUpdateUtil.setHflex(southHLayout, "1");
 		
 		Cell leftCell = new Cell();
 		southHLayout.appendChild(leftCell);
 		ZKUpdateUtil.setHflex(leftCell, "1");
-		//leftCell.setWidth("30%");
-		leftCell.setAlign("left");
+		leftCell.setAlign("center");
 		swDiv = new Div();
 		swDiv.setParent(leftCell);
 		acknowledged = new Checkbox();
 		
-		Cell rightCell = new Cell();
-		southHLayout.appendChild(rightCell);
-		rightCell.setAlign("right");
-		ZKUpdateUtil.setHflex(rightCell, "true");
-		sDiv = new Div();
-		ZKUpdateUtil.setWidth(sDiv, "70px");
-		rightCell.appendChild(sDiv);
+		//createHashTable();
+		currMsg = 0;
+		btnPrev.addEventListener("onClick", this);
+		btnNext = new Button(">");
+		btnNext.addEventListener("onClick", this);
 		
+		swDiv.appendChild(btnPrev);
+		swDiv.appendChild(new Separator("vertical"));
+		swDiv.appendChild(textMsgNo);
+		swDiv.appendChild(new Separator("vertical"));
+		swDiv.appendChild(btnNext);
+		textMsgNo.setStyle("font-weight:bold;");
 		
-			//createHashTable();
-			currMsg = 0;
-			//btnPrev = new Button("<");
-			btnPrev.addEventListener("onClick", this);
-			//textMsgNo = new Label();
-			//textMsgNo.setValue((currMsg+1)+"/"+noOfMsgs);
-			btnNext = new Button(">");
-			btnNext.addEventListener("onClick", this);
-			
-			swDiv.appendChild(btnPrev);
-			swDiv.appendChild(new Separator("vertical"));
-			swDiv.appendChild(textMsgNo);
-			swDiv.appendChild(new Separator("vertical"));
-			swDiv.appendChild(btnNext);
-			textMsgNo.setStyle("font-weight:bold;");
-			
-			renderMsg(UPDATE_CurrMsg);
+		renderMsg(UPDATE_CurrMsg);
 		
 		if(mbMessages.size()<=0)
 			swDiv.setVisible(false);
 		
 		ZKUpdateUtil.setHeight(south, "22%");
-		//south.setWidth("45%");
-		acknowledged.setParent(rightCell);
-		//ZKUpdateUtil.setHflex(acknowledged, "6");
+		acknowledged.setParent(leftCell);
 		acknowledged.setLabel(Msg.getMsg(Env.getCtx(),"Acknowledge"));
 		acknowledged.addEventListener("onClick", this);
 		
@@ -192,6 +193,10 @@ public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup
 		}
 	}
 
+	/**
+	 * Process messages
+	 * @param arrMessages
+	 */
 	public void prepareMessage(ArrayList<MBroadcastMessage> arrMessages){
 		mbMessages = arrMessages;
 		createHashTable();
@@ -252,7 +257,7 @@ public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup
 	
 	/**
 	 * Update message on window
-	 * @param status
+	 * @param status next, previous or current
 	 */
 	public void renderMsg(int status) {
 		int msgToUpdate = currMsg-1;
@@ -294,6 +299,7 @@ public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup
 		}
 		
 		textMsgNo.setValue((currMsg+1)+"/"+noOfMsgs);
+		setTitle(mbMessage);
 		textMsgContent.setContent(mbMessage.get_Translation(MBroadcastMessage.COLUMNNAME_BroadcastMessage));
 		
 		if (!isTest && mbMessage.isLogAcknowledge()) {
@@ -372,5 +378,11 @@ public class BroadcastMessageWindow extends Window implements IBroadcastMsgPopup
 				mbMessages.remove(mBroadcastMessage);
 			}
 		}
+	}
+
+	/** Set the title for the panel using what is defined on the message or fallback to "Message" */
+	protected void setTitle(MBroadcastMessage bm) {
+		String title = bm.get_Translation(MBroadcastMessage.COLUMNNAME_Title);
+		setTitle(Util.isEmpty(title) ? Msg.getMsg(Env.getCtx(), "Message") : title);
 	}
 }

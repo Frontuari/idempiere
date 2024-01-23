@@ -22,21 +22,64 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for AD_AttachmentNote
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_AttachmentNote")
+public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_AttachmentNote (Properties ctx, int AD_AttachmentNote_ID, String trxName)
     {
       super (ctx, AD_AttachmentNote_ID, trxName);
       /** if (AD_AttachmentNote_ID == 0)
+        {
+			setAD_Attachment_ID (0);
+			setAD_AttachmentNote_ID (0);
+			setAD_User_ID (0);
+			setTextMsg (null);
+			setTitle (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_AttachmentNote (Properties ctx, int AD_AttachmentNote_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_AttachmentNote_ID, trxName, virtualColumns);
+      /** if (AD_AttachmentNote_ID == 0)
+        {
+			setAD_Attachment_ID (0);
+			setAD_AttachmentNote_ID (0);
+			setAD_User_ID (0);
+			setTextMsg (null);
+			setTitle (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_AttachmentNote (Properties ctx, String AD_AttachmentNote_UU, String trxName)
+    {
+      super (ctx, AD_AttachmentNote_UU, trxName);
+      /** if (AD_AttachmentNote_UU == null)
+        {
+			setAD_Attachment_ID (0);
+			setAD_AttachmentNote_ID (0);
+			setAD_User_ID (0);
+			setTextMsg (null);
+			setTitle (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_AttachmentNote (Properties ctx, String AD_AttachmentNote_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_AttachmentNote_UU, trxName, virtualColumns);
+      /** if (AD_AttachmentNote_UU == null)
         {
 			setAD_Attachment_ID (0);
 			setAD_AttachmentNote_ID (0);
@@ -53,7 +96,7 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -75,26 +118,26 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
     }
 
 	public org.compiere.model.I_AD_Attachment getAD_Attachment() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_Attachment)MTable.get(getCtx(), org.compiere.model.I_AD_Attachment.Table_Name)
-			.getPO(getAD_Attachment_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_Attachment)MTable.get(getCtx(), org.compiere.model.I_AD_Attachment.Table_ID)
+			.getPO(getAD_Attachment_ID(), get_TrxName());
+	}
 
 	/** Set Attachment.
-		@param AD_Attachment_ID 
-		Attachment for the document
-	  */
+		@param AD_Attachment_ID Attachment for the document
+	*/
 	public void setAD_Attachment_ID (int AD_Attachment_ID)
 	{
-		if (AD_Attachment_ID < 1) 
+		if (AD_Attachment_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_Attachment_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_Attachment_ID, Integer.valueOf(AD_Attachment_ID));
 	}
 
 	/** Get Attachment.
 		@return Attachment for the document
 	  */
-	public int getAD_Attachment_ID () 
+	public int getAD_Attachment_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Attachment_ID);
 		if (ii == null)
@@ -103,21 +146,20 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
 	}
 
 	/** Set Attachment Note.
-		@param AD_AttachmentNote_ID 
-		Personal Attachment Note
-	  */
+		@param AD_AttachmentNote_ID Personal Attachment Note
+	*/
 	public void setAD_AttachmentNote_ID (int AD_AttachmentNote_ID)
 	{
-		if (AD_AttachmentNote_ID < 1) 
+		if (AD_AttachmentNote_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_AttachmentNote_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_AttachmentNote_ID, Integer.valueOf(AD_AttachmentNote_ID));
 	}
 
 	/** Get Attachment Note.
 		@return Personal Attachment Note
 	  */
-	public int getAD_AttachmentNote_ID () 
+	public int getAD_AttachmentNote_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_AttachmentNote_ID);
 		if (ii == null)
@@ -126,7 +168,8 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
 	}
 
 	/** Set AD_AttachmentNote_UU.
-		@param AD_AttachmentNote_UU AD_AttachmentNote_UU	  */
+		@param AD_AttachmentNote_UU AD_AttachmentNote_UU
+	*/
 	public void setAD_AttachmentNote_UU (String AD_AttachmentNote_UU)
 	{
 		set_Value (COLUMNNAME_AD_AttachmentNote_UU, AD_AttachmentNote_UU);
@@ -134,32 +177,32 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
 
 	/** Get AD_AttachmentNote_UU.
 		@return AD_AttachmentNote_UU	  */
-	public String getAD_AttachmentNote_UU () 
+	public String getAD_AttachmentNote_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_AttachmentNote_UU);
 	}
 
 	public org.compiere.model.I_AD_User getAD_User() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_Name)
-			.getPO(getAD_User_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_ID)
+			.getPO(getAD_User_ID(), get_TrxName());
+	}
 
 	/** Set User/Contact.
-		@param AD_User_ID 
-		User within the system - Internal or Business Partner Contact
-	  */
+		@param AD_User_ID User within the system - Internal or Business Partner Contact
+	*/
 	public void setAD_User_ID (int AD_User_ID)
 	{
-		if (AD_User_ID < 1) 
+		if (AD_User_ID < 1)
 			set_Value (COLUMNNAME_AD_User_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_User_ID, Integer.valueOf(AD_User_ID));
 	}
 
 	/** Get User/Contact.
 		@return User within the system - Internal or Business Partner Contact
 	  */
-	public int getAD_User_ID () 
+	public int getAD_User_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_User_ID);
 		if (ii == null)
@@ -168,9 +211,8 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
 	}
 
 	/** Set Text Message.
-		@param TextMsg 
-		Text Message
-	  */
+		@param TextMsg Text Message
+	*/
 	public void setTextMsg (String TextMsg)
 	{
 		set_Value (COLUMNNAME_TextMsg, TextMsg);
@@ -179,15 +221,14 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
 	/** Get Text Message.
 		@return Text Message
 	  */
-	public String getTextMsg () 
+	public String getTextMsg()
 	{
 		return (String)get_Value(COLUMNNAME_TextMsg);
 	}
 
 	/** Set Title.
-		@param Title 
-		Name this entity is referred to as
-	  */
+		@param Title Name this entity is referred to as
+	*/
 	public void setTitle (String Title)
 	{
 		set_Value (COLUMNNAME_Title, Title);
@@ -196,7 +237,7 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
 	/** Get Title.
 		@return Name this entity is referred to as
 	  */
-	public String getTitle () 
+	public String getTitle()
 	{
 		return (String)get_Value(COLUMNNAME_Title);
 	}
@@ -204,7 +245,7 @@ public class X_AD_AttachmentNote extends PO implements I_AD_AttachmentNote, I_Pe
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getTitle());
     }

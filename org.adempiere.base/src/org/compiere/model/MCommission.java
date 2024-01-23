@@ -22,21 +22,36 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.compiere.util.Msg;
+import org.compiere.util.Util;
+
 /**
  *	Model for Commission.
  *	(has Lines)
  *	
  *  @author Jorg Janke
  *  @version $Id: MCommission.java,v 1.3 2006/07/30 00:51:02 jjanke Exp $
- *  @author victor.perez@e-evolution.com www.e-evolution.com [ 1867477 ] http://sourceforge.net/tracker/index.php?func=detail&aid=1867477&group_id=176962&atid=879332
+ *  @author victor.perez@e-evolution.com www.e-evolution.com [ 1867477 ] https://sourceforge.net/p/adempiere/bugs/924/
  *	FR: [ 2214883 ] Remove SQL code and Replace for Query - red1
  */
 public class MCommission extends X_C_Commission
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = 1786202619739310928L;
+	private static final long serialVersionUID = 2702487404398723180L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_Commission_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MCommission(Properties ctx, String C_Commission_UU, String trxName) {
+        super(ctx, C_Commission_UU, trxName);
+		if (Util.isEmpty(C_Commission_UU))
+			setInitialDefaults();
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -48,18 +63,17 @@ public class MCommission extends X_C_Commission
 	{
 		super(ctx, C_Commission_ID, trxName);
 		if (C_Commission_ID == 0)
-		{
-		//	setName (null);
-		//	setC_BPartner_ID (0);
-		//	setC_Charge_ID (0);
-		//	setC_Commission_ID (0);
-		//	setC_Currency_ID (0);
-			//
-			setDocBasisType (DOCBASISTYPE_Invoice);	// I
-			setFrequencyType (FREQUENCYTYPE_Monthly);	// M
-			setListDetails (false);
-		}
+			setInitialDefaults();
 	}	//	MCommission
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setDocBasisType (DOCBASISTYPE_Invoice);	// I
+		setFrequencyType (FREQUENCYTYPE_Monthly);	// M
+		setListDetails (false);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -73,6 +87,16 @@ public class MCommission extends X_C_Commission
 	}	//	MCommission
 
 	/**
+	 * @param ctx
+	 * @param C_Commission_ID
+	 * @param trxName
+	 * @param virtualColumns
+	 */
+	public MCommission(Properties ctx, int C_Commission_ID, String trxName, String... virtualColumns) {
+		super(ctx, C_Commission_ID, trxName, virtualColumns);
+	}
+
+	/**
 	 * 	Get Lines
 	 *	@return array of lines
 	 */
@@ -83,7 +107,7 @@ public class MCommission extends X_C_Commission
 		final String whereClause = "IsActive='Y' AND C_Commission_ID=?";
 		List<MCommissionLine> list  = new Query(getCtx(), I_C_CommissionLine.Table_Name, whereClause, get_TrxName())
 		.setParameters(getC_Commission_ID())
-		.setOrderBy("Line")
+		.setOrderBy("Line,C_CommissionLine_ID")
 		.list();	
 		//	Convert
 		MCommissionLine[] retValue = new MCommissionLine[list.size()];
@@ -95,6 +119,7 @@ public class MCommission extends X_C_Commission
 	 * 	Set Date Last Run
 	 *	@param DateLastRun date
 	 */
+	@Override
 	public void setDateLastRun (Timestamp DateLastRun)
 	{
 		if (DateLastRun != null)
@@ -124,5 +149,17 @@ public class MCommission extends X_C_Commission
 			log.log(Level.SEVERE, "copyLinesFrom - Line difference - From=" + fromLines.length + " <> Saved=" + count);
 		return count;
 	}	//	copyLinesFrom
+
+	/**
+	 * Validations before saving record
+	 */
+	@Override
+	protected boolean beforeSave(boolean newRecord) {
+		if (getC_Charge_ID() == 0 && getM_Product_ID() == 0) {
+			log.saveError("FillMandatory", Msg.translate(getCtx(), "ChargeOrProductMandatory"));
+			return false;
+		}
+		return true;
+	}
 
 }	//	MCommission

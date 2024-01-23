@@ -22,21 +22,58 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for C_RecurringGroup
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_RecurringGroup")
+public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_RecurringGroup (Properties ctx, int C_RecurringGroup_ID, String trxName)
     {
       super (ctx, C_RecurringGroup_ID, trxName);
       /** if (C_RecurringGroup_ID == 0)
+        {
+			setC_RecurringGroup_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RecurringGroup (Properties ctx, int C_RecurringGroup_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_RecurringGroup_ID, trxName, virtualColumns);
+      /** if (C_RecurringGroup_ID == 0)
+        {
+			setC_RecurringGroup_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RecurringGroup (Properties ctx, String C_RecurringGroup_UU, String trxName)
+    {
+      super (ctx, C_RecurringGroup_UU, trxName);
+      /** if (C_RecurringGroup_UU == null)
+        {
+			setC_RecurringGroup_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_RecurringGroup (Properties ctx, String C_RecurringGroup_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_RecurringGroup_UU, trxName, virtualColumns);
+      /** if (C_RecurringGroup_UU == null)
         {
 			setC_RecurringGroup_ID (0);
 			setName (null);
@@ -51,7 +88,7 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -73,18 +110,19 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
     }
 
 	/** Set Recurring Group.
-		@param C_RecurringGroup_ID Recurring Group	  */
+		@param C_RecurringGroup_ID Recurring Group
+	*/
 	public void setC_RecurringGroup_ID (int C_RecurringGroup_ID)
 	{
-		if (C_RecurringGroup_ID < 1) 
+		if (C_RecurringGroup_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_RecurringGroup_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_RecurringGroup_ID, Integer.valueOf(C_RecurringGroup_ID));
 	}
 
 	/** Get Recurring Group.
 		@return Recurring Group	  */
-	public int getC_RecurringGroup_ID () 
+	public int getC_RecurringGroup_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_RecurringGroup_ID);
 		if (ii == null)
@@ -93,7 +131,8 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
 	}
 
 	/** Set C_RecurringGroup_UU.
-		@param C_RecurringGroup_UU C_RecurringGroup_UU	  */
+		@param C_RecurringGroup_UU C_RecurringGroup_UU
+	*/
 	public void setC_RecurringGroup_UU (String C_RecurringGroup_UU)
 	{
 		set_Value (COLUMNNAME_C_RecurringGroup_UU, C_RecurringGroup_UU);
@@ -101,15 +140,14 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
 
 	/** Get C_RecurringGroup_UU.
 		@return C_RecurringGroup_UU	  */
-	public String getC_RecurringGroup_UU () 
+	public String getC_RecurringGroup_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_RecurringGroup_UU);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -118,15 +156,14 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -135,15 +172,14 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -152,7 +188,7 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -160,15 +196,14 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
+		@param Value Search key for the record in the format required - must be unique
+	*/
 	public void setValue (String Value)
 	{
 		set_Value (COLUMNNAME_Value, Value);
@@ -177,7 +212,7 @@ public class X_C_RecurringGroup extends PO implements I_C_RecurringGroup, I_Pers
 	/** Get Search Key.
 		@return Search key for the record in the format required - must be unique
 	  */
-	public String getValue () 
+	public String getValue()
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}

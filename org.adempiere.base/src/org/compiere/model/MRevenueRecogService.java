@@ -26,17 +26,26 @@ import java.util.Properties;
  */
 public class MRevenueRecogService extends X_C_RevenueRecog_Service
 {
-
-
 	/**
-	 * 
+	 * generated serial id 
 	 */
 	private static final long serialVersionUID = -3434480004031478264L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_RevenueRecog_Service_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MRevenueRecogService(Properties ctx, String C_RevenueRecog_Service_UU, String trxName) {
+        super(ctx, C_RevenueRecog_Service_UU, trxName);
+    }
 
 	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
-	 *	@param C_RevenueRecognition_ID id
+	 *	@param C_RevenueRecog_Service_ID id
+	 *  @param trxName
 	 */
 	public MRevenueRecogService (Properties ctx, int C_RevenueRecog_Service_ID, String trxName)
 	{

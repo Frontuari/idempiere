@@ -27,11 +27,11 @@ import java.util.logging.Level;
 import javax.activation.DataSource;
 
 /**
- *	A DataSource based on the Java Mail Example.
+ *	A DataSource based on the Java Mail Example.<br/>
  *  This class implements a DataSource from:
- * 		an InputStream
- *		a byte array
- * 		a String
+ * 	<li>an InputStream
+ *	<li>a byte array
+ * 	<li>a String
  * 	@author John Mani
  * 	@author Bill Shannon
  * 	@author Max Spivak
@@ -157,7 +157,7 @@ public class ByteArrayDataSource
 	}	//	setName
 
 	/**
-	 * 	Return Name or Class Name & Content Type
+	 * 	Return Name or Class Name and Content Type
 	 * 	@return dummy
 	 */
 	public String getName ()

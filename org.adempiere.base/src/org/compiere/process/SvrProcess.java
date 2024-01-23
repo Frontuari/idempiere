@@ -16,17 +16,25 @@
  *****************************************************************************/
 package org.compiere.process;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
+import org.adempiere.base.annotation.Parameter;
 import org.adempiere.base.event.EventManager;
 import org.adempiere.base.event.EventProperty;
 import org.adempiere.base.event.IEventManager;
@@ -39,6 +47,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
+import org.compiere.util.TrxEventListener;
 import org.osgi.service.event.Event;
 
 /**
@@ -54,8 +63,9 @@ import org.osgi.service.event.Event;
  * 			<li>BF [ 1878743 ] SvrProcess.getAD_User_ID
  *			<li>BF [ 1935093 ] SvrProcess.unlock() is setting invalid result
  *			<li>FR [ 2788006 ] SvrProcess: change access to some methods
- *				https://sourceforge.net/tracker/?func=detail&aid=2788006&group_id=176962&atid=879335
+ *				https://sourceforge.net/p/adempiere/feature-requests/709/
  */
+@org.adempiere.base.annotation.Process
 public abstract class SvrProcess implements ProcessCall
 {
 	public static final String PROCESS_INFO_CTX_KEY = "ProcessInfo";
@@ -176,16 +186,41 @@ public abstract class SvrProcess implements ProcessCall
 					m_trx.close();
 					m_trx = null;
 					m_pi.setTransactionName(null);
+					
+					unlock();
+					
+					// outside transaction processing [ teo_sarca, 1646891 ]
+					postProcess(!m_pi.isError());
+
+					@SuppressWarnings("unused")
+					Event eventPP = sendProcessEvent(IEventTopics.POST_PROCESS);
+
 				}
-			
-				unlock();
+				else
+				{
+					m_trx.addTrxEventListener(new TrxEventListener() {
+					
+						@Override
+						public void afterRollback(Trx trx, boolean success) {							
+						}
+						
+						@Override
+						public void afterCommit(Trx trx, boolean success) {
+						}
+						
+						@Override
+						public void afterClose(Trx trx) {
+							unlock();
+							
+							// outside transaction processing [ teo_sarca, 1646891 ]
+							m_trx = null;
+							postProcess(!m_pi.isError());
+							@SuppressWarnings("unused")
+							Event eventPP = sendProcessEvent(IEventTopics.POST_PROCESS);
+						}
+					});
+				}
 				
-				// outside transaction processing [ teo_sarca, 1646891 ]
-				postProcess(!m_pi.isError());
-
-				@SuppressWarnings("unused")
-				Event eventPP = sendProcessEvent(IEventTopics.POST_PROCESS);
-
 				Thread.currentThread().setContextClassLoader(contextLoader);
 			}
 		} finally {
@@ -208,6 +243,7 @@ public abstract class SvrProcess implements ProcessCall
 		boolean success = true;
 		try
 		{
+			autoFillParameters();
 			prepare();
 
 			// event before process
@@ -234,9 +270,9 @@ public abstract class SvrProcess implements ProcessCall
 			if (msg == null)
 				msg = e.toString();
 			if (e.getCause() != null)
-				log.log(Level.SEVERE, msg, e.getCause());
+				log.log(Level.SEVERE, Msg.parseTranslation(getCtx(), msg), e.getCause());
 			else 
-				log.log(Level.SEVERE, msg, e);
+				log.log(Level.SEVERE, Msg.parseTranslation(getCtx(), msg), e);
 			success = false;
 		//	throw new RuntimeException(e);
 		}
@@ -245,8 +281,26 @@ public abstract class SvrProcess implements ProcessCall
 		if(msg != null && msg.startsWith("@Error@"))
 			success = false;
 
-		if (success)
-			flushBufferLog();
+		if (success) {
+			// if the connection has not been used, then the buffer log is never flushed
+			//   f.e. when the process uses local transactions like UUIDGenerator
+			m_trx.getConnection();
+			m_trx.addTrxEventListener(new TrxEventListener() {				
+				@Override
+				public void afterRollback(Trx trx, boolean success) {
+				}
+				
+				@Override
+				public void afterCommit(Trx trx, boolean success) {
+					if (success)
+						flushBufferLog();
+				}
+				
+				@Override
+				public void afterClose(Trx trx) {
+				}
+			});
+		}
 
 		//	Parse Variables
 		msg = Msg.parseTranslation(m_ctx, msg);
@@ -258,16 +312,16 @@ public abstract class SvrProcess implements ProcessCall
 	private Event sendProcessEvent(String topic) {
 		Event event = EventManager.newEvent(topic,
 				new EventProperty(EventManager.EVENT_DATA, m_pi),
-				new EventProperty("processUUID", m_pi.getAD_Process_UU()),
-				new EventProperty("className", m_pi.getClassName()),
-				new EventProperty("processClassName", this.getClass().getName()));
+				new EventProperty(EventManager.PROCESS_UID_PROPERTY, m_pi.getAD_Process_UU()),
+				new EventProperty(EventManager.CLASS_NAME_PROPERTY, m_pi.getClassName()),
+				new EventProperty(EventManager.PROCESS_CLASS_NAME_PROPERTY, this.getClass().getName()));
 		EventManager.getInstance().sendEvent(event);
 		return event;
 	}
 
 	/**
 	 *  Prepare - e.g., get Parameters.
-	 *  <code>
+	 *  <pre>{@code
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
@@ -283,7 +337,7 @@ public abstract class SvrProcess implements ProcessCall
 			else
 				log.log(Level.SEVERE, "Unknown Parameter: " + name);
 		}
-	 *  </code>
+	 *  }</pre>
 	 */
 	abstract protected void prepare();
 
@@ -449,6 +503,25 @@ public abstract class SvrProcess implements ProcessCall
 	} // getRecord_IDs
 
 	/**
+	 *  Get Record_UU
+	 *  @return Record_UU
+	 */
+	protected String getRecord_UU()
+	{
+		return m_pi.getRecord_UU();
+	}   //  getRecord_UU
+
+	/**
+	 * Get Record_UUs
+	 * 
+	 * @return Record_UUs
+	 */
+	protected List<String> getRecord_UUs() 
+	{
+		return m_pi.getRecord_UUs();
+	} // getRecord_UUs
+
+	/**
 	 *  Get AD_User_ID
 	 *  @return AD_User_ID of Process owner or -1 if not found
 	 */
@@ -552,6 +625,9 @@ public abstract class SvrProcess implements ProcessCall
 			addLog (0, null, null, msg);
 	}	//	addLog
 
+	/**
+	 * Add buffer log to process info
+	 */
 	private void flushBufferLog () {
 		if (listEntryLog == null)
 			return;
@@ -560,10 +636,59 @@ public abstract class SvrProcess implements ProcessCall
 			if (m_pi != null)
 				m_pi.addLog(entryLog);
 			if (log.isLoggable(Level.INFO)) log.info(entryLog.getP_ID() + " - " + entryLog.getP_Date() + " - " + entryLog.getP_Number() + " - " + entryLog.getP_Msg() + " - " + entryLog.getAD_Table_ID() + " - " + entryLog.getRecord_ID());
-		}							
+		}
+		listEntryLog = null; // flushed - to avoid flushing it again in case is called
 	}
+	
+	/**
+	 *  Save Progress Log Entry to DB immediately
+	 *  @param date date or null
+	 *  @param id record id or 0
+	 *  @param number number or null
+	 *  @param msg message or null
+	 *  @return String AD_PInstance_Log_UU
+	 */
+	public String saveProgress (int id, Timestamp date, BigDecimal number, String msg)
+	{
+		if (log.isLoggable(Level.INFO)) log.info(id + " - " + date + " - " + number + " - " + msg);
+		if (m_pi != null)
+			return m_pi.saveProgress(id, date, number, msg);
+		return "";
+	}	//	saveProgress
 
-	/**************************************************************************
+	/**
+	 *  Save Status Log Entry to DB immediately
+	 *  @param date date or null
+	 *  @param id record id or 0
+	 *  @param number number or null
+	 *  @param msg message or null
+	 *  @return String AD_PInstance_Log_UU
+	 */
+	public String saveStatus (int id, Timestamp date, BigDecimal number, String msg)
+	{
+		if (log.isLoggable(Level.INFO)) log.info(id + " - " + date + " - " + number + " - " + msg);
+		if (m_pi != null)
+			return m_pi.saveStatus(id, date, number, msg);
+		return "";
+	}	//	saveStatus
+	
+	/**
+	 *  Update Progress Log Entry with the specified AD_PInstance_Log_UU, update if exists
+	 *  @param pInstanceLogUU AD_PInstance_Log_UU
+	 * 	@param id record id or 0
+	 *	@param date date or null
+	 * 	@param number number or null
+	 * 	@param msg message or null
+	 */
+	public void updateProgress (String pInstanceLogUU, int id, Timestamp date, BigDecimal number, String msg)
+	{
+		if (m_pi != null)
+			m_pi.updateProgress(pInstanceLogUU, id, date, number, msg);
+		
+		if (log.isLoggable(Level.INFO)) log.info(pInstanceLogUU + " - " + id + " - " + date + " - " + number + " - " + msg);
+	}	//	saveLog
+	
+	/**
 	 * 	Execute function
 	 * 	@param className class
 	 * 	@param methodName method
@@ -592,7 +717,7 @@ public abstract class SvrProcess implements ProcessCall
 	}	//	doIt
 
 	
-	/**************************************************************************
+	/**
 	 *  Lock Process Instance
 	 */
 	private void lock()
@@ -600,8 +725,9 @@ public abstract class SvrProcess implements ProcessCall
 		if (log.isLoggable(Level.FINE)) log.fine("AD_PInstance_ID=" + m_pi.getAD_PInstance_ID());
 		try 
 		{
-			DB.executeUpdate("UPDATE AD_PInstance SET IsProcessing='Y' WHERE AD_PInstance_ID=" 
-				+ m_pi.getAD_PInstance_ID(), null);		//	outside trx
+			if(m_pi.getAD_PInstance_ID() > 0)	// Update only when AD_PInstance_ID > 0 (When we Start Process w/o saving process instance (No Process Audit))
+				DB.executeUpdate("UPDATE AD_PInstance SET IsProcessing='Y' WHERE AD_PInstance_ID=" 
+					+ m_pi.getAD_PInstance_ID(), null);		//	outside trx
 		} catch (Exception e)
 		{
 			log.severe("lock() - " + e.getLocalizedMessage());
@@ -614,30 +740,32 @@ public abstract class SvrProcess implements ProcessCall
 	 */
 	private void unlock ()
 	{
-		boolean noContext = Env.getCtx().isEmpty() && Env.getCtx().getProperty("#AD_Client_ID") == null;
+		boolean noContext = Env.getCtx().isEmpty() && Env.getCtx().getProperty(Env.AD_CLIENT_ID) == null;
 		try 
 		{
 			//save logging info even if context is lost
 			if (noContext)
-				Env.getCtx().put("#AD_Client_ID", m_pi.getAD_Client_ID());
+				Env.getCtx().put(Env.AD_CLIENT_ID, m_pi.getAD_Client_ID());
 
 			//clear interrupt signal so that we can unlock the ad_pinstance record
 			if (Thread.currentThread().isInterrupted())
 				Thread.interrupted();
-				
-			MPInstance mpi = new MPInstance (getCtx(), m_pi.getAD_PInstance_ID(), null);
-			if (mpi.get_ID() == 0)
-			{
-				log.log(Level.SEVERE, "Did not find PInstance " + m_pi.getAD_PInstance_ID());
-				return;
-			}
-			mpi.setIsProcessing(false);
-			mpi.setResult(!m_pi.isError());
-			mpi.setErrorMsg(m_pi.getSummary());
-			mpi.saveEx();
-			if (log.isLoggable(Level.FINE)) log.fine(mpi.toString());
 			
-			ProcessInfoUtil.saveLogToDB(m_pi);
+			if(m_pi.getAD_PInstance_ID() > 0) {
+				MPInstance mpi = new MPInstance (getCtx(), m_pi.getAD_PInstance_ID(), null);
+				if (mpi.get_ID() == 0)
+				{
+					log.log(Level.INFO, "Did not find PInstance " + m_pi.getAD_PInstance_ID());
+					return;
+				}
+				mpi.setIsProcessing(false);
+				mpi.setResult(!m_pi.isError());
+				mpi.setErrorMsg(m_pi.getSummary());
+				mpi.saveEx();
+				if (log.isLoggable(Level.FINE)) log.fine(mpi.toString());
+				
+				ProcessInfoUtil.saveLogToDB(m_pi);
+			}
 		} 
 		catch (Exception e)
 		{
@@ -646,7 +774,7 @@ public abstract class SvrProcess implements ProcessCall
 		finally
 		{
 			if (noContext)
-				Env.getCtx().remove("#AD_Client_ID");
+				Env.getCtx().remove(Env.AD_CLIENT_ID);
 		}
 	}   //  unlock
 
@@ -678,4 +806,99 @@ public abstract class SvrProcess implements ProcessCall
 			processUI.statusUpdate(message);
 		}
 	}
+
+	/**
+	 * Attempts to initialize class fields having the {@link Parameter} annotation
+	 * with the values received by this process instance.
+	 */
+	private void autoFillParameters(){
+	    Map<String,Field> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+	    // detects annotated fields in this class and its super classes
+	    Class<?> target = getClass();
+	    while(target != null && !target.equals(SvrProcess.class)) {
+		    for (Field field: getFieldsWithParameters(target)) {
+		        field.setAccessible(true);
+		        Parameter pa = field.getAnnotation(Parameter.class);
+		        if(map.containsValue(field))
+		        	continue;
+		        String name = pa.name().isEmpty() ? field.getName() : pa.name();
+		        map.put(name.toLowerCase(), field);
+		    }
+	    	target = target.getSuperclass();
+	    }
+
+	    if(map.size()==0)
+	        return;
+
+        for(ProcessInfoParameter parameter : getParameter()){
+            String name = parameter.getParameterName().trim().toLowerCase();
+            Field field = map.get(name);
+            Field toField = map.containsKey(name + "_to") ? map.get(name + "_to") : null;
+            Field notField = map.containsKey(name + "_not") ? map.get(name + "_not") : null;
+
+            // try to match fields using the "p_" prefix convention
+            if(field==null) {
+            	String candidate = "p_" + name;
+                field = map.get(candidate);
+                toField = map.containsKey(candidate + "_to") ? map.get(candidate + "_to") : null;
+                notField = map.containsKey(candidate + "_not") ? map.get(candidate + "_not") : null;
+            }
+
+            // try to match fields with same name as metadata declaration after stripping "_"
+            if(field==null) {
+            	String candidate = name.replace("_", "");
+                field = map.get(candidate);
+                toField = map.containsKey(candidate + "to") ? map.get(candidate + "to") : null;
+                notField = map.containsKey(candidate + "not") ? map.get(candidate + "not") : null;
+            }
+
+            if(field==null)
+                continue;
+
+            Type type = field.getType();
+            try{
+                if (type.equals(Integer.TYPE) || type.equals(Integer.class)) {
+                    field.set(this, parameter.getParameterAsInt());
+                    if(parameter.getParameter_To()!=null && toField != null)
+                    	toField.set(this, parameter.getParameter_ToAsInt());
+                } else if (type.equals(String.class)) {
+                    field.set(this, (String) parameter.getParameter());
+                    if(notField != null)
+                    	notField.set(this, (boolean) parameter.isNotClause());
+                } else if (type.equals(java.sql.Timestamp.class)) {
+                    field.set(this, (Timestamp) parameter.getParameter());
+                    if(parameter.getParameter_To()!=null && toField != null)
+                    	toField.set(this, (Timestamp) parameter.getParameter_To());
+                } else if (type.equals(BigDecimal.class)) {
+                    field.set(this, (BigDecimal) parameter.getParameter());
+                } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+                    Object tmp = parameter.getParameter();
+                    if(tmp instanceof String && tmp != null)
+                        field.set(this, "Y".equals(tmp));
+                    else
+                    	field.set(this, tmp);
+                } else {
+                	continue;
+                }
+            }catch(Exception e){
+                throw new RuntimeException(e);
+            }
+        }
+	}
+
+	/**
+	 * Tries to find all class attributes having the {@link Parameter} annotation.
+	 * @param clazz
+	 * @return a list of annotated fields
+	 */
+	private List<Field> getFieldsWithParameters(Class<?> clazz) {
+		if (clazz != null)
+			return Arrays.stream(clazz.getDeclaredFields())
+				.filter(f -> f.getAnnotation(Parameter.class) != null)
+				.collect(Collectors.toList());
+
+		return Collections.emptyList();
+	}
+
 }   //  SvrProcess

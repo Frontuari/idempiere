@@ -42,12 +42,14 @@ import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WTableDirEditor;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.model.MLocator;
 import org.compiere.model.MLocatorLookup;
 import org.compiere.model.MLocatorType;
 import org.compiere.model.MRole;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -63,7 +65,7 @@ import org.zkoss.zul.South;
 import org.zkoss.zul.Space;
 
 /**
- * Location Dialog : Based on VLocationDialog
+ * Dialog for warehouse locator
  * 
  * @author  Niraj Sohun
  * @date    Jul 24, 2007
@@ -72,7 +74,7 @@ import org.zkoss.zul.Space;
 public class WLocatorDialog extends Window implements EventListener<Event> 
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -2441739966645819543L;
 
@@ -124,6 +126,8 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 	private boolean m_change;
 
 	private String title;
+	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
+	private boolean isUseEscForTabClosing = MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
 
 	private static final CLogger log = CLogger.getCLogger(WLocatorDialog.class);
 	
@@ -135,8 +139,7 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 	 * 	@param mandatory mandatory
 	 * 	@param only_Warehouse_ID of not 0 restrict warehouse
 	 *  @param windowNo
-	 */
-	
+	 */	
 	public WLocatorDialog (	String title, MLocatorLookup mLocator,
 							int M_Locator_ID, boolean mandatory, int only_Warehouse_ID, 
 							int windowNo)
@@ -156,6 +159,9 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 		initLocator();
 	} // WLocatorDialog
 	
+	/**
+	 * Layout dialog
+	 */
 	private void initComponents()
 	{
 		lblLocator.setValue(Msg.translate(Env.getCtx(), "M_Locator_ID"));
@@ -300,14 +306,15 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 				ZKUpdateUtil.setCSSWidth(this);
 			});
 		}
+		addEventListener(Events.ON_CANCEL, e -> onCancel());
 	}
 	
+	/**
+	 * Load warehouse and locators
+	 */
 	private void initLocator()
 	{
-		log.fine("");
-
-		//	Load Warehouse
-		
+		//	Load Warehouse		
 		String sql = "SELECT M_Warehouse_ID, Name FROM M_Warehouse";
 		
 		if (m_only_Warehouse_ID != 0)
@@ -401,20 +408,21 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 
 		chkCreateNew.setChecked(false);
 		chkCreateNew.addEventListener(Events.ON_CHECK, this);
-		
+		if (! MRole.getDefault().isTableAccess(MLocator.Table_ID, false)) {
+			chkCreateNew.setVisible(false);
+		}
+
 		enableNew();
 
 		lstWarehouse.addEventListener(Events.ON_SELECT, this);
 		txtAisleX.addEventListener(Events.ON_CHANGE, this);
 		txtBinY.addEventListener(Events.ON_CHANGE, this);
 		txtLevelZ.addEventListener(Events.ON_CHANGE, this);
-		
-		//	Update UI
-		
-		//pack();
-		
 	} // initLocator
 
+	/**
+	 * Set field editor values from selected locator
+	 */
 	private void displayLocator()
 	{
 		MLocator l = null;
@@ -476,15 +484,12 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 	
 	/**
 	 *	Enable/disable New data entry
-	 */
-	
+	 */	
 	private void enableNew()
 	{
 		boolean sel = chkCreateNew.isChecked();
-		//lblWarehouse.setVisible(sel);
 		lstWarehouse.setVisible(sel);
 		lstWarehouse.getParent().setVisible(sel);
-		//lWarehouseInfo.setVisible(!sel);
 		txtWarehouse.setVisible(!sel);
 		txtWarehouse.getParent().setVisible(!sel);
 		txtWarehouse.setReadonly(true);
@@ -554,9 +559,8 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 	} // getWarehouseInfo
 
 	/**
-	 *	Create Locator-Value
-	 */
-	
+	 * Create M_Locator.Value for new M_Locator record
+	 */	
 	private void createValue()
 	{
 		// Get Warehouse Info
@@ -578,9 +582,8 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 	} // createValue
 
 	/**
-	 * 	OK - check for changes (save them) & Exit
-	 */
-	
+	 * 	Handle OK button event - check for changes (save them) & Exit
+	 */	
 	private void actionOK()
 	{
 		if (chkCreateNew.isChecked())
@@ -614,7 +617,7 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 			
 			if (mandatoryFields.length() != 0)
 			{
-				FDialog.error(m_WindowNo, this, "FillMandatory", mandatoryFields.substring(0, mandatoryFields.length()-3));
+				Dialog.error(m_WindowNo, "FillMandatory", mandatoryFields.substring(0, mandatoryFields.length()-3));
 				return;
 			}
 
@@ -626,13 +629,14 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 
 			MLocator loc = MLocator.get(Env.getCtx(), m_M_Warehouse_ID, txtKey.getText(),
 				txtAisleX.getText(), txtBinY.getText(), txtLevelZ.getText(), lt);
-			
+			if (loc == null) {
+				Dialog.error(m_WindowNo, "AccessCannotInsert", Msg.getElement(Env.getCtx(), "M_Locator_ID"));
+				return;
+			}
 			m_M_Locator_ID = loc.getM_Locator_ID();
-			
-			listitem = new ListItem();
-			listitem.setValue(loc);
-			
+
 			locatorField.actionRefresh();
+			locatorField.getComponent().appendItem(loc.getValue(), m_M_Locator_ID);
 			locatorField.setValue(m_M_Locator_ID);
 		} // createNew
 
@@ -640,20 +644,17 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 	} // actionOK
 
 	/**
-	 *	Get Selected value
-	 *  @return value as Integer
-	 */
-	
+	 *	Get Selected locator id
+	 *  @return M_Locator_IDD as Integer
+	 */	
 	public Integer getValue()
 	{
 		return (Integer) locatorField.getValue();
 	} // getValue
 
 	/**
-	 *	Get result
 	 *  @return true if changed
-	 */
-	
+	 */	
 	public boolean isChanged()
 	{
 		if (m_change)
@@ -663,9 +664,9 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 				return locator_id == m_M_Locator_ID;
 		}
 		return m_change;
-	} // getChange
+	} // isChanged
 
-	
+	@Override
 	public void onEvent(Event event) throws Exception 
 	{
 		if (event == null)
@@ -673,8 +674,7 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 		
 		if (event.getTarget() == confirmPanel.getButton(ConfirmPanel.A_CANCEL))
 		{
-			m_change = false;
-			this.detach();
+			onCancel();
 		}
 		else if (event.getTarget() == confirmPanel.getButton(ConfirmPanel.A_OK))
 		{
@@ -690,5 +690,17 @@ public class WLocatorDialog extends Window implements EventListener<Event>
 		else if (chkCreateNew.isChecked()
 				 && (event.getTarget() == lstWarehouse || event.getTarget() == txtAisleX || event.getTarget() == txtBinY || event.getTarget() == txtLevelZ))
 			createValue();
+	}
+
+	/**
+	 * Handle onCancel event
+	 */
+	private void onCancel() {
+		// do not allow to close tab for Events.ON_CTRL_KEY event
+		if(isUseEscForTabClosing)
+			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
+
+		m_change = false;
+		this.detach();
 	}
 }

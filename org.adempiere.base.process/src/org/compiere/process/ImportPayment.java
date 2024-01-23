@@ -24,6 +24,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MPayment;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.X_I_Payment;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
@@ -38,6 +39,7 @@ import org.compiere.util.Env;
  *  Contributor(s):
  *    Carlos Ruiz - globalqss - FR [ 1992542 ] Import Payment doesn't have DocAction parameter
  */
+@org.adempiere.base.annotation.Process
 public class ImportPayment extends SvrProcess
 {
 	/**	Organization to be imported to	*/
@@ -70,7 +72,7 @@ public class ImportPayment extends SvrProcess
 			else if (name.equals("DocAction"))
 				m_docAction = (String)para[i].getParameter();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		m_ctx = Env.getCtx();
 	}	//	prepare
@@ -412,13 +414,11 @@ public class ImportPayment extends SvrProcess
 			.append(" ORDER BY C_BankAccount_ID, CheckNo, DateTrx, R_AuthCode");
 			
 		MBankAccount account = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
+		
 		int noInsert = 0;
-		try
+		try (PreparedStatement pstmt = DB.prepareStatement(sql.toString(), get_TrxName());)
 		{
-			pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
-			rs = pstmt.executeQuery();
+			ResultSet rs = pstmt.executeQuery();
 				
 			while (rs.next())
 			{ 
@@ -459,13 +459,10 @@ public class ImportPayment extends SvrProcess
 				
 				payment.setDateAcct(imp.getDateTrx());
 				payment.setDateTrx(imp.getDateTrx());
-			//	payment.setDescription(imp.getDescription());
-				//
 				payment.setC_BPartner_ID(imp.getC_BPartner_ID());
 				payment.setC_Invoice_ID(imp.getC_Invoice_ID());
 				payment.setC_DocType_ID(imp.getC_DocType_ID());
 				payment.setC_Currency_ID(imp.getC_Currency_ID());
-			//	payment.setC_ConversionType_ID(imp.getC_ConversionType_ID());
 				payment.setC_Charge_ID(imp.getC_Charge_ID());
 				payment.setChargeAmt(imp.getChargeAmt());
 				payment.setTaxAmt(imp.getTaxAmt());
@@ -519,12 +516,6 @@ public class ImportPayment extends SvrProcess
 		catch(Exception e)
 		{
 			log.log(Level.SEVERE, sql.toString(), e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
 		}
 		
 		//	Set Error to indicator to not imported

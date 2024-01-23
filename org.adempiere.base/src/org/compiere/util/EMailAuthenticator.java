@@ -16,13 +16,18 @@
  *****************************************************************************/
 package org.compiere.util;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.logging.Level;
 
 import javax.mail.Authenticator;
 import javax.mail.PasswordAuthentication;
 
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MAuthorizationAccount;
+
 /**
- *  Email User Authentification
+ *  Email User Authentication
  *
  *  @author Jorg Janke
  *  @version $Id: EMailAuthenticator.java,v 1.2 2006/07/30 00:54:36 jjanke Exp $
@@ -32,10 +37,26 @@ public class EMailAuthenticator extends Authenticator
 	/**
 	 * 	Constructor
 	 * 	@param username user name
-	 * 	@param password user password
+	 * 	@param password user password (ignored if is OAuth2 account)
 	 */
 	public EMailAuthenticator (String username, String password)
 	{
+		m_authAccount = MAuthorizationAccount.getEMailAccount(username);
+		if (m_authAccount != null)
+		{
+			m_isOAuth2 = true;
+			try
+			{
+				password = m_authAccount.refreshAndGetAccessToken();
+			}
+			catch (GeneralSecurityException | IOException e)
+			{
+				throw new AdempiereException(e);
+			}
+			if (m_authAccount.getPreferred_UserName() != null)
+				username = m_authAccount.getPreferred_UserName();
+		}
+
 		m_pass = new PasswordAuthentication (username, password);
 		if (username == null || username.length() == 0)
 		{
@@ -51,17 +72,38 @@ public class EMailAuthenticator extends Authenticator
 
 	/**	Password		*/
 	private PasswordAuthentication 	m_pass = null;
+	/**	Is OAuth2		*/
+	private boolean m_isOAuth2 = false;
+	/** Authorization Account   */
+	private MAuthorizationAccount m_authAccount = null;
 	/**	Logger			*/
 	private static CLogger log = CLogger.getCLogger(EMailAuthenticator.class);
 
 	/**
-	 *	Ger PasswordAuthentication
-	 * 	@return Password Autnetifucation
+	 *	Get Password Authentication
+	 * 	@return Password Authentication
 	 */
 	protected PasswordAuthentication getPasswordAuthentication()
 	{
 		return m_pass;
 	}	//	getPasswordAuthentication
+
+	/**
+	 *	Get OAuth2 Authorization Account
+	 * 	@return Authorization Account
+	 */
+	protected MAuthorizationAccount getAuthorizationAccount()
+	{
+		return m_authAccount;
+	}	//	getAuthorizationAccount
+
+	/**
+	 * If the authenticator is using OAuth2 account
+	 * @return boolean
+	 */
+	protected boolean isOAuth2() {
+		return m_isOAuth2;
+	}
 
 	/**
 	 * 	Get String representation
@@ -71,9 +113,6 @@ public class EMailAuthenticator extends Authenticator
 	{
 		if (m_pass == null)
 			return "EMailAuthenticator[]";
-		if (CLogMgt.isLevelFinest())
-			return "EMailAuthenticator[" 
-				+ m_pass.getUserName() + "/" + m_pass.getPassword() + "]";
 		return "EMailAuthenticator[" 
 			+ m_pass.getUserName() + "/************]";
 	}	//	toString

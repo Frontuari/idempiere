@@ -29,6 +29,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutablePOSupport;
 
 /**
@@ -47,15 +48,15 @@ import org.idempiere.cache.ImmutablePOSupport;
 public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 2256035503713773448L;
 
 	/**
-	 * 	Get Empty Template Business Partner
+	 * 	Create new Business Partner from template (not save)
 	 * 	@param ctx context
 	 * 	@param AD_Client_ID client
-	 * 	@return Template Business Partner or null
+	 * 	@return new Business Partner created from template or null
 	 */
 	public static MBPartner getTemplate (Properties ctx, int AD_Client_ID)
 	{
@@ -78,7 +79,6 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 			template.setSO_CreditLimit (Env.ZERO);
 			template.setSO_CreditUsed (Env.ZERO);
 			template.setTotalOpenBalance (Env.ZERO);
-		//	s_template.setRating(null);
 			//
 			template.setActualLifeTimeValue(Env.ZERO);
 			template.setPotentialLifeTimeValue(Env.ZERO);
@@ -96,7 +96,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	getTemplate
 
 	/**
-	 * 	Get Cash Trx Business Partner
+	 * 	Get Cash Trx Business Partner (as template for new BP)
 	 * 	@param ctx context
 	 * 	@param AD_Client_ID client
 	 * 	@return Cash Trx Business Partner or null
@@ -156,9 +156,9 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	getFirstWithTaxID
 
 	/**
-	 * 	Get BPartner with Value
+	 * 	Get BPartner with id
 	 *	@param ctx context 
-	 *	@param Value value
+	 *  @param C_BPartner_ID
 	 *	@return BPartner or null
 	 */
 	public static MBPartner get (Properties ctx, int C_BPartner_ID)
@@ -168,9 +168,9 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	
 	
 	/**
-	 * 	Get BPartner with Value in a transaction
+	 * 	Get BPartner with id in a transaction
 	 *	@param ctx context 
-	 *	@param Value value
+	 *  @param C_BPartner_ID
 	 * 	@param trxName transaction
 	 *	@return BPartner or null
 	 */
@@ -218,13 +218,11 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 		}
 		return retValue;
 	}	//	getNotInvoicedAmt
-
 	
 	/**	Static Logger				*/
 	private static CLogger		s_log = CLogger.getCLogger (MBPartner.class);
-
 	
-	/**************************************************************************
+	/**
 	 * 	Constructor for new BPartner from Template
 	 * 	@param ctx context
 	 */
@@ -234,7 +232,6 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	MBPartner
 
 	/**
-	 * 	Default Constructor
 	 * 	@param ctx context
 	 * 	@param rs ResultSet to load from
 	 * 	@param trxName transaction
@@ -244,8 +241,19 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 		super(ctx, rs, trxName);
 	}	//	MBPartner
 
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_BPartner_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MBPartner(Properties ctx, String C_BPartner_UU, String trxName) {
+        super(ctx, C_BPartner_UU, trxName);
+		if (Util.isEmpty(C_BPartner_UU))
+			setInitialDefaults();
+    }
+
 	/**
-	 * 	Default Constructor
 	 * 	@param ctx context
 	 * 	@param C_BPartner_ID partner or 0 or -1 (load from template)
 	 * 	@param trxName transaction
@@ -260,39 +268,40 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 			C_BPartner_ID = 0;
 		}
 		if (C_BPartner_ID == 0)
-		{
-		//	setValue ("");
-		//	setName ("");
-		//	setName2 (null);
-		//	setDUNS("");
-			//
-			setIsCustomer (true);
-			setIsProspect (true);
-			//
-			setSendEMail (false);
-			setIsOneTime (false);
-			setIsVendor (false);
-			setIsSummary (false);
-			setIsEmployee (false);
-			setIsSalesRep (false);
-			setIsTaxExempt(false);
-			setIsPOTaxExempt(false);
-			setIsDiscountPrinted(false);
-			//
-			setSO_CreditLimit (Env.ZERO);
-			setSO_CreditUsed (Env.ZERO);
-			setTotalOpenBalance (Env.ZERO);
-			setSOCreditStatus(SOCREDITSTATUS_NoCreditCheck);
-			//
-			setFirstSale(null);
-			setActualLifeTimeValue(Env.ZERO);
-			setPotentialLifeTimeValue(Env.ZERO);
-			setAcqusitionCost(Env.ZERO);
-			setShareOfCustomer(0);
-			setSalesVolume(0);
-		}
+			setInitialDefaults();
 		if (log.isLoggable(Level.FINE)) log.fine(toString());
 	}	//	MBPartner
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		//
+		setIsCustomer (true);
+		setIsProspect (true);
+		//
+		setSendEMail (false);
+		setIsOneTime (false);
+		setIsVendor (false);
+		setIsSummary (false);
+		setIsEmployee (false);
+		setIsSalesRep (false);
+		setIsTaxExempt(false);
+		setIsPOTaxExempt(false);
+		setIsDiscountPrinted(false);
+		//
+		setSO_CreditLimit (Env.ZERO);
+		setSO_CreditUsed (Env.ZERO);
+		setTotalOpenBalance (Env.ZERO);
+		setSOCreditStatus(SOCREDITSTATUS_NoCreditCheck);
+		//
+		setFirstSale(null);
+		setActualLifeTimeValue(Env.ZERO);
+		setPotentialLifeTimeValue(Env.ZERO);
+		setAcqusitionCost(Env.ZERO);
+		setShareOfCustomer(0);
+		setSalesVolume(0);
+	}
 
 	/**
 	 * 	Import Constructor
@@ -326,7 +335,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	MBPartner
 	
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MBPartner(MBPartner copy) 
@@ -335,7 +344,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -345,7 +354,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -362,6 +371,16 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 		this.m_group = copy.m_group != null ? new MBPGroup(ctx, copy.m_group, trxName) : null;
 	}
 
+	/**
+	 * @param ctx
+	 * @param C_BPartner_ID
+	 * @param trxName
+	 * @param virtualColumns
+	 */
+	public MBPartner(Properties ctx, int C_BPartner_ID, String trxName, String... virtualColumns) {
+		super(ctx, C_BPartner_ID, trxName, virtualColumns);
+	}
+
 	/** Users							*/
 	protected MUser[]				m_contacts = null;
 	/** Addressed						*/
@@ -376,7 +395,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	protected MBPGroup				m_group = null;
 	
 	/**
-	 * 	Load Default BPartner
+	 * 	Initialize BPartner record from template
 	 * 	@param AD_Client_ID client
 	 * 	@return true if loaded
 	 */
@@ -424,10 +443,9 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 		return success;
 	}	//	getTemplate
 
-
 	/**
 	 * 	Get All Contacts
-	 * 	@param reload if true users will be requeried
+	 * 	@param reload true to reload from DB
 	 *	@return contacts
 	 */
 	public MUser[] getContacts (boolean reload)
@@ -438,7 +456,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 			return m_contacts;
 		//
 		ArrayList<MUser> list = new ArrayList<MUser>();
-		final String sql = "SELECT * FROM AD_User WHERE C_BPartner_ID=? ORDER BY AD_User_ID";
+		final String sql = "SELECT * FROM AD_User WHERE C_BPartner_ID=? AND IsActive = 'Y' ORDER BY AD_User_ID";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -481,11 +499,10 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 		}
 		return users[0];
 	}	//	getContact
-	
-	
+		
 	/**
 	 * Get All Locations (only active)
-	 * @param reload if true locations will be requeried
+	 * @param reload true to reload from DB
 	 * @return locations
 	 */
 	public MBPartnerLocation[] getLocations (boolean reload)
@@ -524,7 +541,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	getLocations
 
 	/**
-	 * 	Get explicit or first bill Location
+	 * 	Get location for C_BPartner_Location_ID or first bill Location or first location
 	 * 	@param C_BPartner_Location_ID optional explicit location
 	 *	@return location or null
 	 */
@@ -549,7 +566,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	
 	/**
 	 * 	Get Bank Accounts
-	 * 	@param requery requery
+	 * 	@param requery true to reload from DB
 	 *	@return Bank Accounts
 	 */
 	public MBPBankAccount[] getBankAccounts (boolean requery)
@@ -584,12 +601,12 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 		list.toArray(m_accounts);
 		return m_accounts;
 	}	//	getBankAccounts
-
 	
-	/**************************************************************************
+	/**
 	 *	String Representation
 	 * 	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder ("MBPartner[ID=")
@@ -606,6 +623,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	 *	@param AD_Client_ID client
 	 *	@param AD_Org_ID org
 	 */
+	@Override
 	public void setClientOrg (int AD_Client_ID, int AD_Org_ID)
 	{
 		super.setClientOrg(AD_Client_ID, AD_Org_ID);
@@ -619,13 +637,14 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	 * 	@return AD_Org_ID if BP
 	 *  @deprecated
 	 */
+	@Deprecated(forRemoval = true, since = "11")
 	public int getAD_OrgBP_ID_Int() 
 	{
 		return getAD_OrgBP_ID();
 	}	//	getAD_OrgBP_ID_Int
 
 	/**
-	 * 	Get Primary C_BPartner_Location_ID
+	 * 	Get Primary C_BPartner_Location_ID (First BillTo or First)
 	 *	@return C_BPartner_Location_ID
 	 */
 	public int getPrimaryC_BPartner_Location_ID()
@@ -651,7 +670,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	getPrimaryC_BPartner_Location_ID
 	
 	/**
-	 * 	Get Primary C_BPartner_Location
+	 * 	Get Primary C_BPartner_Location (BillTo or First)
 	 *	@return C_BPartner_Location
 	 */
 	public MBPartnerLocation getPrimaryC_BPartner_Location()
@@ -667,16 +686,13 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	
 	/**
 	 * 	Get Primary AD_User_ID
-	 *	@return AD_User_ID
+	 *	@return AD_User_ID or 0
 	 */
 	public int getPrimaryAD_User_ID()
 	{
 		if (m_primaryAD_User_ID == null)
 		{
 			MUser[] users = getContacts(false);
-		//	for (int i = 0; i < users.length; i++)
-		//	{
-		//	}
 			if (m_primaryAD_User_ID == null && users.length > 0)
 				setPrimaryAD_User_ID(users[0].getAD_User_ID());
 		}
@@ -702,14 +718,13 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	{
 		m_primaryAD_User_ID = Integer.valueOf(AD_User_ID);
 	}	//	setPrimaryAD_User_ID
-	
-	
+		
 	/**
 	 * 	Calculate Total Open Balance and SO_CreditUsed.
-	 *  (includes drafted invoices)
 	 */
 	public void setTotalOpenBalance ()
 	{
+		log.info("");
 		BigDecimal SO_CreditUsed = null;
 		BigDecimal TotalOpenBalance = null;
 		//AZ Goodwill -> BF2041226 : only count completed/closed docs.
@@ -757,7 +772,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	setTotalOpenBalance
 
 	/**
-	 * 	Set Actual Life Time Value from DB
+	 * 	Calculate Actual Life Time Invoiced Value from DB
 	 */
 	public void setActualLifeTimeValue()
 	{
@@ -793,7 +808,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	setActualLifeTimeValue
 	
 	/**
-	 * 	Set Credit Status
+	 * Update Credit Status for sales transaction
 	 */
 	public void setSOCreditStatus ()
 	{
@@ -817,12 +832,11 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 				setSOCreditStatus (SOCREDITSTATUS_CreditOK);
 		}
 	}	//	setSOCreditStatus
-	
-	
+		
 	/**
 	 * 	Get SO CreditStatus with additional amount
 	 * 	@param additionalAmt additional amount in Accounting Currency
-	 *	@return sinulated credit status
+	 *	@return simulated credit status
 	 */
 	public String getSOCreditStatus (BigDecimal additionalAmt)
 	{
@@ -887,7 +901,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	getBPGroup
 
 	/**
-	 * 	Get BP Group
+	 * 	Set BP Group
 	 *	@param group group
 	 */
 	public void setBPGroup(MBPGroup group)
@@ -909,8 +923,8 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	setBPGroup
 
 	/**
-	 * 	Get PriceList
-	 *	@return price List
+	 * 	Get PriceList ID
+	 *	@return BP M_PriceList_ID or BP Group M_PriceList_ID 
 	 */
 	public int getM_PriceList_ID ()
 	{
@@ -921,8 +935,8 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	getM_PriceList_ID
 	
 	/**
-	 * 	Get PO PriceList
-	 *	@return price list
+	 * 	Get PO PriceList ID
+	 *	@return BP PO price list id or BP Group PO price list id
 	 */
 	public int getPO_PriceList_ID ()
 	{
@@ -933,8 +947,8 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//
 	
 	/**
-	 * 	Get DiscountSchema
-	 *	@return Discount Schema
+	 * 	Get DiscountSchema id
+	 *	@return Discount Schema id
 	 */
 	public int getM_DiscountSchema_ID ()
 	{
@@ -945,8 +959,8 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	}	//	getM_DiscountSchema_ID
 	
 	/**
-	 * 	Get PO DiscountSchema
-	 *	@return po discount
+	 * 	Get PO DiscountSchema id
+	 *	@return po discount schema id
 	 */
 	public int getPO_DiscountSchema_ID ()
 	{
@@ -961,6 +975,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		if (newRecord || is_ValueChanged("C_BP_Group_ID"))
@@ -976,12 +991,13 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 		return true;
 	}	//	beforeSave
 	
-	/**************************************************************************
+	/**
 	 * 	After Save
 	 *	@param newRecord new
 	 *	@param success success
 	 *	@return success
 	 */
+	@Override
 	protected boolean afterSave (boolean newRecord, boolean success)
 	{
 		if (!success)
@@ -991,10 +1007,12 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 			//	Trees
 			insert_Tree(MTree_Base.TREETYPE_BPartner);
 			//	Accounting
-			StringBuilder msgacc = new StringBuilder("p.C_BP_Group_ID=").append(getC_BP_Group_ID());
+			StringBuilder msgacc = new StringBuilder("p.C_BP_Group_ID=")
+					.append(getC_BP_Group_ID() > MTable.MAX_OFFICIAL_ID && Env.isLogMigrationScript(get_TableName())
+							? "toRecordId('C_BP_Group',"+DB.TO_STRING(MBPGroup.get(getC_BP_Group_ID()).getC_BP_Group_UU())+")"
+							: getC_BP_Group_ID());
 			insert_Accounting("C_BP_Customer_Acct", "C_BP_Group_Acct", msgacc.toString());
 			insert_Accounting("C_BP_Vendor_Acct", "C_BP_Group_Acct",msgacc.toString());
-			// insert_Accounting("C_BP_Employee_Acct", "C_AcctSchema_Default", null);
 		}
 		if (newRecord || is_ValueChanged(COLUMNNAME_Value))
 			update_Tree(MTree_Base.TREETYPE_BPartner);
@@ -1013,6 +1031,7 @@ public class MBPartner extends X_C_BPartner implements ImmutablePOSupport
 	 *	@param success
 	 *	@return deleted
 	 */
+	@Override
 	protected boolean afterDelete (boolean success)
 	{
 		if (success)

@@ -2,7 +2,7 @@
 <feature
       id="org.adempiere.ui.zk.feature"
       label="Zk Client-feature"
-      version="8.1.0.qualifier"
+      version="12.0.0.qualifier"
       provider-name="iDempiere Community">
 
    <description url="http://www.example.com/description">
@@ -25,7 +25,7 @@
          id="org.adempiere.ui.zk"
          download-size="0"
          install-size="0"
-         version="8.1.0.qualifier"/>
+         version="0.0.0"/>
 
    <plugin
          id="org.atmosphere.runtime"
@@ -40,6 +40,35 @@
          install-size="0"
          version="0.0.0"
          fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="org.idempiere.keikai"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="org.idempiere.printformat.editor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.idempiere.zk.billboard"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.idempiere.zk.billboard.chart"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
          unpack="false"/>
 
 </feature>

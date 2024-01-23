@@ -17,9 +17,13 @@
 package org.compiere.model;
 
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.Properties;
 
+import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutablePOSupport;
 import org.idempiere.cache.ImmutablePOCache;
 
@@ -31,7 +35,7 @@ import org.idempiere.cache.ImmutablePOCache;
 public class MProductCategoryAcct extends X_M_Product_Category_Acct implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -7990259665379770596L;
 	/** Static cache */
@@ -88,7 +92,17 @@ public class MProductCategoryAcct extends X_M_Product_Category_Acct implements I
 		return acct;
 	}	//	get
 	
-	/**************************************************************************
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param M_Product_Category_Acct_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MProductCategoryAcct(Properties ctx, String M_Product_Category_Acct_UU, String trxName) {
+        super(ctx, M_Product_Category_Acct_UU, trxName);
+    }
+
+	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
 	 *	@param ignored ignored 
@@ -102,7 +116,7 @@ public class MProductCategoryAcct extends X_M_Product_Category_Acct implements I
 	}	//	MProductCategoryAcct
 
 	/**
-	 * 	Load Cosntructor
+	 * 	Load Constructor
 	 *	@param ctx context
 	 *	@param rs result set
 	 *	@param trxName trx
@@ -113,7 +127,7 @@ public class MProductCategoryAcct extends X_M_Product_Category_Acct implements I
 	}	//	MProductCategoryAcct
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MProductCategoryAcct(MProductCategoryAcct copy) 
@@ -122,7 +136,7 @@ public class MProductCategoryAcct extends X_M_Product_Category_Acct implements I
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -132,7 +146,7 @@ public class MProductCategoryAcct extends X_M_Product_Category_Acct implements I
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -159,6 +173,7 @@ public class MProductCategoryAcct extends X_M_Product_Category_Acct implements I
 	 *	@param success success
 	 *	@return success
 	 */
+	@Override
 	protected boolean afterSave (boolean newRecord, boolean success)
 	{
 		if (!success)
@@ -180,6 +195,7 @@ public class MProductCategoryAcct extends X_M_Product_Category_Acct implements I
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder ("MProductCategoryAcct[");
@@ -192,4 +208,44 @@ public class MProductCategoryAcct extends X_M_Product_Category_Acct implements I
 		return sb.toString ();
 	}	//	toString
 
+	@Override
+	protected boolean beforeSave(boolean newRecord) {
+		if (!newRecord && is_ValueChanged(COLUMNNAME_CostingLevel)) {
+			String newCostingLevel = getCostingLevel();
+			String oldCostingLevel = (String) get_ValueOld(COLUMNNAME_CostingLevel);
+			I_C_AcctSchema schema = getC_AcctSchema();
+			if (newCostingLevel == null)
+				newCostingLevel = schema.getCostingLevel();
+			if (oldCostingLevel == null)
+				oldCostingLevel = schema.getCostingLevel();
+			if (!newCostingLevel.equals(oldCostingLevel)) {
+				String products = getProductsWithCost();
+				if (!Util.isEmpty(products)) {
+					log.saveError("Error", Msg.getMsg(getCtx(), "ChangeCostingLevelError") + ". Products: " + products);
+					return false; 
+				}
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * @return CSV list of product Value for product that has cost detail record.
+	 */
+	private String getProductsWithCost() {
+		StringBuilder products = new StringBuilder();
+		StringBuilder sql = new StringBuilder("SELECT DISTINCT p.Value FROM M_Product p JOIN M_CostDetail d ON p.M_Product_ID=d.M_Product_ID");
+		sql.append(" WHERE p.IsActive='Y' AND p.M_Product_Category_ID=? AND d.C_AcctSchema_ID=?");
+		String query = DB.getDatabase().addPagingSQL(sql.toString(), 0, 50);
+		List<List<Object>> list = DB.getSQLArrayObjectsEx(get_TrxName(), query, getM_Product_Category_ID(), getC_AcctSchema_ID());
+		if (list != null) {
+			for(List<Object> entry : list) {
+				String value = (String) entry.get(0);
+				if (products.length() > 0)
+					products.append(",");
+				products.append(value);
+			}
+		}
+		return products.toString();
+	}
 }	//	MProductCategoryAcct

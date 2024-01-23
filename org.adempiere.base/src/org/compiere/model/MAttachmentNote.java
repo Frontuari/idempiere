@@ -30,9 +30,19 @@ import org.compiere.util.Env;
 public class MAttachmentNote extends X_AD_AttachmentNote
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 5902789937430504039L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_AttachmentNote_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MAttachmentNote(Properties ctx, String AD_AttachmentNote_UU, String trxName) {
+        super(ctx, AD_AttachmentNote_UU, trxName);
+    }
 
 	/** 
 	 * 	Standard Constructor
@@ -43,15 +53,6 @@ public class MAttachmentNote extends X_AD_AttachmentNote
 	public MAttachmentNote (Properties ctx, int AD_AttachmentNote_ID, String trxName)
 	{
 		super (ctx, AD_AttachmentNote_ID, trxName);
-		/**
-		if (AD_AttachmentNote_ID == 0)
-		{
-			setAD_Attachment_ID (0);
-			setAD_User_ID (0);
-			setTextMsg (null);
-			setTitle (null);
-		}
-		/**/
 	}	//	MAttachmentNote
 	
 	/** 

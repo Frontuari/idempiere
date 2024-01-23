@@ -24,12 +24,13 @@ import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 /**
- *  Model Window Value Object
+ *  Window Model Value Object
  *
  *  @author Jorg Janke
  *  @version  $Id: GridWindowVO.java,v 1.4 2006/07/30 00:58:04 jjanke Exp $
@@ -37,15 +38,57 @@ import org.compiere.util.Env;
 public class GridWindowVO implements Serializable
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 6884332743173214735L;
+	
+	private static final CLogger log = CLogger.getCLogger(GridWindowVO.class);
 
+	/**	Window Cache		*/
+	private static CCache<Integer,GridWindowVO>	s_windowsvo
+		= new CCache<Integer,GridWindowVO>(I_AD_Window.Table_Name, I_AD_Window.Table_Name+"|GridWindowVO", 10);
+	
+	/**
+	 * @param AD_Window_ID
+	 * @param windowNo
+	 * @return {@link GridWindowVO}
+	 */
+	public static GridWindowVO get(int AD_Window_ID, int windowNo)
+	{
+		return get(AD_Window_ID, windowNo, -1);
+	}
+	
+	/**
+	 * @param AD_Window_ID
+	 * @param windowNo
+	 * @param AD_Menu_ID
+	 * @return {@link GridWindowVO}
+	 */
+	public static GridWindowVO get(int AD_Window_ID, int windowNo, int AD_Menu_ID) 
+	{
+		GridWindowVO mWindowVO = s_windowsvo.get(AD_Window_ID);
+		if (mWindowVO != null)
+		{
+			mWindowVO = mWindowVO.clone(windowNo);
+			if (log.isLoggable(Level.INFO)) log.info("Cached=" + mWindowVO);
+		}
+		if (mWindowVO == null)
+		{
+			if (log.isLoggable(Level.CONFIG)) log.config("create local");
+			mWindowVO = GridWindowVO.create (Env.getCtx(), windowNo, AD_Window_ID, AD_Menu_ID);
+			if (mWindowVO != null) 
+			{
+				s_windowsvo.put(AD_Window_ID, mWindowVO);
+			}
+		}
+		return mWindowVO;
+	}
+	
 	/**
 	 *  Create Window Value Object
 	 *  @param WindowNo window no for ctx
 	 *  @param AD_Window_ID window id
-	 *  @return MWindowVO
+	 *  @return GridWindowVO
 	 */
 	public static GridWindowVO create (int WindowNo, int AD_Window_ID)
 	{
@@ -57,7 +100,7 @@ public class GridWindowVO implements Serializable
 	 *  @param ctx context
 	 *  @param WindowNo window no for ctx
 	 *  @param AD_Window_ID window id
-	 *  @return MWindowVO
+	 *  @return GridWindowVO
 	 */
 	public static GridWindowVO create (Properties ctx, int WindowNo, int AD_Window_ID)
 	{
@@ -71,12 +114,13 @@ public class GridWindowVO implements Serializable
 	 *  @param WindowNo window no for ctx
 	 *  @param AD_Window_ID window id
 	 *  @param AD_Menu_ID menu id
-	 *  @return MWindowVO
+	 *  @return GridWindowVO
 	 */
 	public static GridWindowVO create (Properties ctx, int WindowNo, int AD_Window_ID, int AD_Menu_ID)
 	{
-		CLogger.get().config("#" + WindowNo
-			+ " - AD_Window_ID=" + AD_Window_ID + "; AD_Menu_ID=" + AD_Menu_ID);
+		if (CLogger.get().isLoggable(Level.CONFIG))
+			CLogger.get().config("#" + WindowNo
+				+ " - AD_Window_ID=" + AD_Window_ID + "; AD_Menu_ID=" + AD_Menu_ID);
 		GridWindowVO vo = new GridWindowVO (ctx, WindowNo);
 		vo.AD_Window_ID = AD_Window_ID;
 
@@ -115,65 +159,41 @@ public class GridWindowVO implements Serializable
 				DB.close(rs, pstmt);
 				rs = null; pstmt = null;
 			}
-			CLogger.get().config("AD_Window_ID=" + vo.AD_Window_ID);
+			if (CLogger.get().isLoggable(Level.CONFIG))
+				CLogger.get().config("AD_Window_ID=" + vo.AD_Window_ID);
 		}
 
 		//  --  Get Window
 
-		StringBuilder sql = new StringBuilder("SELECT Name,Description,Help,WindowType, "
-			+ "AD_Color_ID,AD_Image_ID,WinHeight,WinWidth, "
-			+ "IsSOTrx, AD_Window_UU ");
-
-		if (Env.isBaseLanguage(vo.ctx, "AD_Window"))
-			sql.append("FROM AD_Window w WHERE w.AD_Window_ID=? AND w.IsActive='Y'");
+		MWindow window = MWindow.get(AD_Window_ID);
+		boolean base = Env.isBaseLanguage(vo.ctx, "AD_Window");
+		if (window != null)
+		{
+			vo.Name = base ? window.getName() : window.get_Translation(MWindow.COLUMNNAME_Name); 
+			vo.Description = base ? window.getDescription() : window.get_Translation(MWindow.COLUMNNAME_Description);
+			if (vo.Description == null)
+				vo.Description = "";
+			vo.Help = base ? window.getHelp() : window.get_Translation(MWindow.COLUMNNAME_Help);
+			if (vo.Help == null)
+				vo.Help = "";
+			vo.WindowType = window.getWindowType();
+			//
+			vo.AD_Color_ID = window.getAD_Color_ID();
+			vo.AD_Image_ID = window.getAD_Image_ID();
+			//vo.IsReadWrite = rs.getString(7);
+			//
+			vo.WinHeight = window.getWinHeight();
+			vo.WinWidth = window.getWinWidth();
+			//
+			vo.IsSOTrx = window.isSOTrx();
+			Env.setContext(ctx, WindowNo, "IsSOTrx", vo.IsSOTrx);
+			vo.AD_Window_UU = window.getAD_Window_UU();
+		}
 		else
-			sql.append("FROM AD_Window_vt w WHERE w.AD_Window_ID=?")
-				.append(" AND AD_Language='")
-				.append(Env.getAD_Language(vo.ctx)).append("'");
-
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
 		{
-			//	create statement
-			pstmt = DB.prepareStatement(sql.toString(), null);
-			pstmt.setInt(1, vo.AD_Window_ID);
-			// 	get data
-			rs = pstmt.executeQuery();
-			if (rs.next())
-			{
-				vo.Name = rs.getString(1);
-				vo.Description = rs.getString(2);
-				if (vo.Description == null)
-					vo.Description = "";
-				vo.Help = rs.getString(3);
-				if (vo.Help == null)
-					vo.Help = "";
-				vo.WindowType = rs.getString(4);
-				//
-				vo.AD_Color_ID = rs.getInt(5);
-				vo.AD_Image_ID = rs.getInt(6);
-				//vo.IsReadWrite = rs.getString(7);
-				//
-				vo.WinHeight = rs.getInt(7);
-				vo.WinWidth = rs.getInt(8);
-				//
-				vo.IsSOTrx = "Y".equals(rs.getString(9));
-				vo.AD_Window_UU = rs.getString(10);
-			}
-			else
-				vo = null;
+			vo = null;
 		}
-		catch (SQLException ex)
-		{
-			CLogger.get().log(Level.SEVERE, sql.toString(), ex);
-			return null;
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null; pstmt = null;
-		}
+		
 		// Ensure ASP exceptions
 		MRole role = MRole.getDefault(ctx, false);
 		final Boolean windowAccess = vo!=null ? role.getWindowAccess(vo.AD_Window_ID) : null;
@@ -184,7 +204,7 @@ public class GridWindowVO implements Serializable
 		if (vo == null)
 		{
 			CLogger.get().log(Level.SEVERE, "No Window - AD_Window_ID=" + AD_Window_ID
-				+ ", AD_Role_ID=" + role + " - " + sql);
+				+ ", AD_Role_ID=" + role);
 			CLogger.get().saveError("AccessTableNoView", "(Not found)");
 			return null;
 		}
@@ -279,9 +299,8 @@ public class GridWindowVO implements Serializable
 		Env.setContext(mWindowVO.ctx, mWindowVO.WindowNo, "BaseTable_ID", mWindowVO.AD_Table_ID);
 		return true;
 	}   //  createTabs
-
 	
-	/**************************************************************************
+	/**
 	 *  Private Constructor
 	 *  @param Ctx context
 	 *  @param windowNo window no
@@ -303,7 +322,7 @@ public class GridWindowVO implements Serializable
 	public String		AD_Window_UU = "";
 	/** Name				*/
 	public	String		Name = "";
-	/** Desription			*/
+	/** Description			*/
 	public	String		Description = "";
 	/** Help				*/
 	public	String		Help = "";
@@ -335,7 +354,7 @@ public class GridWindowVO implements Serializable
 	public static final String	WINDOWTYPE_MMAINTAIN = "M";
 
 	/**
-	 *  Set Context including contained elements
+	 *  Set window context including context of GridTabVO
 	 *  @param newCtx context
 	 */
 	public void setCtx (Properties newCtx)
@@ -351,7 +370,7 @@ public class GridWindowVO implements Serializable
 	/**
 	 * 	Clone
 	 * 	@param windowNo no
-	 *	@return WindowVO
+	 *	@return GridWindowVO
 	 */
 	public GridWindowVO clone (int windowNo)
 	{
@@ -392,5 +411,5 @@ public class GridWindowVO implements Serializable
 		return clone;
 	}	//	clone
 
-}   //  MWindowVO
+}   //  GridWindowVO
 

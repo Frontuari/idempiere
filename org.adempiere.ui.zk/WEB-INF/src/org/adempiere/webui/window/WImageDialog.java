@@ -17,8 +17,11 @@
 package org.adempiere.webui.window;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.AdempiereWebUI;
 import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.LayoutUtils;
@@ -28,12 +31,15 @@ import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.compiere.model.MImage;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.zkoss.image.AImage;
@@ -47,24 +53,21 @@ import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
-import org.zkoss.zul.Image;
+import org.zkoss.zul.Iframe;
 import org.zkoss.zul.North;
 import org.zkoss.zul.Separator;
 import org.zkoss.zul.South;
 import org.zkoss.zul.Space;
 
 /**
- *  Base on the original Swing Image Dialog.
- *  @author   Jorg Janke
- *  
- *  Zk Port
+ *  Dialog to view, remove or upload new image
  *  @author Low Heng Sin 
  *  
  */
 public class WImageDialog extends Window implements EventListener<Event>
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -5048907034691374834L;
 
@@ -97,6 +100,9 @@ public class WImageDialog extends Window implements EventListener<Event>
 					AImage aImage = new AImage(m_mImage.getName(), m_mImage.getData());
 					
 					image.setContent(aImage);
+					image.setClientAttribute("sandbox", "");
+					image.setVisible(true);
+					image.invalidate();
 				} catch (Exception e) {
 					log.log(Level.WARNING, "load image", e);
 				}
@@ -112,12 +118,12 @@ public class WImageDialog extends Window implements EventListener<Event>
 	/**	Logger					*/
 	private static final CLogger log = CLogger.getCLogger(WImageDialog.class);
 
-	/** */
+	/** Main layout */
 	private Borderlayout mainLayout = new Borderlayout();
 	private Panel parameterPanel = new Panel();
 	private Button fileButton = new Button();
 	private Button captureButton = new Button();
-	private Image image = new Image();
+	private Iframe image = new Iframe();
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true,false,true,false,false,false);
 	private boolean cancel = false;
 	private Textbox fileNameTextbox = new Textbox();
@@ -125,12 +131,26 @@ public class WImageDialog extends Window implements EventListener<Event>
 	private Div captureDiv;
 	private String defaultNameForCaptureImage = "CapturedImage";
 	private Button cancelCaptureButton;
-	
+	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
+	private boolean isUseEscForTabClosing = MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
+
+	private static List<String> autoPreviewList;
+
+	static {
+		autoPreviewList = new ArrayList<String>();
+		autoPreviewList.add("image/jpeg");
+		autoPreviewList.add("image/png");
+		autoPreviewList.add("image/gif");
+		autoPreviewList.add("image/tiff");
+		autoPreviewList.add("image/bmp");
+		autoPreviewList.add("image/x-icon");
+	}
+
 	/**
-	 *  Static Init
+	 *  Layout dialog
 	 *  @throws Exception
 	 */
-	void init() throws Exception
+	protected void init() throws Exception
 	{
 		this.setSclass("popup-dialog image-dialog");
 		this.setBorder("normal");
@@ -221,8 +241,10 @@ public class WImageDialog extends Window implements EventListener<Event>
 		
 		addEventListener(Events.ON_UPLOAD, this);
 		addEventListener("onSave", this);
+		addEventListener(Events.ON_CANCEL, e -> onCancel());
 	}   //  init
 
+	@Override
 	public void onEvent(Event e) throws Exception {
 		if (e instanceof UploadEvent) 
 		{
@@ -236,13 +258,15 @@ public class WImageDialog extends Window implements EventListener<Event>
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
-			cancel = true;
-			detach();
+			onCancel();
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_RESET))
 		{
 			AImage img = null;
 			image.setContent(img);
+			image.setClientAttribute("sandbox", "");
+			image.setVisible(true);
+			image.invalidate();
 			fileNameTextbox.setValue(null);
 		}
 		else if (e.getTarget() == captureButton)
@@ -251,10 +275,11 @@ public class WImageDialog extends Window implements EventListener<Event>
 			cancelCaptureButton.setVisible(true);
 			cancelCaptureButton.setEnabled(true);
 			mainLayout.setVisible(false);
-			String script = "var wgt = zk.Widget.$('#"+captureDiv.getUuid()+"');";
-			script = script + "var cancelBtn=zk.Widget.$('#"+cancelCaptureButton.getUuid()+"');";
+			String script = "(function(){let wgt = zk.Widget.$('#"+captureDiv.getUuid()+"');";
+			script = script + "let cancelBtn=zk.Widget.$('#"+cancelCaptureButton.getUuid()+"');";
 			script = script + "jq(wgt).photobooth(); ";
 			script = script + "jq(wgt).bind( 'image', function( event, dataUrl ){ cancelBtn.setVisible(false);zAu.send(new zk.Event(wgt, 'onCaptureImage', dataUrl, {toServer:true})); });";
+			script = script + "})()";
 			Clients.evalJavaScript(script);
 		}
 		else if (e.getName().equals("onCaptureImage"))
@@ -270,6 +295,9 @@ public class WImageDialog extends Window implements EventListener<Event>
 				byte[] imageData = Base64.decodeBase64(dataUrl.substring(contentStartIndex).getBytes());
 				AImage img = new AImage(defaultNameForCaptureImage, imageData);
 				image.setContent(img);
+				image.setClientAttribute("sandbox", "");
+				image.setVisible(true);
+				image.invalidate();
 				
 				if (m_mImage == null)
 					m_mImage = new MImage (Env.getCtx(), 0, null);
@@ -277,8 +305,8 @@ public class WImageDialog extends Window implements EventListener<Event>
 				m_mImage.setBinaryData(imageData);
 				fileNameTextbox.setValue(defaultNameForCaptureImage);
 			}
-			String script = "var wgt = zk.Widget.$('#"+captureDiv.getUuid()+"');";
-			script = script + "jq(wgt).data( 'photobooth').destroy(); ";
+			String script = "(function(){let wgt = zk.Widget.$('#"+captureDiv.getUuid()+"');";
+			script = script + "jq(wgt).data( 'photobooth').destroy();})() ";
 			Clients.evalJavaScript(script);
 		}
 		else if (e.getTarget() == cancelCaptureButton) 
@@ -286,8 +314,8 @@ public class WImageDialog extends Window implements EventListener<Event>
 			captureDiv.setVisible(false);
 			cancelCaptureButton.setVisible(false);
 			mainLayout.setVisible(true);
-			String script = "var wgt = zk.Widget.$('#"+captureDiv.getUuid()+"');";
-			script = script + "jq(wgt).data( 'photobooth').destroy(); ";
+			String script = "(function(){let wgt = zk.Widget.$('#"+captureDiv.getUuid()+"');";
+			script = script + "jq(wgt).data( 'photobooth').destroy();})() ";
 			Clients.evalJavaScript(script);
 		}
 		else if (e.getName().equals("onSave"))
@@ -300,6 +328,21 @@ public class WImageDialog extends Window implements EventListener<Event>
 		}
 	}
 
+	/**
+	 * Handle onCancel event
+	 */
+	private void onCancel() {
+		// do not allow to close tab for Events.ON_CTRL_KEY event
+		if(isUseEscForTabClosing)
+			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
+
+		cancel = true;
+		detach();
+	}
+
+	/**
+	 * Save changes
+	 */
 	private void onSave() {
 		if (image.getContent() != null)
 		{
@@ -323,19 +366,34 @@ public class WImageDialog extends Window implements EventListener<Event>
 		return cancel;
 	}
 
+	/**
+	 * Process uploaded image file
+	 * @param imageFile
+	 */
 	private void processUploadMedia(Media imageFile) {
 		if (imageFile == null)
 			return;
 
 		String fileName = imageFile.getName();
-		
+		String mimeType = MimeType.getMimeType(fileName);
+		if (! autoPreviewList.contains(mimeType))
+			throw new AdempiereException(Msg.getMsg(Env.getCtx(), "UploadImageTypeNotAllowed"));
+
 		//  See if we can load & display it
 		try
 		{
 			InputStream is = imageFile.getStreamData();
 			AImage aImage = new AImage(fileName, is);
-			
-			image.setContent(aImage);
+
+			if (autoPreviewList.contains(mimeType)) {
+				image.setContent(aImage);
+				image.setClientAttribute("sandbox", "");
+				image.setVisible(true);
+				image.invalidate();
+			} else {
+				image.setSrc(null);
+				image.setVisible(false);
+			}
 			
 			is.close();
 		}
@@ -362,7 +420,7 @@ public class WImageDialog extends Window implements EventListener<Event>
 
 	/**
 	 * 	Get Image ID
-	 *	@return ID or 0
+	 *	@return AD_Image_ID or 0
 	 */
 	public int getAD_Image_ID()
 	{
@@ -383,5 +441,12 @@ public class WImageDialog extends Window implements EventListener<Event>
 	 */
 	public void setDefaultNameForCaptureImage(String defaultNameForCaptureImage) {
 		this.defaultNameForCaptureImage = defaultNameForCaptureImage;
-	}	
+	}
+
+	@Override
+	public void focus() {
+		super.focus();
+		if (fileButton != null)
+			fileButton.focus();
+	}			
 }   //  WImageDialog

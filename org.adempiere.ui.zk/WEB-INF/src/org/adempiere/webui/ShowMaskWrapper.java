@@ -16,11 +16,14 @@ package org.adempiere.webui;
 
 import org.adempiere.webui.component.Mask;
 import org.adempiere.webui.part.UIPart;
+import org.zkoss.zk.au.out.AuScript;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Executions;
+import org.zkoss.zk.ui.util.Clients;
 
 /**
- * Helper class for any component want implement {@link ISupportMask}
- * Just make a instance of this class and let it do everything  
+ * Helper class for {@link ISupportMask} implementation.
+ * Just make a instance of this class and let it do everything.
  * @author hieplq
  *
  */
@@ -37,7 +40,7 @@ public class ShowMaskWrapper implements ISupportMask {
 	private Mask maskObj;
 	
 	/**
-	 * comp is component want implement this interface 
+	 * comp is component that implement ISupportMask 
 	 * @param comp
 	 */
 	public ShowMaskWrapper (Component comp){
@@ -73,7 +76,15 @@ public class ShowMaskWrapper implements ISupportMask {
 		if (maskObj != null || maskObj.getParent() != null){
 			// in same request, not yet call to show mask
 			if (!ShowMaskWrapper.hasFlagShowMask(comp)){
+				Component p = maskObj.getParent();
 				maskObj.detach();
+				if (p == comp) {
+					StringBuilder script = new StringBuilder("(function(){let w=zk.Widget.$('#");
+					script.append(p.getUuid()).append("');");
+					script.append("w.busy=null;");
+					script.append("})()");
+					Clients.response(new AuScript(script.toString()));
+				}
 			}
 		}
 	}
@@ -103,15 +114,17 @@ public class ShowMaskWrapper implements ISupportMask {
 	 * @param comp
 	 */
 	public static void setFlagShowMask (Component comp){
-		comp.setAttribute(ISupportMask.READY_SHOW_MASK_FLAG, Integer.valueOf(1), Component.REQUEST_SCOPE);
+		if(Executions.getCurrent() != null && Executions.getCurrent().getNativeRequest() != null)
+			comp.setAttribute(ISupportMask.READY_SHOW_MASK_FLAG, Integer.valueOf(1), Component.REQUEST_SCOPE);
 	}
 	
 	/**
-	 * check flag {@link ISupportMask#READY_SHOW_MASK_FLAG} ready in scope Component.REQUEST_SCOPE
+	 * check flag {@link ISupportMask#READY_SHOW_MASK_FLAG} exists in scope Component.REQUEST_SCOPE
 	 * @param comp
-	 * @return
+	 * @return true if flag exists
 	 */
 	public static boolean hasFlagShowMask (Component comp){
-		return (comp.getAttribute(ISupportMask.READY_SHOW_MASK_FLAG, Component.REQUEST_SCOPE) != null);
+		return (Executions.getCurrent() != null && Executions.getCurrent().getNativeRequest() != null) 
+				&& (comp.getAttribute(ISupportMask.READY_SHOW_MASK_FLAG, Component.REQUEST_SCOPE) != null);
 	}
 }

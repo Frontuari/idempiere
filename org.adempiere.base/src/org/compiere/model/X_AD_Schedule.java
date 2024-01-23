@@ -22,21 +22,64 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for AD_Schedule
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_Schedule")
+public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_Schedule (Properties ctx, int AD_Schedule_ID, String trxName)
     {
       super (ctx, AD_Schedule_ID, trxName);
       /** if (AD_Schedule_ID == 0)
+        {
+			setIsIgnoreProcessingTime (false);
+// N
+			setIsSystemSchedule (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Schedule (Properties ctx, int AD_Schedule_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_Schedule_ID, trxName, virtualColumns);
+      /** if (AD_Schedule_ID == 0)
+        {
+			setIsIgnoreProcessingTime (false);
+// N
+			setIsSystemSchedule (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Schedule (Properties ctx, String AD_Schedule_UU, String trxName)
+    {
+      super (ctx, AD_Schedule_UU, trxName);
+      /** if (AD_Schedule_UU == null)
+        {
+			setIsIgnoreProcessingTime (false);
+// N
+			setIsSystemSchedule (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Schedule (Properties ctx, String AD_Schedule_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_Schedule_UU, trxName, virtualColumns);
+      /** if (AD_Schedule_UU == null)
         {
 			setIsIgnoreProcessingTime (false);
 // N
@@ -53,7 +96,7 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
     }
 
     /** AccessLevel
-      * @return 4 - System 
+      * @return 4 - System
       */
     protected int get_AccessLevel()
     {
@@ -75,18 +118,19 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
     }
 
 	/** Set Schedule.
-		@param AD_Schedule_ID Schedule	  */
+		@param AD_Schedule_ID Schedule
+	*/
 	public void setAD_Schedule_ID (int AD_Schedule_ID)
 	{
-		if (AD_Schedule_ID < 1) 
+		if (AD_Schedule_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_Schedule_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_Schedule_ID, Integer.valueOf(AD_Schedule_ID));
 	}
 
 	/** Get Schedule.
 		@return Schedule	  */
-	public int getAD_Schedule_ID () 
+	public int getAD_Schedule_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Schedule_ID);
 		if (ii == null)
@@ -95,7 +139,8 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	}
 
 	/** Set AD_Schedule_UU.
-		@param AD_Schedule_UU AD_Schedule_UU	  */
+		@param AD_Schedule_UU AD_Schedule_UU
+	*/
 	public void setAD_Schedule_UU (String AD_Schedule_UU)
 	{
 		set_Value (COLUMNNAME_AD_Schedule_UU, AD_Schedule_UU);
@@ -103,15 +148,14 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 
 	/** Get AD_Schedule_UU.
 		@return AD_Schedule_UU	  */
-	public String getAD_Schedule_UU () 
+	public String getAD_Schedule_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_Schedule_UU);
 	}
 
 	/** Set Cron Scheduling Pattern.
-		@param CronPattern 
-		Cron pattern to define when the process should be invoked.
-	  */
+		@param CronPattern Cron pattern to define when the process should be invoked.
+	*/
 	public void setCronPattern (String CronPattern)
 	{
 		set_Value (COLUMNNAME_CronPattern, CronPattern);
@@ -120,15 +164,14 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Cron Scheduling Pattern.
 		@return Cron pattern to define when the process should be invoked.
 	  */
-	public String getCronPattern () 
+	public String getCronPattern()
 	{
 		return (String)get_Value(COLUMNNAME_CronPattern);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -137,15 +180,14 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Frequency.
-		@param Frequency 
-		Frequency of events
-	  */
+		@param Frequency Frequency of events
+	*/
 	public void setFrequency (int Frequency)
 	{
 		set_Value (COLUMNNAME_Frequency, Integer.valueOf(Frequency));
@@ -154,7 +196,7 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Frequency.
 		@return Frequency of events
 	  */
-	public int getFrequency () 
+	public int getFrequency()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Frequency);
 		if (ii == null)
@@ -164,16 +206,15 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 
 	/** FrequencyType AD_Reference_ID=221 */
 	public static final int FREQUENCYTYPE_AD_Reference_ID=221;
-	/** Minute = M */
-	public static final String FREQUENCYTYPE_Minute = "M";
-	/** Hour = H */
-	public static final String FREQUENCYTYPE_Hour = "H";
 	/** Day = D */
 	public static final String FREQUENCYTYPE_Day = "D";
+	/** Hour = H */
+	public static final String FREQUENCYTYPE_Hour = "H";
+	/** Minute = M */
+	public static final String FREQUENCYTYPE_Minute = "M";
 	/** Set Frequency Type.
-		@param FrequencyType 
-		Frequency of event
-	  */
+		@param FrequencyType Frequency of event
+	*/
 	public void setFrequencyType (String FrequencyType)
 	{
 
@@ -183,15 +224,14 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Frequency Type.
 		@return Frequency of event
 	  */
-	public String getFrequencyType () 
+	public String getFrequencyType()
 	{
 		return (String)get_Value(COLUMNNAME_FrequencyType);
 	}
 
 	/** Set Ignore Processing Time.
-		@param IsIgnoreProcessingTime 
-		Do not include processing time for the DateNextRun calculation
-	  */
+		@param IsIgnoreProcessingTime Do not include processing time for the DateNextRun calculation
+	*/
 	public void setIsIgnoreProcessingTime (boolean IsIgnoreProcessingTime)
 	{
 		set_Value (COLUMNNAME_IsIgnoreProcessingTime, Boolean.valueOf(IsIgnoreProcessingTime));
@@ -200,22 +240,21 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Ignore Processing Time.
 		@return Do not include processing time for the DateNextRun calculation
 	  */
-	public boolean isIgnoreProcessingTime () 
+	public boolean isIgnoreProcessingTime()
 	{
 		Object oo = get_Value(COLUMNNAME_IsIgnoreProcessingTime);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set System Schedule.
-		@param IsSystemSchedule 
-		Schedule Just For System
-	  */
+		@param IsSystemSchedule Schedule Just For System
+	*/
 	public void setIsSystemSchedule (boolean IsSystemSchedule)
 	{
 		set_Value (COLUMNNAME_IsSystemSchedule, Boolean.valueOf(IsSystemSchedule));
@@ -224,22 +263,21 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get System Schedule.
 		@return Schedule Just For System
 	  */
-	public boolean isSystemSchedule () 
+	public boolean isSystemSchedule()
 	{
 		Object oo = get_Value(COLUMNNAME_IsSystemSchedule);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Day of the Month.
-		@param MonthDay 
-		Day of the month 1 to 28/29/30/31
-	  */
+		@param MonthDay Day of the month 1 to 28/29/30/31
+	*/
 	public void setMonthDay (int MonthDay)
 	{
 		set_Value (COLUMNNAME_MonthDay, Integer.valueOf(MonthDay));
@@ -248,7 +286,7 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Day of the Month.
 		@return Day of the month 1 to 28/29/30/31
 	  */
-	public int getMonthDay () 
+	public int getMonthDay()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_MonthDay);
 		if (ii == null)
@@ -257,9 +295,8 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -268,7 +305,7 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -276,13 +313,14 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Run only on IP.
-		@param RunOnlyOnIP Run only on IP	  */
+		@param RunOnlyOnIP Run only on IP
+	*/
 	public void setRunOnlyOnIP (String RunOnlyOnIP)
 	{
 		set_Value (COLUMNNAME_RunOnlyOnIP, RunOnlyOnIP);
@@ -290,25 +328,24 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 
 	/** Get Run only on IP.
 		@return Run only on IP	  */
-	public String getRunOnlyOnIP () 
+	public String getRunOnlyOnIP()
 	{
 		return (String)get_Value(COLUMNNAME_RunOnlyOnIP);
 	}
 
 	/** ScheduleType AD_Reference_ID=318 */
 	public static final int SCHEDULETYPE_AD_Reference_ID=318;
-	/** Frequency = F */
-	public static final String SCHEDULETYPE_Frequency = "F";
-	/** Week Day = W */
-	public static final String SCHEDULETYPE_WeekDay = "W";
-	/** Month Day = M */
-	public static final String SCHEDULETYPE_MonthDay = "M";
 	/** Cron Scheduling Pattern = C */
 	public static final String SCHEDULETYPE_CronSchedulingPattern = "C";
+	/** Frequency = F */
+	public static final String SCHEDULETYPE_Frequency = "F";
+	/** Month Day = M */
+	public static final String SCHEDULETYPE_MonthDay = "M";
+	/** Week Day = W */
+	public static final String SCHEDULETYPE_WeekDay = "W";
 	/** Set Schedule Type.
-		@param ScheduleType 
-		Type of schedule
-	  */
+		@param ScheduleType Type of schedule
+	*/
 	public void setScheduleType (String ScheduleType)
 	{
 
@@ -318,15 +355,13 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Schedule Type.
 		@return Type of schedule
 	  */
-	public String getScheduleType () 
+	public String getScheduleType()
 	{
 		return (String)get_Value(COLUMNNAME_ScheduleType);
 	}
 
 	/** WeekDay AD_Reference_ID=167 */
 	public static final int WEEKDAY_AD_Reference_ID=167;
-	/** Sunday = 7 */
-	public static final String WEEKDAY_Sunday = "7";
 	/** Monday = 1 */
 	public static final String WEEKDAY_Monday = "1";
 	/** Tuesday = 2 */
@@ -339,10 +374,11 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	public static final String WEEKDAY_Friday = "5";
 	/** Saturday = 6 */
 	public static final String WEEKDAY_Saturday = "6";
+	/** Sunday = 7 */
+	public static final String WEEKDAY_Sunday = "7";
 	/** Set Day of the Week.
-		@param WeekDay 
-		Day of the Week
-	  */
+		@param WeekDay Day of the Week
+	*/
 	public void setWeekDay (String WeekDay)
 	{
 
@@ -352,7 +388,7 @@ public class X_AD_Schedule extends PO implements I_AD_Schedule, I_Persistent
 	/** Get Day of the Week.
 		@return Day of the Week
 	  */
-	public String getWeekDay () 
+	public String getWeekDay()
 	{
 		return (String)get_Value(COLUMNNAME_WeekDay);
 	}

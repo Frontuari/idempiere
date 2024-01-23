@@ -17,30 +17,44 @@
 package org.compiere.wf;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.compiere.model.PO;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutablePOSupport;
 import org.compiere.model.X_AD_WF_NextCondition;
 
 /**
- *	Workflow Transition Condition
+ *	Extended Workflow Transition Condition model for AD_WF_NextCondition
  *	
  *  @author Jorg Janke
  *  @version $Id: MWFNextCondition.java,v 1.3 2006/07/30 00:51:05 jjanke Exp $
  * 
- * @author Teo Sarca, SC ARHIPAC SERVICE SRL
+ *  @author Teo Sarca, SC ARHIPAC SERVICE SRL
  * 		<li>BF [ 1943720 ] WF Next Condition: handling boolean values is poor
  */
 public class MWFNextCondition extends X_AD_WF_NextCondition implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = 1694467559057544172L;
+	private static final long serialVersionUID = 3119863973003103716L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_WF_NextCondition_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MWFNextCondition(Properties ctx, String AD_WF_NextCondition_UU, String trxName) {
+        super(ctx, AD_WF_NextCondition_UU, trxName);
+    }
 
 	/**
 	 * 	Default Constructor
@@ -65,7 +79,7 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	}	//	MWFNextCondition
 	
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MWFNextCondition(MWFNextCondition copy) 
@@ -74,7 +88,7 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -84,7 +98,7 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -115,14 +129,42 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	 */
 	public boolean evaluate (MWFActivity activity)
 	{
-		if (getAD_Column_ID() == 0)
-			throw new IllegalStateException("No Column defined - " + this);
+		return evaluate(activity.getPO());
+	}	//	evaluate
+	
+	/**
+	 * 	Evaluate Condition
+	 * 	@param po PO
+	 *	@return true if true
+	 */
+	protected boolean evaluate (PO po)
+	{
+		if (getAD_Column_ID() == 0 && Util.isEmpty(getSQLStatement(), true))
+			throw new IllegalStateException("No Column and SQL Statement defined - " + this);
 			
-		PO po = activity.getPO();
 		if (po == null || po.get_ID() == 0)
 			throw new IllegalStateException("Could not evaluate " + po + " - " + this);
 		//
-		Object valueObj = po.get_ValueOfColumn(getAD_Column_ID());
+		if (getOperation().equals(OPERATION_Sql)) {
+			String sqlStatement = getSQLStatement();
+			if (Util.isEmpty(getSQLStatement(), true))
+				return false;
+			if (sqlStatement.indexOf("@") >= 0)
+				sqlStatement = Env.parseVariable(sqlStatement, po, po.get_TrxName(), false);
+			String result = DB.getSQLValueStringEx(po.get_TrxName(), sqlStatement);
+			return "true".equalsIgnoreCase(result) || "y".equalsIgnoreCase(result);
+		}
+		//
+		Object valueObj = null;
+		if (!Util.isEmpty(getSQLStatement(), true)) {
+			try {
+				valueObj = getColumnSQLValue(po);
+			} catch (SQLException e) {
+				throw new RuntimeException("Could not get result from column sql: " + getSQLStatement(), e);
+			}
+		} else {
+			valueObj = po.get_ValueOfColumn(getAD_Column_ID());
+		}		
 		if (valueObj == null)
 			valueObj = "";
 		String value1 = getDecodedValue(getValue(), po);	// F3P: added value decoding
@@ -133,8 +175,6 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 			value2 = "";
 		
 		String resultStr = "PO:{" + valueObj + "} " + getOperation() + " Condition:{" + value1 + "}";
-		if (getOperation().equals(OPERATION_Sql))
-			throw new IllegalArgumentException("SQL Operator not implemented yet: " + resultStr);
 		if (getOperation().equals(OPERATION_X))
 			resultStr += "{" + value2 + "}";
 
@@ -152,14 +192,14 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	}	//	evaluate
 	
 	/**
-	 * F3P: Decode value string, for each substring enclosed in @:
-	 *  COL= remaining value is interpreted as a column of the associated record
+	 * Decode value string.<br/>
+	 * If sValue start with @COL=, remaining text is interpreted as a column of the associated record.<br/>
+	 * Otherwise, parse sValue for context and PO variable (i.e resolve @tag@ variables).
 	 * 
 	 * @param sValue value to be decoded
-	 * @param PO model object bound to the activity
-	 * 
+	 * @param po PO model object bound to the activity
+	 * @return decoded value
 	 */
-	
 	protected String getDecodedValue(String sValue, PO po)
 	{		
 		String sRet = sValue;
@@ -185,9 +225,9 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	
 	/**
 	 * 	Compare Number
-	 *	@param valueObj comparator
+	 *	@param valueObj source value for comparison
 	 *	@param value1 first value
-	 *	@param value2 second value
+	 *	@param value2 second value for between comparison (OPERATION_X)
 	 *	@return true if operation
 	 */
 	private boolean compareNumber (Number valueObj, String value1, String value2)
@@ -260,9 +300,9 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	
 	/**
 	 * 	Compare String
-	 *	@param valueObj comparator
+	 *	@param valueObj source value for comparison
 	 *	@param value1S first value
-	 *	@param value2S second value
+	 *	@param value2S second value for between comparison (OPERATION_X)
 	 *	@return true if operation
 	 */
 	private boolean compareString (Object valueObj, String value1S, String value2S)
@@ -302,9 +342,9 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	
 	/**
 	 * 	Compare Boolean
-	 *	@param valueObj comparator
+	 *	@param valueObj source value for comparison
 	 *	@param value1S first value
-	 *	@param value2S second value
+	 *	@param value2S ignore
 	 *	@return true if operation
 	 */
 	private boolean compareBoolean (Boolean valueObj, String value1S, String value2S)
@@ -326,6 +366,7 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder ("MWFNextCondition[");
@@ -342,5 +383,40 @@ public class MWFNextCondition extends X_AD_WF_NextCondition implements Immutable
 		makeImmutable();
 		return this;
 	}
+	
+	/**
+	 * Get value from Column SQL (SQLStatement) instead of from AD_Column_ID
+	 * @param po
+	 * @return Value from Column SQL
+	 * @throws SQLException 
+	 */
+	private Object getColumnSQLValue(PO po) throws SQLException {
+		String columnSQL = getSQLStatement();
+		if (columnSQL.indexOf("@") >= 0) {
+			columnSQL = Env.parseVariable(columnSQL, po, po.get_TrxName(), false);
+		}
+		String tableName = po.get_TableName();
+		String pkName = po.get_KeyColumns() != null && po.get_KeyColumns().length==1 ? po.get_KeyColumns()[0] : po.getUUIDColumnName();
 
+		String resultSql = String.format("SELECT (%s) FROM %s WHERE %s = ?", columnSQL, tableName, pkName);
+
+		try (PreparedStatement pstmt = DB.prepareStatement(resultSql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, po.get_TrxName())) {
+			if (pkName.endsWith("_UU"))
+				pstmt.setString(1, po.get_ValueAsString(po.getUUIDColumnName()));				
+			else
+				pstmt.setInt(1, po.get_ID());
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next())
+				return rs.getObject(1);
+		}
+		return null;
+	}
+
+	@Override
+	protected boolean beforeSave(boolean newRecord) {
+		if (!Util.isEmpty(getSQLStatement(), true)) {
+			setAD_Column_ID(0);
+		}
+		return true;
+	}	 
 }	//	MWFNextCondition

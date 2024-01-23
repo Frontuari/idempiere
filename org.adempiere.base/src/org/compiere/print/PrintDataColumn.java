@@ -30,6 +30,7 @@ public class PrintDataColumn
 	/**
 	 * 	Print Data Column
 	 *
+	 *  @param AD_PrintFormatItem_ID
 	 * 	@param AD_Column_ID Column
 	 * 	@param columnName Column Name
 	 * 	@param displayType Display Type
@@ -38,8 +39,9 @@ public class PrintDataColumn
 	 *  @param isPageBreak if true force page break after function
 	 *  @param foreignColumnName name foreign
 	 */
-	public PrintDataColumn(int AD_Column_ID, String columnName,int displayType, int columnSize,String alias, boolean isPageBreak, String foreignColumnName) 
+	public PrintDataColumn(int AD_PrintFormatItem_ID, int AD_Column_ID, String columnName,int displayType, int columnSize,String alias, boolean isPageBreak, String foreignColumnName) 
 	{
+		m_AD_PrintFormatItem_ID = AD_PrintFormatItem_ID;
 		m_AD_Column_ID = AD_Column_ID;
 		m_columnName = columnName;
 		//
@@ -53,11 +55,12 @@ public class PrintDataColumn
 		m_foreignColumnName = foreignColumnName;
 	}
 
-	public PrintDataColumn (int AD_Column_ID, String columnName,int displayType, int columnSize,String alias, boolean isPageBreak)
+	public PrintDataColumn (int AD_PrintFormatItem_ID, int AD_Column_ID, String columnName,int displayType, int columnSize,String alias, boolean isPageBreak)
 	{
-		this(AD_Column_ID, columnName, displayType, columnSize, alias, isPageBreak, null);
+		this(AD_PrintFormatItem_ID, AD_Column_ID, columnName, displayType, columnSize, alias, isPageBreak, null);
 	}	//	PrintDataColumn
 	
+	private int 		m_AD_PrintFormatItem_ID;
 	private int			m_AD_Column_ID;
 	private String		m_columnName;
 	private String		m_foreignColumnName;
@@ -66,9 +69,19 @@ public class PrintDataColumn
 	private String		m_alias;
 	private boolean		m_pageBreak;
 	private String      m_FormatPattern;
+	private String		m_PrintFormatType;
 
 	/*************************************************************************/
 
+	/**
+	 * 
+	 * @return AD_PrintFormatItem_ID
+	 */
+	public int getAD_PrintFormatItem_ID() 
+	{
+		return m_AD_PrintFormatItem_ID;
+	}
+	
 	/**
 	 * 	Get AD_Column_ID
 	 * 	@return AD_Column_ID
@@ -143,7 +156,8 @@ public class PrintDataColumn
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder("PrintDataColumn[");
-		sb.append("ID=").append(m_AD_Column_ID)
+		sb.append("AD_PrintFormatItem_ID=").append(m_AD_PrintFormatItem_ID);
+		sb.append(",AD_Column_ID=").append(m_AD_Column_ID)
 			.append("-").append(m_columnName);
 		if (hasAlias())
 			sb.append("(").append(m_alias).append(")");
@@ -159,6 +173,14 @@ public class PrintDataColumn
 	
 	public String getFormatPattern() {
 		return m_FormatPattern;
+	}
+
+	public String getPrintFormatType() {
+		return m_PrintFormatType;
+	}
+
+	public void setPrintFormatType(String m_PrintFormatType) {
+		this.m_PrintFormatType = m_PrintFormatType;
 	}
 
 }	//	PrintDataColumn

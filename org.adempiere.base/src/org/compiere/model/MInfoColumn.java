@@ -29,6 +29,7 @@ import org.compiere.util.Evaluatee;
 import org.compiere.util.Evaluator;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.idempiere.cache.ImmutablePOSupport;
 
 /**
  * 	Info Window Column Model
@@ -36,12 +37,22 @@ import org.compiere.util.Util;
  *  @author Jorg Janke
  *  @version $Id: MInfoColumn.java,v 1.2 2006/07/30 00:51:03 jjanke Exp $
  */
-public class MInfoColumn extends X_AD_InfoColumn implements IInfoColumn
+public class MInfoColumn extends X_AD_InfoColumn implements IInfoColumn, ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = -6313260451237775302L;
+	private static final long serialVersionUID = 3909164419255524834L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_InfoColumn_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MInfoColumn(Properties ctx, String AD_InfoColumn_UU, String trxName) {
+        super(ctx, AD_InfoColumn_UU, trxName);
+    }
 
 	/**
 	 * 	Stanfard Constructor
@@ -65,6 +76,9 @@ public class MInfoColumn extends X_AD_InfoColumn implements IInfoColumn
 		super (ctx, rs, trxName);
 	}	//	MInfoColumn
 
+	/**
+	 * @param targetInfoWindow
+	 */
 	public MInfoColumn(MInfoWindow targetInfoWindow) {
 		this(targetInfoWindow.getCtx(), 0, targetInfoWindow.get_TrxName());
 		m_parent = targetInfoWindow;
@@ -99,18 +113,28 @@ public class MInfoColumn extends X_AD_InfoColumn implements IInfoColumn
 	/**
 	 * check column read access
 	 * @param tableInfos
-	 * @return false if current role don't have read access to the column, false otherwise
+	 * @return false if current role don't have read access to the column, true otherwise
 	 */
 	public boolean isColumnAccess(TableInfo[] tableInfos)
 	{
+		String synonym = null;
+		String column = null;
 		int index = getSelectClause().indexOf(".");
 		if (index == getSelectClause().lastIndexOf(".") && index >= 0)
 		{
-			String synonym = getSelectClause().substring(0, index);
-			String column = getSelectClause().substring(index+1);
+			synonym = getSelectClause().substring(0, index);
+			column = getSelectClause().substring(index+1);
+		}
+		else if (tableInfos.length == 1)
+		{
+			synonym = Util.isEmpty(tableInfos[0].getSynonym(), true) ? tableInfos[0].getTableName() : tableInfos[0].getSynonym();
+			column = getSelectClause();
+		}
+		if (!Util.isEmpty(synonym, true) && !Util.isEmpty(column, true))
+		{
 			for(TableInfo tableInfo : tableInfos)
 			{
-				if (tableInfo.getSynonym() != null && tableInfo.getSynonym().equals(synonym))
+				if ((!Util.isEmpty(tableInfo.getSynonym(),true) && tableInfo.getSynonym().equals(synonym)) || (Util.isEmpty(tableInfo.getSynonym(),true) && tableInfo.getTableName().equals(synonym)))
 				{
 					String tableName = tableInfo.getTableName();
 					MTable mTable = MTable.get(Env.getCtx(), tableName);
@@ -134,7 +158,7 @@ public class MInfoColumn extends X_AD_InfoColumn implements IInfoColumn
 	/**
 	 * @param ctx
 	 * @param windowNo
-	 * @return boolean
+	 * @return true if visible, false otherwise
 	 */
 	public boolean isDisplayed(final Properties ctx, final int windowNo) {
 		if (!isDisplayed())
@@ -177,6 +201,13 @@ public class MInfoColumn extends X_AD_InfoColumn implements IInfoColumn
 			setSeqNoSelection(next);
 		}
 
+		if (!isQueryCriteria()) {
+			if (isQueryAfterChange())
+				setIsQueryAfterChange(false);
+			if (isMandatory())
+				setIsMandatory(false);
+		}
+		
 		return true;
 	}
 	
@@ -201,9 +232,11 @@ public class MInfoColumn extends X_AD_InfoColumn implements IInfoColumn
 	}
 	
 	/**
+	 * <pre>
 	 * when delete record, call valid from parent to set state
 	 * when delete all, valid state is false
 	 * when delete a wrong column can make valid state to true
+	 * </pre>
 	 */
 	@Override
 	protected boolean afterDelete(boolean success) {
@@ -225,5 +258,17 @@ public class MInfoColumn extends X_AD_InfoColumn implements IInfoColumn
 	@Override
 	public I_AD_Val_Rule getAD_Val_Rule() throws RuntimeException {
 		return MValRule.getCopy(getCtx(), getAD_Val_Rule_ID(), get_TrxName());
+	}
+
+	@Override
+	public PO markImmutable() {
+		if (is_Immutable())
+			return this;
+		
+		makeImmutable();
+		if (m_parent != null && !m_parent.is_Immutable())
+			m_parent.markImmutable();
+		
+		return this;
 	}
 }	//	MInfoColumn

@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for M_Product_Category
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_M_Product_Category 
 {
@@ -59,8 +59,8 @@ public interface I_M_Product_Category
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -68,12 +68,12 @@ public interface I_M_Product_Category
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -223,12 +223,14 @@ public interface I_M_Product_Category
     public static final String COLUMNNAME_PlannedMargin = "PlannedMargin";
 
 	/** Set Planned Margin %.
-	  * Project's planned margin as a percentage
+	  * Project&#039;
+s planned margin as a percentage
 	  */
 	public void setPlannedMargin (BigDecimal PlannedMargin);
 
 	/** Get Planned Margin %.
-	  * Project's planned margin as a percentage
+	  * Project&#039;
+s planned margin as a percentage
 	  */
 	public BigDecimal getPlannedMargin();
 

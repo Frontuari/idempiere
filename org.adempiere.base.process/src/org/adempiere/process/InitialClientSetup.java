@@ -36,6 +36,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.Adempiere;
 import org.compiere.model.MCity;
 import org.compiere.model.MCurrency;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MSetup;
 import org.compiere.model.MSysConfig;
 import org.compiere.print.PrintUtil;
@@ -54,6 +55,7 @@ import org.compiere.util.Util;
  *  @author Carlos Ruiz
  *    [ 2598506 ] FR - Implement Initial Client Setup
  */
+@org.adempiere.base.annotation.Process
 public class InitialClientSetup extends SvrProcess
 {
 	
@@ -161,7 +163,7 @@ public class InitialClientSetup extends SvrProcess
 			else if (name.equals("NormalUserEmail"))
 				p_NormalUserEmail = (String) para[i].getParameter();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}
 
@@ -215,14 +217,20 @@ public class InitialClientSetup extends SvrProcess
 
 		// Validate Uniqueness of client and users name
 		//	Unique Client Name
-		if (DB.executeUpdate("UPDATE AD_Client SET CreatedBy=0 WHERE Name=?", new Object[] {p_ClientName}, false, null) != 0)
-			throw new AdempiereException("@" + Msg.getMsg(Env.getCtx(), "NotUnique") + "@ " + p_ClientName);
+		if (DB.getSQLValueEx(null, "SELECT COUNT(*) FROM AD_Client WHERE Name=?", p_ClientName) != 0)
+			throw new AdempiereException(Msg.parseTranslation(getCtx(), "@NotUnique@ @ClientName@ = " + p_ClientName));
+
+		if (DB.getSQLValueEx(null, "SELECT COUNT(*) FROM AD_Client WHERE Value=?", p_ClientName) != 0)
+			throw new AdempiereException(Msg.parseTranslation(getCtx(), "@NotUnique@ @ClientValue@ = " + p_ClientName));
+
+		if (DB.getSQLValueEx(null, "SELECT COUNT(*) FROM AD_Client WHERE LoginPrefix=?", p_ClientName) != 0)
+			throw new AdempiereException(Msg.parseTranslation(getCtx(), "@NotUnique@ @LoginPrefix@ = " + p_ClientName));
 
 		//	Unique User Names
-		if (DB.executeUpdate("UPDATE AD_User SET CreatedBy=0 WHERE Name=?", new Object[] {p_AdminUserName}, false, null) != 0)
-			throw new AdempiereException("@" + Msg.getMsg(Env.getCtx(), "NotUnique") + "@ " + p_AdminUserName);
-		if (DB.executeUpdate("UPDATE AD_User SET CreatedBy=0 WHERE Name=?", new Object[] {p_NormalUserName}, false, null) != 0)
-			throw new AdempiereException("@" + Msg.getMsg(Env.getCtx(), "NotUnique") + "@ " + p_NormalUserName);
+		if (DB.getSQLValueEx(null, "SELECT COUNT(*) FROM AD_User WHERE Name=?", p_AdminUserName) != 0)
+			throw new AdempiereException(Msg.parseTranslation(getCtx(), "@NotUnique@ @AdminUserName@ = " + p_AdminUserName));
+		if (DB.getSQLValueEx(null, "SELECT COUNT(*) FROM AD_User WHERE Name=?", p_NormalUserName) != 0)
+			throw new AdempiereException(Msg.parseTranslation(getCtx(), "@NotUnique@ @NormalUserName@ = " + p_NormalUserName));
 
 		// City_ID overrides CityName if both used
 		if (p_C_City_ID > 0) {
@@ -279,13 +287,13 @@ public class InitialClientSetup extends SvrProcess
 				p_IsUseProductDimension, p_IsUseBPDimension, p_IsUseProjectDimension, p_IsUseCampaignDimension, p_IsUseSalesRegionDimension, p_IsUseActivityDimension,
 				coaFile, p_UseDefaultCoA, p_InactivateDefaults)) {
 				ms.rollback();
-				throw new AdempiereException("@" + Msg.getMsg(Env.getCtx(), "AccountSetupError")+ "@");
+				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "AccountSetupError"));
 			}
 
 			//  Generate Entities
 			if (!ms.createEntities(p_C_Country_ID, p_CityName, p_C_Region_ID, p_C_Currency_ID, p_Postal, p_Address1)) {
 				ms.rollback();
-				throw new AdempiereException("@" +  Msg.getMsg(Env.getCtx(), "AccountSetupError") + "@");
+				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "AccountSetupError"));
 			}
 			addLog(ms.getInfo());
 

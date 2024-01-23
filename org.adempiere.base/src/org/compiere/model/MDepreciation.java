@@ -18,19 +18,33 @@ import org.idempiere.fa.exceptions.AssetNotSupportedException;
 import org.idempiere.fa.service.api.DepreciationDTO;
 import org.idempiere.fa.service.api.IDepreciationMethod;
 
-
 /**
- * Depreciation Engine (eg. SL, ARH_VAR ...)
+ * Depreciation Method (eg. SL, ARH_VAR ...).
+ * Note that only SL (straight line) method have been implemented.
  * @author Teo Sarca, SC ARHIPAC SERVICE SRL
  */
 public class MDepreciation extends X_A_Depreciation implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id 
 	 */
 	private static final long serialVersionUID = -4366354698409595086L;
 
-	/** Standard Constructor */
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param A_Depreciation_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MDepreciation(Properties ctx, String A_Depreciation_UU, String trxName) {
+        super(ctx, A_Depreciation_UU, trxName);
+    }
+
+	/**
+	 * @param ctx
+	 * @param A_Depreciation_ID
+	 * @param trxName
+	 */
 	public MDepreciation (Properties ctx, int A_Depreciation_ID, String trxName)
 	{
 		super (ctx, A_Depreciation_ID, trxName);
@@ -47,7 +61,7 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	}	//	MDepreciation
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MDepreciation(MDepreciation copy) 
@@ -56,7 +70,7 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -66,7 +80,7 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -88,9 +102,12 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	/** The accuracy of calculation on depreciation */
 	private final static int m_precision = 2;
 		
-	/* Constrants */
+	/* 12 month */
 	private static final BigDecimal BD_12 = BigDecimal.valueOf(12);
 	
+	/**
+	 * @param depr
+	 */
 	private static void addToCache(MDepreciation depr)
 	{
 		if (depr == null)
@@ -174,7 +191,7 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	}
 	
 	/**
-	 * Needs to be adjusted in last month's amortization 
+	 * @return true if needs to be adjusted in last month's amortization 
 	 */
 	public boolean requireLastPeriodAdjustment()
 	{
@@ -183,10 +200,11 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 
 	/**
 	 * Calculate the value of depreciation over time
-	 * @param assetwk -  Fixed Assets worksheet
+	 * @param assetwk -  Depreciation work sheet
 	 * @param assetAcct - FA default accounting elements
 	 * @param A_Current_Period - current period
 	 * @param Accum_Dep accumulated depreciation until present period
+	 * @param depreciationMethod
 	 * @return amortized value
 	 */
 	public BigDecimal invoke(MDepreciationWorkfile assetwk, MAssetAcct assetAcct,
@@ -194,8 +212,6 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	{
 		String depreciationType = getDepreciationType();
 		BigDecimal retValue = null;
-		//~ int offset = getFixMonthOffset();
-		//~ A_Current_Period += offset;
 		
 		if(CLogMgt.isLevelFinest())
 		{
@@ -227,7 +243,8 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 			depreciationDTO.scale = getPrecision();
 			// calculate expense use implement of IDepreciationMethod
 			retValue = depreciationMethod.caclulateDepreciation(depreciationDTO);
-		}else if (depreciationType.equalsIgnoreCase("SL"))
+		}
+		else if (depreciationType.equalsIgnoreCase("SL"))
 		{
 			retValue = apply_SL(assetwk, assetAcct, A_Current_Period, Accum_Dep);
 		}
@@ -263,16 +280,17 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	}	//	invoke
 
 	/**
-	 * Check if the method can be invoked to give parameters
+	 * Check if the method can be invoked to give parameters. <br/>
+	 * Not fully implemented - always return true now.
 	 * @param	assetwk
 	 * @param	assetAcct
 	 * @param	A_Current_Period	between 0 to UseLifeMonths - 1
 	 * @param	Accum_Dep
+	 * @return true if can invoke depreciation
 	 */
 	public boolean canInvoke(MDepreciationWorkfile assetwk, MAssetAcct assetAcct,
 								int A_Current_Period, BigDecimal Accum_Dep)
 	{
-		//~ MDepreciationWorkfile wk = MDepreciationWorkfile.get(getCtx(), A_Asset_ID, PostingType);
 		if (assetwk == null)
 		{
 			log.warning("@NotFound@ @A_Depreciation_Workfile_ID@");
@@ -288,13 +306,11 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	}	//	canInvoke
 
 	/**
-	 * Without depreciation
-	 * @param A_Asset_ID			Assets IDs	(ignored)
-	 * @param A_Current_Period		current period (in months, between 0 and UseLifeMonths - 1)	(ignored)
-	 * @param PostingType			posting type (eg. A - Actual, S - Statistics ...)	(ignored)
-	 * @param A_Asset_Acct_ID		FA accounting IDs (see table A_Asset_Acct)	(ignored)
-	 * @param Accum_Dep				Accumulated depreciation from this method	(ignored)
-	 * @return Env.ZERO
+	 * @param wk
+	 * @param assetAcct
+	 * @param A_Current_Period
+	 * @param Accum_Dep
+	 * @return always return 0
 	 */
 	private BigDecimal apply_ARH_ZERO (MDepreciationWorkfile wk, MAssetAcct assetAcct,
 										int A_Current_Period, BigDecimal Accum_Dep)
@@ -302,13 +318,13 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 		return Env.ZERO;
 	}
 
-	/** Linear depreciation regime 
-	 *	@param A_Asset_ID			Assets IDs
-	 *	@param A_Current_Period		current period (in months, between 0 and UseLifeMonths - 1)
-	 *	@param PostingType			posting type (eg. A - Actual, S - Statistics ...)
-	 *	@param A_Asset_Acct_ID		FA accounting IDs  (see table A_Asset_Acct)
-	 *	@param Accum_Dep			Accumulated depreciation from this method
-	 *	@return depreciation for the current month
+	/** 
+	 *  Linear depreciation regime 
+	 *	@param wk Depreciation work sheet
+	 *	@param assetAcct Asset account
+	 *	@param A_Current_Period current period
+	 *	@param Accum_Dep Accumulated depreciation
+	 *	@return depreciation for current period
 	 */
 	private BigDecimal apply_SL (MDepreciationWorkfile wk, MAssetAcct assetAcct,
 									int A_Current_Period, BigDecimal Accum_Dep)
@@ -328,18 +344,17 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 
 	/**
 	 * Accelerated depreciation regime
-	 *	@param A_Current_Period		current period (in months, between 0 and UseLifeMonths - 1)
-	 *	@param PostingType			posting type (eg. A - Actual, S - Statistics ...)
-	 *	@param A_Asset_Acct_ID		FA accounting IDs  (see table A_Asset_Acct)
-	 *	@param Accum_Dep			Accumulated depreciation from this method
-	 *	@return depreciation for the current month
+	 * @param wk
+	 * @param acct
+	 * @param A_Current_Period
+	 * @param Accum_Dep
+	 * @return depreciation for current period
 	 */
 	private BigDecimal apply_ARH_VAR (MDepreciationWorkfile wk, MAssetAcct acct,
 										int A_Current_Period, BigDecimal Accum_Dep)
 	{
 		BigDecimal amt = wk.getActualCost();
 		BigDecimal varPercent = acct.getA_Depreciation_Variable_Perc(wk.isFiscal()).setScale(getPrecision(), RoundingMode.HALF_UP);
-		//~ int lifePeriods = wk.getUseLifeMonths(wk.isFiscal());
 		BigDecimal assetExp = BigDecimal.ZERO;
 		
 		// First time in first year
@@ -366,19 +381,17 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 	}
 	
 
-	/** Digressive depreciation regime (AD1)
-	 *	@param A_Current_Period		current period (in months, between 0 and UseLifeMonths - 1)
-	 *	@param PostingType			posting type (eg. A - Actual, S - Statistics ...)
-	 *	@param A_Asset_Acct_ID		FA accounting IDs  (see table A_Asset_Acct)
-	 *	@param Accum_Dep			Accumulated depreciation from this method
-	 *	@return depreciation for the current month
-	 *	TODO	RE TEST IT!
+	/** 
+	 * Digressive depreciation regime (AD1)
+	 * @param wk
+	 * @param assetAcct
+	 * @param A_Current_Period
+	 * @param Accum_Dep	Accumulated depreciation
+	 * @return depreciation for current period
+	 * TODO	RE TEST IT!
 	 */
 	private BigDecimal apply_ARH_AD1(MDepreciationWorkfile wk, MAssetAcct assetAcct, int A_Current_Period,BigDecimal Accum_Dep)
 	{
-		//~ /** Current Worksheet */
-		//~ MDepreciationWorkfile wk = MDepreciationWorkfile.get(getCtx(), A_Asset_ID, PostingType);
-		
 		/** FAs' value = acquisition value - the amount recovered */
 		BigDecimal assetAmt = wk.getActualCost();
 		/** Life in months */
@@ -387,29 +400,16 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 		int A_Current_Year = (int)(A_Current_Period / 12);
 		/** Life in years = integer part of (the life in months / 12) => first year will be 0 */
 		int A_Life_Year = (int)(A_Life_Period / 12);
-		//~ /** Number of years of use remaining (including current year) */
-		//~ int A_RemainingLife_Year = A_Life_Year - A_Current_Year;
-		
-		
-		/** Coefficient K */
-		/* @win : looks like a country specific requirement
-		BigDecimal coef_K = get_AD_K(A_Life_Year);
-		*/
 		
 		/** Linear damping coefficient for one year = 1 / total number of years */
 		BigDecimal coef_sl = BigDecimal.ONE.divide(new BigDecimal(A_Life_Year), getPrecision() + 2, RoundingMode.DOWN);
-		/** Degressive damping coefficient for one year = one-year linear depreciation * coeficient K */
-		//BigDecimal coef_ad1 = coef_sl.multiply(coef_K); //commented by @win
+		/** Degressive damping coefficient for one year = one-year linear depreciation * coefficient K */
 		BigDecimal coef_ad1 = coef_sl.multiply(BigDecimal.valueOf(2.0)); //added by @win
-		
-		/** AD2 */
-		//~ BigDecimal DUR = BD_100.multiply(
 		
 		// logging
 		if (log.isLoggable(Level.FINE))  {
 			log.fine("assetAmt=" + assetAmt + ", A_Life_Period=" + A_Life_Period);
 			log.fine("A_Current_Year=" + A_Current_Year + ", A_Life_Year=" + A_Life_Year);
-			//log.fine("coef_K=" + coef_K + ", coef_sl=" + coef_sl + ", coef_ad1=" + coef_ad1); //commented out by @win
 		}
 		
 		/** Depreciation for the current year, is calculated below */
@@ -470,31 +470,8 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 		throw new AssetNotImplementedException("AD2");
 	}
 	
-	/** For depreciation regime skimmed returns coefficient K depending on the life of FAs
-	 *	@param A_Life_Year	life in years
-	 *	@return coeficient K degressive method for
-	 *	@see #apply_ARH_AD1(int, int, String, int, BigDecimal)
-	 */
-	/*private static BigDecimal get_AD_K(int A_Life_Year)
-	{
-		if (A_Life_Year < 2) {
-			throw new IllegalArgumentException("@A_Life_Year@ = " + A_Life_Year + " < 2");
-		}
-		// A_Life_Year in [2, 5]
-		else if (A_Life_Year <= 5) {
-			return new BigDecimal(1.5);
-		}
-		// A_Life_Year in (5, 10]
-		else if (A_Life_Year <= 10) {
-			return new BigDecimal(2.0);
-		}
-		// A_Life_Year in (10, infinit)
-		else {
-			return new BigDecimal(2.5);
-		}
-	}*/
-	
-	/** Calculate the value of depreciation over a month (period). In the last month of the year we add errors from the adjustment calculation
+	/** 
+	 *  Calculate the value of depreciation over a month (period). In the last month of the year we add errors from the adjustment calculation.
 	 *	@param A_Current_Period		current month's index
 	 *	@param amtPerYear			value of depreciation per year
 	 *	@return rounded value to the nearest month/decimal getPrecision ()
@@ -520,6 +497,9 @@ public class MDepreciation extends X_A_Depreciation implements ImmutablePOSuppor
 		return assetExp;
 	}
 
+	/**
+	 * @return always return 0
+	 */
 	public int getFixMonthOffset() {
 		// IDEMPIERE-197 Stabilize Fixed Assets
 		// MDepreciationWorkfile is requiring this missing column

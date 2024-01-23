@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import org.compiere.model.MInventory;
 import org.compiere.model.MInventoryLine;
 import org.compiere.model.MInventoryLineMA;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereSystemError;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -40,6 +41,7 @@ import org.compiere.util.Env;
  *  @author Jorg Janke
  *  @version $Id: InventoryCountCreate.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class InventoryCountCreate extends SvrProcess
 {
 	
@@ -92,7 +94,7 @@ public class InventoryCountCreate extends SvrProcess
 			else if (name.equals("DeleteOld"))
 				p_DeleteOld = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_M_Inventory_ID = getRecord_ID();
 	}	//	prepare
@@ -138,10 +140,10 @@ public class InventoryCountCreate extends SvrProcess
 			StringBuilder sql = new StringBuilder("INSERT INTO M_StorageOnHand ");
 								sql.append("(AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy,");
 								sql.append(" M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID,");
-								sql.append(" QtyOnHand, DateLastInventory) ");
+								sql.append(" QtyOnHand, DateLastInventory, DateMaterialPolicy, M_StorageOnHand_UU) ");
 								sql.append("SELECT l.AD_CLIENT_ID, l.AD_ORG_ID, 'Y', getDate(), 0,getDate(), 0,");
 								sql.append(" l.M_Locator_ID, p.M_Product_ID, 0,");
-								sql.append(" 0,null ");
+								sql.append(" 0,null,trunc(getdate()),generate_uuid() ");
 								sql.append("FROM M_Locator l");
 								sql.append(" INNER JOIN M_Product p ON (l.AD_Client_ID=p.AD_Client_ID) ");
 								sql.append("WHERE l.M_Warehouse_ID=");
@@ -194,7 +196,6 @@ public class InventoryCountCreate extends SvrProcess
 			   .append(" AND il.M_Product_ID=s.M_Product_ID")
 			   .append(" AND il.M_Locator_ID=s.M_Locator_ID")
 			   .append(" AND COALESCE(il.M_AttributeSetInstance_ID,0)=COALESCE(s.M_AttributeSetInstance_ID,0))");
-		//	+ " AND il.M_AttributeSetInstance_ID=s.M_AttributeSetInstance_ID)");
 		//
 		sql.append(" ORDER BY l.Value, p.Value, s.M_AttributeSetInstance_ID, s.DateMaterialPolicy, s.QtyOnHand DESC");	//	Locator/Product
 		//
@@ -368,7 +369,7 @@ public class InventoryCountCreate extends SvrProcess
 	 * @param productCategoryId
 	 * @param categories
 	 * @param loopIndicatorId
-	 * @return comma seperated list of category ids
+	 * @return comma separated list of category ids
 	 * @throws AdempiereSystemError if a loop is detected
 	 */
 	private String getSubCategoriesString(int productCategoryId, Vector<SimpleTreeNode> categories, int loopIndicatorId) throws AdempiereSystemError {

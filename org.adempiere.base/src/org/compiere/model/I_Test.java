@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for Test
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_Test 
 {
@@ -35,9 +35,9 @@ public interface I_Test
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
 
-    /** AccessLevel = 4 - System 
+    /** AccessLevel = 7 - System - Client - Org 
      */
-    BigDecimal accessLevel = BigDecimal.valueOf(4);
+    BigDecimal accessLevel = BigDecimal.valueOf(7);
 
     /** Load Meta Data */
 
@@ -55,8 +55,8 @@ public interface I_Test
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -64,14 +64,29 @@ public interface I_Test
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
+
+    /** Column name AD_Table_ID */
+    public static final String COLUMNNAME_AD_Table_ID = "AD_Table_ID";
+
+	/** Set Table.
+	  * Database Table information
+	  */
+	public void setAD_Table_ID (int AD_Table_ID);
+
+	/** Get Table.
+	  * Database Table information
+	  */
+	public int getAD_Table_ID();
+
+	public org.compiere.model.I_AD_Table getAD_Table() throws RuntimeException;
 
     /** Column name BinaryData */
     public static final String COLUMNNAME_BinaryData = "BinaryData";
@@ -89,12 +104,12 @@ public interface I_Test
     /** Column name C_BPartner_ID */
     public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
 
-	/** Set Business Partner .
+	/** Set Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public void setC_BPartner_ID (int C_BPartner_ID);
 
-	/** Get Business Partner .
+	/** Get Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public int getC_BPartner_ID();
@@ -303,6 +318,28 @@ public interface I_Test
 	/** Get Process Now	  */
 	public boolean isProcessing();
 
+    /** Column name Record_ID */
+    public static final String COLUMNNAME_Record_ID = "Record_ID";
+
+	/** Set Record ID.
+	  * Direct internal record ID
+	  */
+	public void setRecord_ID (int Record_ID);
+
+	/** Get Record ID.
+	  * Direct internal record ID
+	  */
+	public int getRecord_ID();
+
+    /** Column name Record_UU */
+    public static final String COLUMNNAME_Record_UU = "Record_UU";
+
+	/** Set Record UUID	  */
+	public void setRecord_UU (String Record_UU);
+
+	/** Get Record UUID	  */
+	public String getRecord_UU();
+
     /** Column name T_Amount */
     public static final String COLUMNNAME_T_Amount = "T_Amount";
 
@@ -348,6 +385,19 @@ public interface I_Test
 	/** Get Test_UU	  */
 	public String getTest_UU();
 
+    /** Column name TestVirtualQty */
+    public static final String COLUMNNAME_TestVirtualQty = "TestVirtualQty";
+
+	/** Set Virtual Quantity.
+	  * Used only for testing purposes
+	  */
+	public void setTestVirtualQty (BigDecimal TestVirtualQty);
+
+	/** Get Virtual Quantity.
+	  * Used only for testing purposes
+	  */
+	public BigDecimal getTestVirtualQty();
+
     /** Column name T_Integer */
     public static final String COLUMNNAME_T_Integer = "T_Integer";
 
@@ -374,6 +424,19 @@ public interface I_Test
 
 	/** Get Qty	  */
 	public BigDecimal getT_Qty();
+
+    /** Column name T_Timestamp */
+    public static final String COLUMNNAME_T_Timestamp = "T_Timestamp";
+
+	/** Set Timestamp.
+	  * Timestamp with time zone
+	  */
+	public void setT_Timestamp (Timestamp T_Timestamp);
+
+	/** Get Timestamp.
+	  * Timestamp with time zone
+	  */
+	public Timestamp getT_Timestamp();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";

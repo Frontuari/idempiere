@@ -42,6 +42,7 @@ import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.minigrid.ColumnInfo;
 import org.compiere.minigrid.IDColumn;
 import org.compiere.model.MLookupFactory;
+import org.compiere.model.MPayment;
 import org.compiere.model.MQuery;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
@@ -127,7 +128,6 @@ public class InfoPaymentPanel extends InfoPanel implements ValueChangeListener, 
 	/**
 	 *  Detail Protected Constructor
 	 *
-	 *  @param modal modal
 	 *  @param WindowNo window no
 	 *  @param value query value
 	 *  @param multiSelection multiple selections
@@ -142,11 +142,11 @@ public class InfoPaymentPanel extends InfoPanel implements ValueChangeListener, 
 	/**
 	 *  Detail Protected Constructor
 	 *
-	 *  @param modal modal
 	 *  @param WindowNo window no
 	 *  @param value query value
 	 *  @param multiSelection multiple selections
 	 *  @param whereClause where clause
+	 *  @param lookup
 	 */
 	public InfoPaymentPanel(int WindowNo, String value,
 			boolean multiSelection, String whereClause, boolean lookup)
@@ -478,7 +478,7 @@ public class InfoPaymentPanel extends InfoPanel implements ValueChangeListener, 
 	public void zoom()
 	{
 		log.info( "InfoPayment.zoom");
-		Integer C_Payment_ID = getSelectedRowKey();
+		Integer C_Payment_ID = getIntSelectedRowKey(MPayment.Table_ID);
 		if (C_Payment_ID == null)
 			return;
 		MQuery query = new MQuery("C_Payment");

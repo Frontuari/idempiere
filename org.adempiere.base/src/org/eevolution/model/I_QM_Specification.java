@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for QM_Specification
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 @SuppressWarnings("all")
 public interface I_QM_Specification 
@@ -46,8 +46,8 @@ public interface I_QM_Specification
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -55,12 +55,12 @@ public interface I_QM_Specification
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -167,13 +167,17 @@ public interface I_QM_Specification
     /** Column name PP_Product_BOM_ID */
     public static final String COLUMNNAME_PP_Product_BOM_ID = "PP_Product_BOM_ID";
 
-	/** Set BOM & Formula.
-	  * BOM & Formula
+	/** Set BOM &amp;
+ Formula.
+	  * BOM &amp;
+ Formula
 	  */
 	public void setPP_Product_BOM_ID (int PP_Product_BOM_ID);
 
-	/** Get BOM & Formula.
-	  * BOM & Formula
+	/** Get BOM &amp;
+ Formula.
+	  * BOM &amp;
+ Formula
 	  */
 	public int getPP_Product_BOM_ID();
 

@@ -24,6 +24,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 import org.compiere.model.GridField;
+import org.compiere.model.MRole;
 import org.compiere.model.X_AD_PrintFormatItem;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
@@ -31,6 +32,8 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
+import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutablePOSupport;
 
 /**
@@ -48,6 +51,18 @@ public class MPrintFormatItem extends X_AD_PrintFormatItem implements ImmutableP
 	 */
 	private static final long serialVersionUID = 2950704375830865408L;
 
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_PrintFormatItem_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MPrintFormatItem(Properties ctx, String AD_PrintFormatItem_UU, String trxName) {
+        super(ctx, AD_PrintFormatItem_UU, trxName);
+		if (Util.isEmpty(AD_PrintFormatItem_UU))
+			setInitialDefaults();
+    }
+
 	/**
 	 *	Constructor
 	 *  @param ctx context
@@ -59,47 +74,52 @@ public class MPrintFormatItem extends X_AD_PrintFormatItem implements ImmutableP
 		super (ctx, AD_PrintFormatItem_ID, trxName);
 		//	Default Setting
 		if (AD_PrintFormatItem_ID == 0)
-		{
-			setFieldAlignmentType(FIELDALIGNMENTTYPE_Default);
-			setLineAlignmentType(LINEALIGNMENTTYPE_None);
-			setPrintFormatType(PRINTFORMATTYPE_Text);
-			setPrintAreaType(PRINTAREATYPE_Content);
-			setShapeType(SHAPETYPE_NormalRectangle);
-			//
-			setIsCentrallyMaintained(true);
-			setIsRelativePosition(true);
-			setIsNextLine(false);
-			setIsNextPage(false);
-			setIsSetNLPosition(false);
-			setIsFilledRectangle(false);
-			setIsImageField(false);
-			setXSpace(0);
-			setYSpace(0);
-			setXPosition(0);
-			setYPosition(0);
-			setMaxWidth(0);
-			setIsFixedWidth(false);
-			setIsHeightOneLine(false);
-			setMaxHeight(0);
-			setLineWidth(1);
-			setArcDiameter(0);
-			//
-			setIsOrderBy(false);
-			setSortNo(0);
-			setIsGroupBy(false);
-			setIsPageBreak(false);
-			setIsSummarized(false);
-			setIsAveraged(false);
-			setIsCounted(false);
-			setIsMinCalc(false);
-			setIsMaxCalc(false);
-			setIsVarianceCalc(false);
-			setIsDeviationCalc(false);
-			setIsRunningTotal(false);
-			setImageIsAttached(false);
-			setIsSuppressNull(false);
-		}
+			setInitialDefaults();
 	}	//	MPrintFormatItem
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setFieldAlignmentType(FIELDALIGNMENTTYPE_Default);
+		setLineAlignmentType(LINEALIGNMENTTYPE_None);
+		setPrintFormatType(PRINTFORMATTYPE_Text);
+		setPrintAreaType(PRINTAREATYPE_Content);
+		setShapeType(SHAPETYPE_NormalRectangle);
+		//
+		setIsCentrallyMaintained(true);
+		setIsRelativePosition(true);
+		setIsNextLine(false);
+		setIsNextPage(false);
+		setIsSetNLPosition(false);
+		setIsFilledRectangle(false);
+		setIsImageField(false);
+		setXSpace(0);
+		setYSpace(0);
+		setXPosition(0);
+		setYPosition(0);
+		setMaxWidth(0);
+		setIsFixedWidth(false);
+		setIsHeightOneLine(false);
+		setMaxHeight(0);
+		setLineWidth(1);
+		setArcDiameter(0);
+		//
+		setIsOrderBy(false);
+		setSortNo(0);
+		setIsGroupBy(false);
+		setIsPageBreak(false);
+		setIsSummarized(false);
+		setIsAveraged(false);
+		setIsCounted(false);
+		setIsMinCalc(false);
+		setIsMaxCalc(false);
+		setIsVarianceCalc(false);
+		setIsDeviationCalc(false);
+		setIsRunningTotal(false);
+		setImageIsAttached(false);
+		setIsSuppressNull(false);
+	}
 
 	/**
 	 *	Constructor
@@ -246,6 +266,14 @@ public class MPrintFormatItem extends X_AD_PrintFormatItem implements ImmutableP
 		}
 	}	//	loadTranslations
 
+	/**
+	 * 	Type Script
+	 *	@return true if script
+	 */
+	public boolean isTypeScript()
+	{
+		return getPrintFormatType().equals(PRINTFORMATTYPE_Script);
+	}
 
 	/**
 	 * 	Type Field
@@ -721,6 +749,18 @@ public class MPrintFormatItem extends X_AD_PrintFormatItem implements ImmutableP
 		if (!isTypeField() && !isTypePrintFormat() && !isImageField()) {
 			setAD_Column_ID(0);
 		}
+		
+		if(!isTypeScript() && !Util.isEmpty(getScript())) {
+			setScript(null);
+		}
+		
+		if(   !Util.isEmpty(getScript())
+		   && is_ValueChanged(MPrintFormatItem.COLUMNNAME_Script)
+		   && !MRole.getDefault().isAccessAdvanced()) {
+			log.saveError("Error", Msg.getMsg(getCtx(), "ActionNotAllowedHere"));
+			return false;
+		}
+		
 		return true;
 	}	//	beforeSave
 	
@@ -734,7 +774,6 @@ public class MPrintFormatItem extends X_AD_PrintFormatItem implements ImmutableP
 	{
 		//	Set Translation from Element
 		if (newRecord 
-		//	&& MClient.get(getCtx()).isMultiLingualDocument()
 			&& getPrintName() != null && getPrintName().length() > 0)
 		{
 			String sql = "UPDATE AD_PrintFormatItem_Trl "

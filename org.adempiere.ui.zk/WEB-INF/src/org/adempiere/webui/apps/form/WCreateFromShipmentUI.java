@@ -63,15 +63,23 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Vlayout;
 
+/**
+ * Form to create shipment lines (M_InOutLine) from Purchase Order, Vendor Invoice or Customer RMA.
+ * @author hengsin
+ */
 public class WCreateFromShipmentUI extends CreateFromShipment implements EventListener<Event>, ValueChangeListener
 {
-
+	/** Create from window instance */
 	private WCreateFromWindow window;
 	
+	/**
+	 * 
+	 * @param tab
+	 */
 	public WCreateFromShipmentUI(GridTab tab) 
 	{
 		super(tab);
-		log.info(getGridTab().toString());
+		if (log.isLoggable(Level.INFO)) log.info(getGridTab().toString());
 		
 		window = new WCreateFromWindow(this, getGridTab().getWindowNo());
 		
@@ -100,9 +108,11 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 	private final static CLogger log = CLogger.getCLogger(WCreateFromShipmentUI.class);
 		
 	protected Label bPartnerLabel = new Label();
+	/** Business partner parameter field */
 	protected WEditor bPartnerField;
 	
 	protected Label orderLabel = new Label();
+	/** Purchase order parameter field */
 	protected Listbox orderField = ListboxFactory.newDropdownListbox();
 
     /** Label for the rma selection */
@@ -111,25 +121,33 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
     protected Listbox rmaField = ListboxFactory.newDropdownListbox();
 	
     protected Label invoiceLabel = new Label();
+    /** Vendor invoice parameter field */
     protected Listbox invoiceField = ListboxFactory.newDropdownListbox();
+    
+    /** True to show only documents from same warehouse with calling M_InOut record */
 	protected Checkbox sameWarehouseCb = new Checkbox();
+	
 	protected Label locatorLabel = new Label();
+	/** Locator parameter field */
 	protected WLocatorEditor locatorField = new WLocatorEditor();
+	
 	protected Label upcLabel = new Label();
+	/** Product UPC field. Use to select product in data grid. */
 	protected WStringEditor upcField = new WStringEditor();
 
+	/** Grid layout for parameter panel */
 	private Grid parameterStdLayout;
 
+	/** Number of column for {@link #parameterStdLayout} */
 	private int noOfParameterColumn;
     
-	/**
-	 *  Dynamic Init
-	 *  @throws Exception if Lookups cannot be initialized
-	 *  @return true if initialized
-	 */
-	public boolean dynInit() throws Exception
+	/** true when form is handling event */
+	private boolean m_actionActive = false;
+	
+	@Override
+	protected boolean dynInit() throws Exception
 	{
-		log.config("");
+		if (log.isLoggable(Level.CONFIG)) log.config("");
 		
 		super.dynInit();
 		
@@ -138,7 +156,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		sameWarehouseCb.setSelected(true);
 		sameWarehouseCb.addActionListener(this);
 		//  load Locator
-		MLocatorLookup locator = new MLocatorLookup(Env.getCtx(), p_WindowNo);
+		MLocatorLookup locator = new MLocatorLookup(Env.getCtx(), p_WindowNo, (String)null);
 		locatorField = new WLocatorEditor ("M_Locator_ID", true, false, true, locator, p_WindowNo);
 
 		initBPartner(false);
@@ -151,6 +169,10 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		return true;
 	}   //  dynInit
 	
+	/**
+	 * Layout {@link #window}
+	 * @throws Exception
+	 */
 	protected void zkInit() throws Exception
 	{
     	boolean isRMAWindow = ((getGridTab().getAD_Window_ID() == WINDOW_RETURNTOVENDOR) || (getGridTab().getAD_Window_ID() == WINDOW_CUSTOMERRETURN)); 
@@ -220,65 +242,18 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		}
 	}
 
-	private boolean 	m_actionActive = false;
-	
-	/**
-	 *  Action Listener
-	 *  @param e event
-	 * @throws Exception 
-	 */
+	@Override
 	public void onEvent(Event e) throws Exception
 	{
 		if (m_actionActive)
 			return;
 		m_actionActive = true;
-		/*
-		//  Order
-		if (e.getTarget().equals(orderField))
-		{
-			ListItem li = orderField.getSelectedItem();
-			int C_Order_ID = 0;
-			if (li != null && li.getValue() != null)
-				C_Order_ID = ((Integer) li.getValue()).intValue();
-			//  set Invoice, RMA and Shipment to Null
-			rmaField.setSelectedIndex(-1);
-			//shipmentField.setSelectedIndex(-1);
-			loadOrder(C_Order_ID, true);
-		}
-		//  Shipment
-		else if (e.getTarget().equals(invoiceField))
-		{
-			ListItem li = shipmentField.getSelectedItem();
-			int M_InOut_ID = 0;
-			if (li != null && li.getValue() != null)
-				M_InOut_ID = ((Integer) li.getValue()).intValue();
-			//  set Order, RMA and Invoice to Null
-			orderField.setSelectedIndex(-1);
-			rmaField.setSelectedIndex(-1);
-			loadShipment(M_InOut_ID);
-		}
-		//  RMA
-		else if (e.getTarget().equals(rmaField))
-		{
-			ListItem li = rmaField.getSelectedItem();
-		    int M_RMA_ID = 0;
-		    if (li != null && li.getValue() != null)
-		        M_RMA_ID = ((Integer) li.getValue()).intValue();
-		    //  set Order and Invoice to Null
-		    orderField.setSelectedIndex(-1);
-		    //shipmentField.setSelectedIndex(-1);
-		    loadRMA(M_RMA_ID);
-		}
-		m_actionActive = false;
-		*/
-		
+
 		//  Order
 		if (e.getTarget().equals(orderField))
 		{
 			KeyNamePair pp = orderField.getSelectedItem().toKeyNamePair();
-			if (pp == null || pp.getKey() == 0)
-				;
-			else
+			if (pp != null && pp.getKey() > 0)
 			{
 				int C_Order_ID = pp.getKey();
 				//  set Invoice and Shipment to Null
@@ -291,9 +266,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		else if (e.getTarget().equals(invoiceField))
 		{
 			KeyNamePair pp = invoiceField.getSelectedItem().toKeyNamePair();
-			if (pp == null || pp.getKey() == 0)
-				;
-			else
+			if (pp != null && pp.getKey() > 0)
 			{
 				int C_Invoice_ID = pp.getKey();
 				//  set Order and Shipment to Null
@@ -306,9 +279,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
         else if (e.getTarget().equals(rmaField))
         {
             KeyNamePair pp = rmaField.getSelectedItem().toKeyNamePair();
-            if (pp == null || pp.getKey() == 0)
-                ;
-            else
+			if (pp != null && pp.getKey() > 0)
             {
                 int M_RMA_ID = pp.getKey();
                 //  set Order and Shipment to Null
@@ -332,8 +303,8 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 	}
 	
 	/**
-	 * Checks the UPC value and checks if the UPC matches any of the products in the
-	 * list.
+	 * Find product from data grid ({@link WCreateFromWindow#getWListbox()} with UPC value that matched the value from {@link #upcField}.<br/>
+	 * If a match is found, select the data grid row and set quantity to 1.
 	 */
 	private void checkProductUsingUPC()
 	{
@@ -378,10 +349,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		return(-1);
 	}
 		
-	/**
-	 *  Change Listener
-	 *  @param e event
-	 */
+	@Override
 	public void valueChange (ValueChangeEvent e)
 	{
 		if (log.isLoggable(Level.CONFIG)) log.config(e.getPropertyName() + "=" + e.getNewValue());
@@ -419,7 +387,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 	}   //  initBPartner
 
 	/**
-	 * Init Details - load invoices not shipped
+	 * Load invoices not shipped for C_BPartner_ID
 	 * @param C_BPartner_ID BPartner
 	 */
 	private void initBPInvoiceDetails(int C_BPartner_ID)
@@ -443,7 +411,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 	}
 	
 	/**
-	 *  Load PBartner dependent Order/Invoice/Shipment Field.
+	 *  Load Orders for C_BPartner_ID
 	 *  @param C_BPartner_ID BPartner
 	 *  @param forInvoice for invoice
 	 */
@@ -460,18 +428,32 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		for(KeyNamePair knp : list)
 			orderField.addItem(knp);
 		
-		orderField.setSelectedIndex(0);
+		int C_Order_ID = Env.getContextAsInt(Env.getCtx(), p_WindowNo, "C_Order_ID");
+		if (C_Order_ID > 0) {
+			orderField.setValue(Integer.valueOf(C_Order_ID));
+			if (orderField.getSelectedItem() != null) { // in case the order is not in the list, f.e. the BP was changed
+				KeyNamePair knpo = orderField.getSelectedItem().toKeyNamePair();
+				if (knpo != null && knpo.getKey() > 0)
+					loadOrder(knpo.getKey(), false, locatorField.getValue()!=null?((Integer)locatorField.getValue()).intValue():0);
+			}
+		} else {
+			orderField.setSelectedIndex(0);
+		}
 		orderField.addActionListener(this);
 
 		initBPDetails(C_BPartner_ID);
 	}   //  initBPOrderDetails
 	
-	public void initBPDetails(int C_BPartner_ID) 
+	/**
+	 * Load bpartner related details. <br/>
+	 * Call {@link #initBPInvoiceDetails(int)} and {@link #initBPRMADetails(int)}.
+	 * @param C_BPartner_ID
+	 */
+	protected void initBPDetails(int C_BPartner_ID) 
 	{
 		initBPInvoiceDetails(C_BPartner_ID);
 		initBPRMADetails(C_BPartner_ID);
 	}
-
 	
 	/**
 	 * Load RMA that are candidates for shipment
@@ -494,29 +476,9 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 	}
 
 	/**
-	 *  Load Data - Order
+	 *  Load Order lines
 	 *  @param C_Order_ID Order
-	 *  @param forInvoice true if for invoice vs. delivery qty
-	 */
-/*	protected void loadOrder (int C_Order_ID, boolean forInvoice)
-	{
-		loadTableOIS(getOrderData(C_Order_ID, forInvoice));
-	}   //  LoadOrder
-	
-	protected void loadRMA (int M_RMA_ID)
-	{
-		loadTableOIS(getRMAData(M_RMA_ID));
-	}
-	
-	protected void loadShipment (int M_InOut_ID)
-	{
-		loadTableOIS(getShipmentData(M_InOut_ID));
-	}*/
-	
-	/**
-	 *  Load Data - Order
-	 *  @param C_Order_ID Order
-	 *  @param forInvoice true if for invoice vs. delivery qty
+	 *  @param forInvoice true for invoice line, false for shipment line
 	 *  @param M_Locator_ID
 	 */
 	protected void loadOrder (int C_Order_ID, boolean forInvoice, int M_Locator_ID)
@@ -525,7 +487,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 	}   //  LoadOrder
 	
 	/**
-	 *  Load Data - RMA
+	 *  Load RMA lines
 	 *  @param M_RMA_ID RMA
 	 *  @param M_Locator_ID
 	 */
@@ -535,7 +497,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 	}
 		
 	/**
-	 *  Load Data - Invoice
+	 *  Load Invoice Lines
 	 *  @param C_Invoice_ID Invoice
 	 *  @param M_Locator_ID
 	 */
@@ -545,7 +507,7 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 	}
 		
 	/**
-	 *  Load Order/Invoice/Shipment data into Table
+	 *  Load data into list box
 	 *  @param data data
 	 */
 	protected void loadTableOIS (Vector<?> data)
@@ -561,13 +523,15 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		//
 		
 		configureMiniTable(window.getWListbox());
-	}   //  loadOrder
+	}
 	
+	@Override
 	public void showWindow()
 	{
 		window.setVisible(true);
 	}
 	
+	@Override
 	public void closeWindow()
 	{
 		window.dispose();
@@ -578,6 +542,10 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		return window;
 	}
 	
+	/**
+	 * Setup columns of parameter grid
+	 * @param parameterGrid
+	 */
 	protected void setupColumns(Grid parameterGrid) {
 		noOfParameterColumn = ClientInfo.maxWidth((ClientInfo.EXTRA_SMALL_WIDTH+ClientInfo.SMALL_WIDTH)/2) ? 2 : 4;
 		Columns columns = new Columns();
@@ -608,6 +576,9 @@ public class WCreateFromShipmentUI extends CreateFromShipment implements EventLi
 		}
 	}
 	
+	/**
+	 * handle onClientInfo event
+	 */
 	protected void onClientInfo()
 	{
 		if (ClientInfo.isMobile() && parameterStdLayout != null && parameterStdLayout.getRows() != null)

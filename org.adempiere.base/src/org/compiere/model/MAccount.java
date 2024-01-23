@@ -24,22 +24,22 @@ import java.util.logging.Level;
 
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutableIntPOCache;
 import org.idempiere.cache.ImmutablePOSupport;
 
 /**
- *  Account Object Entity to maintain all segment values.
- * 	C_ValidCombination
+ *  Combination of account element and segment values
  *
  *  @author		Jorg Janke
  *  @author     victor.perez@e-evolution.com, www.e-evolution.com
- *    			<li>RF [ 2214883 ] Remove SQL code and Replace for Query http://sourceforge.net/tracker/index.php?func=detail&aid=2214883&group_id=176962&atid=879335
+ *    			<li>RF [ 2214883 ] Remove SQL code and Replace for Query https://sourceforge.net/p/adempiere/feature-requests/557/
  *  @version 	$Id: MAccount.java,v 1.4 2006/07/30 00:58:04 jjanke Exp $
  */
 public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 1927316490582718406L;
 	
@@ -66,7 +66,7 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 	}
 	
 	/**
-	 * 	Get existing Account or create it 
+	 * 	Get existing account combination or create a new one (if not exists)
 	 *	@param ctx context
 	 *	@param AD_Client_ID
 	 *	@param AD_Org_ID
@@ -214,7 +214,6 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 			whereClause.append(" AND UserElement2_ID=?");
 			params.add(UserElement2_ID);
 		}
-		//	whereClause.append(" ORDER BY IsFullyQualified DESC");
 		
 		MAccount existingAccount = new Query(ctx, MAccount.Table_Name, whereClause.toString(), trxName)
 										.setParameters(params)
@@ -288,7 +287,7 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 		return acct;
 	}	//	get
 	
-	/**************************************************************************
+	/**
 	 *  Factory: default combination
 	 *  @param ctx context
 	 *  @param C_AcctSchema_ID accounting schema
@@ -304,10 +303,10 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 	}   //  getDefault
 
 	/**
-	 *  Factory: default combination
+	 *  Factory: create new account with default combination
 	 *  @param acctSchema accounting schema
 	 * 	@param optionalNull if true, the optional values are null
-	 *  @return Account
+	 *  @return new MAccount record
 	 */
 	public static MAccount getDefault (MAcctSchema acctSchema, boolean optionalNull)
 	{
@@ -413,9 +412,19 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 	/**	Logger						*/
 	private static CLogger		s_log = CLogger.getCLogger (MAccount.class);
 
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_ValidCombination_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MAccount(Properties ctx, String C_ValidCombination_UU, String trxName) {
+        super(ctx, C_ValidCombination_UU, trxName);
+		if (Util.isEmpty(C_ValidCombination_UU))
+			setInitialDefaults();
+    }
 
-	
-	/**************************************************************************
+	/**
 	 *  Default constructor
 	 * 	@param ctx context
 	 *  @param C_ValidCombination_ID combination
@@ -425,12 +434,15 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 	{
 		super (ctx, C_ValidCombination_ID, trxName);
 		if (C_ValidCombination_ID == 0)
-		{
-		//	setAccount_ID (0);
-		//	setC_AcctSchema_ID (0);
-			setIsFullyQualified (false);
-		}
+			setInitialDefaults();
 	}   //  MAccount
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setIsFullyQualified (false);
+	}
 
 	/**
 	 *  Load constructor
@@ -488,9 +500,8 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 	
 	/**	Account Segment				*/
 	private MElementValue	m_accountEV = null;
-
 	
-	/**************************************************************************
+	/**
 	 * Return String representation
 	 * @return String
 	 */
@@ -503,7 +514,6 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 				.append(getCombination());
 		else
 		{
-			//	.append(",Client=").append(getAD_Client_ID())
 			sb.append(",Schema=").append(getC_AcctSchema_ID())
 				.append(",Org=").append(getAD_Org_ID())
 				.append(",Acct=").append(getAccount_ID())
@@ -542,7 +552,7 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 	}	//	toString
 
 	/**
-	 * 	Set Account_ID
+	 * 	Set account element id
 	 * 	@param Account_ID id
 	 */
 	public void setAccount_ID (int Account_ID)
@@ -552,8 +562,7 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 	}	//	setAccount
 	
 	/**
-	 * 	Set Account_ID
-	 * 	@return element value
+	 * 	@return account element value
 	 */
 	public MElementValue getAccount ()
 	{
@@ -568,7 +577,6 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 		}
 		return m_accountEV;
 	}	//	setAccount
-
 
 	/**
 	 * 	Get Account Type
@@ -588,7 +596,7 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 
 	/**
 	 * Is this a Balance Sheet Account
-	 * @return boolean
+	 * @return true if this is a balance sheet account
 	 */
 	public boolean isBalanceSheet()
 	{
@@ -608,8 +616,8 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 	}	//	isActive
 
 	/**
-	 * Is this a Passiva Account
-	 * @return boolean
+	 * Is this a Liability Account
+	 * @return true if this is a liability account
 	 */
 	public boolean isPassiva()
 	{
@@ -652,7 +660,6 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 				{
 					combiStr = "*";
 					descrStr = "*";
-					//fullyQualified = false; IDEMPIERE 159 - allow combination with org *
 				}
 			}
 			else if (MAcctSchemaElement.ELEMENTTYPE_Account.equals(element.getElementType()))
@@ -879,8 +886,7 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 		setValueDescription();
 		return validate();
 	}	//	beforeSave
-	
-	
+		
 	@Override
 	public MAccount markImmutable() {
 		if (is_Immutable())
@@ -891,25 +897,5 @@ public class MAccount extends X_C_ValidCombination implements ImmutablePOSupport
 			m_accountEV.markImmutable();
 		return this;
 	}
-
-	/**
-	 * 	Test
-	 *	@param args
-	 */
-	public static void main (String[] args)
-	{
-		org.compiere.Adempiere.startup(true);
-		MAccount acct = get (Env.getCtx(), 11, 11, 101, 600, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-		System.out.println(acct);
-		System.out.println(acct.get_xmlString(new StringBuffer ("xxxx")));
-		
-		//
-		MAccount acct2 = get (Env.getCtx(), 11, 12, 101, 600, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-		System.out.println(acct2);
-		
-	}	//	main
-
 }	//	Account
 

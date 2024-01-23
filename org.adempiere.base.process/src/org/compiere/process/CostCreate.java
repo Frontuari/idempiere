@@ -19,6 +19,7 @@ package org.compiere.process;
 import java.util.logging.Level;
 
 import org.compiere.model.MCostDetail;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.util.AdempiereUserError;
 
@@ -28,6 +29,7 @@ import org.compiere.util.AdempiereUserError;
  *  @author Jorg Janke
  *  @version $Id: CostCreate.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class CostCreate extends SvrProcess
 {
 	/**	Product				*/
@@ -48,7 +50,7 @@ public class CostCreate extends SvrProcess
 			else if (name.equals("M_Product_ID"))
 				p_M_Product_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);		
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

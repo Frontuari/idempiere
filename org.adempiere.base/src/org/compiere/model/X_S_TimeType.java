@@ -22,21 +22,55 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for S_TimeType
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="S_TimeType")
+public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_S_TimeType (Properties ctx, int S_TimeType_ID, String trxName)
     {
       super (ctx, S_TimeType_ID, trxName);
       /** if (S_TimeType_ID == 0)
+        {
+			setName (null);
+			setS_TimeType_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_S_TimeType (Properties ctx, int S_TimeType_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, S_TimeType_ID, trxName, virtualColumns);
+      /** if (S_TimeType_ID == 0)
+        {
+			setName (null);
+			setS_TimeType_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_S_TimeType (Properties ctx, String S_TimeType_UU, String trxName)
+    {
+      super (ctx, S_TimeType_UU, trxName);
+      /** if (S_TimeType_UU == null)
+        {
+			setName (null);
+			setS_TimeType_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_S_TimeType (Properties ctx, String S_TimeType_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, S_TimeType_UU, trxName, virtualColumns);
+      /** if (S_TimeType_UU == null)
         {
 			setName (null);
 			setS_TimeType_ID (0);
@@ -50,7 +84,7 @@ public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -72,9 +106,8 @@ public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -83,15 +116,14 @@ public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -100,15 +132,14 @@ public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -117,7 +148,7 @@ public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -125,27 +156,26 @@ public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Time Type.
-		@param S_TimeType_ID 
-		Type of time recorded
-	  */
+		@param S_TimeType_ID Type of time recorded
+	*/
 	public void setS_TimeType_ID (int S_TimeType_ID)
 	{
-		if (S_TimeType_ID < 1) 
+		if (S_TimeType_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_S_TimeType_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_S_TimeType_ID, Integer.valueOf(S_TimeType_ID));
 	}
 
 	/** Get Time Type.
 		@return Type of time recorded
 	  */
-	public int getS_TimeType_ID () 
+	public int getS_TimeType_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_S_TimeType_ID);
 		if (ii == null)
@@ -154,7 +184,8 @@ public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
 	}
 
 	/** Set S_TimeType_UU.
-		@param S_TimeType_UU S_TimeType_UU	  */
+		@param S_TimeType_UU S_TimeType_UU
+	*/
 	public void setS_TimeType_UU (String S_TimeType_UU)
 	{
 		set_Value (COLUMNNAME_S_TimeType_UU, S_TimeType_UU);
@@ -162,7 +193,7 @@ public class X_S_TimeType extends PO implements I_S_TimeType, I_Persistent
 
 	/** Get S_TimeType_UU.
 		@return S_TimeType_UU	  */
-	public String getS_TimeType_UU () 
+	public String getS_TimeType_UU()
 	{
 		return (String)get_Value(COLUMNNAME_S_TimeType_UU);
 	}

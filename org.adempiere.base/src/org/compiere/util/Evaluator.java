@@ -16,17 +16,16 @@
  *****************************************************************************/
 package org.compiere.util;
 
-import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+import org.idempiere.expression.logic.LogicEvaluator;
 
 /**
  *	Expression Evaluator	
@@ -41,6 +40,7 @@ public class Evaluator
 	
 	private static final Map<String, SQLLogicResult> sqlLogicCache = new ConcurrentHashMap<>();
 
+	/** Value object for SQL logic result */
 	public static class SQLLogicResult {
 		long timestamp;
 		boolean value;
@@ -81,203 +81,17 @@ public class Evaluator
 	}	//	isAllVariablesDefined
 	
 	/**
-	 *	Evaluate Logic.
-	 *  <code>
-	 *	format		:= <expression> [<logic> <expression>]
-	 *	expression	:= @<context>@<exLogic><value>
-	 *	logic		:= <|> | <&>
-	 *  exLogic		:= <=> | <!> | <^> | <<> | <>>
-	 *
-	 *	context		:= any global or window context
-	 *	value		:= strings can be with ' or "
-	 *	logic operators	:= AND or OR with the prevoius result from left to right
-	 *
-	 *	Example	'@AD_Table@=Test | @Language@=GERGER
-	 *  </code>
+	 *	Evaluate logic expression
+	 *  @see LogicEvaluator#evaluateLogic(Evaluatee, String)
 	 *  @param source class implementing get_ValueAsString(variable)
-	 *  @param logic logic string
+	 *  @param logic logic expression
 	 *  @return logic result
 	 */
 	public static boolean evaluateLogic (Evaluatee source, String logic)
 	{
-		//	Conditional
-		StringTokenizer st = new StringTokenizer(logic.trim(), "&|", true);
-		int it = st.countTokens();
-		if (((it/2) - ((it+1)/2)) == 0)		//	only uneven arguments
-		{
-			s_log.severe ("Logic does not comply with format "
-				+ "'<expression> [<logic> <expression>]' => " + logic);
-			return false;
-		}
-
-		String exprStrand = st.nextToken().trim();		
-		if (exprStrand.matches("^@\\d+$") || "@P".equals(exprStrand))
-		{
-			exprStrand = exprStrand.concat(st.nextToken());
-			exprStrand = exprStrand.concat(st.nextToken());			
-		}		
-
-		//boolean retValue = evaluateLogicTuple(source, st.nextToken());
-		boolean retValue = evaluateLogicTuple(source, exprStrand);
-		while (st.hasMoreTokens())
-		{
-			String logOp = st.nextToken().trim();
-			//boolean temp = evaluateLogicTuple(source, st.nextToken());			
-
-			exprStrand = st.nextToken().trim();		
-			if (exprStrand.matches("^@\\d+$") || "@P".equals(exprStrand))
-			{
-				exprStrand = exprStrand.concat(st.nextToken());
-				exprStrand = exprStrand.concat(st.nextToken());				
-			}
-
-			boolean temp = evaluateLogicTuple(source, exprStrand);
-
-			if (logOp.equals("&"))
-				retValue = retValue & temp;
-			else if (logOp.equals("|"))
-				retValue = retValue | temp;
-			else
-			{
-				s_log.log(Level.SEVERE, "Logic operand '|' or '&' expected => " + logic);
-				return false;
-			}
-		}	// hasMoreTokens
-		return retValue;
+		return LogicEvaluator.evaluateLogic(source, logic);
 	}   //  evaluateLogic
 
-	/**
-	 *	Evaluate	@context@=value or @context@!value or @context@^value.
-	 *  <pre>
-	 *	value: strips ' and " always (no escape or mid stream)
-	 *  value: can also be a context variable
-	 *  </pre>
-	 *  @param source class implementing get_ValueAsString(variable)
-	 *  @param logic logic tuple
-	 *	@return	true or false
-	 */
-	private static boolean evaluateLogicTuple (Evaluatee source, String logic)
-	{
-		StringTokenizer st = new StringTokenizer (logic.trim(), "!=^><", true);
-		if (st.countTokens() != 3)
-		{
-			s_log.log(Level.SEVERE, "Logic tuple does not comply with format "
-				+ "'@context@=value' where operand could be one of '=!^><' => " + logic);
-			return false;
-		}
-		//	First Part
-		String first = st.nextToken().trim();					//	get '@tag@'
-		String firstEval = first.trim();
-		if (first.indexOf('@') != -1)		//	variable
-		{			
-			first = first.replace ('@', ' ').trim (); 			//	strip 'tag'
-			// IDEMPIERE-194 Handling null context variable
-			String defaultValue = "";
-			int idx = first.indexOf(":");	//	or clause
-			if (idx  >=  0) 
-			{
-				defaultValue = first.substring(idx+1, first.length());
-				first = first.substring(0, idx);
-			}
-			firstEval = source.get_ValueAsString (first);		//	replace with it's value
-			if (Util.isEmpty(firstEval) && !Util.isEmpty(defaultValue)) {
-				firstEval = defaultValue;
-			}
-		}
-		//NPE sanity check
-		if (firstEval == null)
-			firstEval = "";
-		
-		firstEval = firstEval.replace('\'', ' ').replace('"', ' ').trim();	//	strip ' and "
-
-		//	Comperator
-		String operand = st.nextToken();
-		
-		//	Second Part
-		String rightToken = st.nextToken();							//	get value
-		String[] list = rightToken.split("[,]");
-		for(String second : list)
-		{
-			String secondEval = second.trim();
-			if (second.indexOf('@') != -1)		//	variable
-			{
-				second = second.replace('@', ' ').trim();			// strip tag
-				secondEval = source.get_ValueAsString (second);		//	replace with it's value
-			}
-			secondEval = secondEval.replace('\'', ' ').replace('"', ' ').trim();	//	strip ' and "
-	
-			//	Handling of ID compare (null => 0)
-			if (first.trim().endsWith("_ID") && firstEval.length() == 0)
-				firstEval = "0";
-			if (second.trim().endsWith("_ID") && secondEval.length() == 0)
-				secondEval = "0";
-	
-			//	Logical Comparison
-			boolean result = evaluateLogicTuple (firstEval, operand, secondEval);
-			//
-			if (s_log.isLoggable(Level.FINEST)) s_log.finest(logic 
-				+ " => \"" + firstEval + "\" " + operand + " \"" + secondEval + "\" => " + result);
-			if (result)
-				return true;
-		}
-		//
-		return false;
-	}	//	evaluateLogicTuple
-	
-	/**
-	 * 	Evaluate Logic Tuple
-	 *	@param value1 value
-	 *	@param operand operand = ~ ^ ! > <
-	 *	@param value2
-	 *	@return evaluation
-	 */
-	private static boolean evaluateLogicTuple (String value1, String operand, String value2)
-	{
-		if (value1 == null || operand == null || value2 == null)
-			return false;
-		
-		BigDecimal value1bd = null;
-		BigDecimal value2bd = null;
-		try
-		{
-			if (!value1.startsWith("'"))
-				value1bd = new BigDecimal (value1);
-			if (!value2.startsWith("'"))
-				value2bd = new BigDecimal (value2);
-		}
-		catch (Exception e)
-		{
-			value1bd = null;
-			value2bd = null;
-		}
-		//
-		if (operand.equals("="))
-		{
-			if (value1bd != null && value2bd != null)
-				return value1bd.compareTo(value2bd) == 0;
-			return value1.compareTo(value2) == 0;
-		}
-		else if (operand.equals("<"))
-		{
-			if (value1bd != null && value2bd != null)
-				return value1bd.compareTo(value2bd) < 0;
-			return value1.compareTo(value2) < 0;
-		}
-		else if (operand.equals(">"))
-		{
-			if (value1bd != null && value2bd != null)
-				return value1bd.compareTo(value2bd) > 0;
-			return value1.compareTo(value2) > 0;
-		}
-		else //	interpreted as not
-		{
-			if (value1bd != null && value2bd != null)
-				return value1bd.compareTo(value2bd) != 0;
-			return value1.compareTo(value2) != 0;
-		}
-	}	//	evaluateLogicTuple
-
-	
 	/**
 	 *  Parse String and add variables with @ to the list.
 	 *  @param list list to be added to
@@ -287,7 +101,6 @@ public class Evaluator
 	{
 		if (parseString == null || parseString.length() == 0)
 			return;
-	//	log.fine( "MField.parseDepends", parseString);
 		String s = parseString;
 		//  while we have variables
 		while (s.indexOf('@') != -1)
@@ -299,7 +112,6 @@ public class Evaluator
 				continue;	//	error number of @@ not correct
 			String variable = s.substring(0, pos);
 			s = s.substring(pos+1);
-		//	log.fine( variable);
 			if (variable.startsWith("~")) 
 				variable = variable.substring(1);
 			// strip also @tabno|
@@ -313,13 +125,13 @@ public class Evaluator
 	}   //  parseDepends
 
 	/**
-	 * evaluator a expression logic base on sql
+	 * Evaluate a logic expression base on SQL
 	 * @param sqlLogic
 	 * @param ctx
 	 * @param windowNo
 	 * @param tabNo
 	 * @param targetObjectName expression logic is evaluated for, that target object (purpose for logging) can be field name, toolbar button name,..
-	 * @return
+	 * @return result of logic expression
 	 */
 	public static boolean parseSQLLogic(String sqlLogic, Properties ctx, int windowNo, int tabNo, String targetObjectName) {
 		String sql = sqlLogic.substring(5); // remove @SQL=

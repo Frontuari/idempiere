@@ -25,21 +25,70 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for M_DiscountSchema
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_DiscountSchema")
+public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_DiscountSchema (Properties ctx, int M_DiscountSchema_ID, String trxName)
     {
       super (ctx, M_DiscountSchema_ID, trxName);
       /** if (M_DiscountSchema_ID == 0)
+        {
+			setDiscountType (null);
+			setIsBPartnerFlatDiscount (false);
+			setIsQuantityBased (true);
+// Y
+			setM_DiscountSchema_ID (0);
+			setName (null);
+			setValidFrom (new Timestamp( System.currentTimeMillis() ));
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_DiscountSchema (Properties ctx, int M_DiscountSchema_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_DiscountSchema_ID, trxName, virtualColumns);
+      /** if (M_DiscountSchema_ID == 0)
+        {
+			setDiscountType (null);
+			setIsBPartnerFlatDiscount (false);
+			setIsQuantityBased (true);
+// Y
+			setM_DiscountSchema_ID (0);
+			setName (null);
+			setValidFrom (new Timestamp( System.currentTimeMillis() ));
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_DiscountSchema (Properties ctx, String M_DiscountSchema_UU, String trxName)
+    {
+      super (ctx, M_DiscountSchema_UU, trxName);
+      /** if (M_DiscountSchema_UU == null)
+        {
+			setDiscountType (null);
+			setIsBPartnerFlatDiscount (false);
+			setIsQuantityBased (true);
+// Y
+			setM_DiscountSchema_ID (0);
+			setName (null);
+			setValidFrom (new Timestamp( System.currentTimeMillis() ));
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_DiscountSchema (Properties ctx, String M_DiscountSchema_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_DiscountSchema_UU, trxName, virtualColumns);
+      /** if (M_DiscountSchema_UU == null)
         {
 			setDiscountType (null);
 			setIsBPartnerFlatDiscount (false);
@@ -58,7 +107,7 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -84,9 +133,8 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Line = L */
 	public static final String CUMULATIVELEVEL_Line = "L";
 	/** Set Accumulation Level.
-		@param CumulativeLevel 
-		Level for accumulative calculations
-	  */
+		@param CumulativeLevel Level for accumulative calculations
+	*/
 	public void setCumulativeLevel (String CumulativeLevel)
 	{
 
@@ -96,15 +144,14 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get Accumulation Level.
 		@return Level for accumulative calculations
 	  */
-	public String getCumulativeLevel () 
+	public String getCumulativeLevel()
 	{
 		return (String)get_Value(COLUMNNAME_CumulativeLevel);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -113,25 +160,24 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** DiscountType AD_Reference_ID=247 */
 	public static final int DISCOUNTTYPE_AD_Reference_ID=247;
-	/** Flat Percent = F */
-	public static final String DISCOUNTTYPE_FlatPercent = "F";
-	/** Formula = S */
-	public static final String DISCOUNTTYPE_Formula = "S";
 	/** Breaks = B */
 	public static final String DISCOUNTTYPE_Breaks = "B";
+	/** Flat Percent = F */
+	public static final String DISCOUNTTYPE_FlatPercent = "F";
 	/** Pricelist = P */
 	public static final String DISCOUNTTYPE_Pricelist = "P";
+	/** Formula = S */
+	public static final String DISCOUNTTYPE_Formula = "S";
 	/** Set Discount Type.
-		@param DiscountType 
-		Type of trade discount calculation
-	  */
+		@param DiscountType Type of trade discount calculation
+	*/
 	public void setDiscountType (String DiscountType)
 	{
 
@@ -141,15 +187,14 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get Discount Type.
 		@return Type of trade discount calculation
 	  */
-	public String getDiscountType () 
+	public String getDiscountType()
 	{
 		return (String)get_Value(COLUMNNAME_DiscountType);
 	}
 
 	/** Set Flat Discount %.
-		@param FlatDiscount 
-		Flat discount percentage 
-	  */
+		@param FlatDiscount Flat discount percentage 
+	*/
 	public void setFlatDiscount (BigDecimal FlatDiscount)
 	{
 		set_Value (COLUMNNAME_FlatDiscount, FlatDiscount);
@@ -158,7 +203,7 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get Flat Discount %.
 		@return Flat discount percentage 
 	  */
-	public BigDecimal getFlatDiscount () 
+	public BigDecimal getFlatDiscount()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_FlatDiscount);
 		if (bd == null)
@@ -167,9 +212,8 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	}
 
 	/** Set B.Partner Flat Discount.
-		@param IsBPartnerFlatDiscount 
-		Use flat discount defined on Business Partner Level
-	  */
+		@param IsBPartnerFlatDiscount Use flat discount defined on Business Partner Level
+	*/
 	public void setIsBPartnerFlatDiscount (boolean IsBPartnerFlatDiscount)
 	{
 		set_Value (COLUMNNAME_IsBPartnerFlatDiscount, Boolean.valueOf(IsBPartnerFlatDiscount));
@@ -178,22 +222,21 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get B.Partner Flat Discount.
 		@return Use flat discount defined on Business Partner Level
 	  */
-	public boolean isBPartnerFlatDiscount () 
+	public boolean isBPartnerFlatDiscount()
 	{
 		Object oo = get_Value(COLUMNNAME_IsBPartnerFlatDiscount);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Quantity based.
-		@param IsQuantityBased 
-		Trade discount break level based on Quantity (not value)
-	  */
+		@param IsQuantityBased Trade discount break level based on Quantity (not value)
+	*/
 	public void setIsQuantityBased (boolean IsQuantityBased)
 	{
 		set_Value (COLUMNNAME_IsQuantityBased, Boolean.valueOf(IsQuantityBased));
@@ -202,34 +245,33 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get Quantity based.
 		@return Trade discount break level based on Quantity (not value)
 	  */
-	public boolean isQuantityBased () 
+	public boolean isQuantityBased()
 	{
 		Object oo = get_Value(COLUMNNAME_IsQuantityBased);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Discount Schema.
-		@param M_DiscountSchema_ID 
-		Schema to calculate the trade discount percentage
-	  */
+		@param M_DiscountSchema_ID Schema to calculate the trade discount percentage
+	*/
 	public void setM_DiscountSchema_ID (int M_DiscountSchema_ID)
 	{
-		if (M_DiscountSchema_ID < 1) 
+		if (M_DiscountSchema_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_DiscountSchema_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_DiscountSchema_ID, Integer.valueOf(M_DiscountSchema_ID));
 	}
 
 	/** Get Discount Schema.
 		@return Schema to calculate the trade discount percentage
 	  */
-	public int getM_DiscountSchema_ID () 
+	public int getM_DiscountSchema_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_DiscountSchema_ID);
 		if (ii == null)
@@ -238,7 +280,8 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	}
 
 	/** Set M_DiscountSchema_UU.
-		@param M_DiscountSchema_UU M_DiscountSchema_UU	  */
+		@param M_DiscountSchema_UU M_DiscountSchema_UU
+	*/
 	public void setM_DiscountSchema_UU (String M_DiscountSchema_UU)
 	{
 		set_Value (COLUMNNAME_M_DiscountSchema_UU, M_DiscountSchema_UU);
@@ -246,15 +289,14 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 
 	/** Get M_DiscountSchema_UU.
 		@return M_DiscountSchema_UU	  */
-	public String getM_DiscountSchema_UU () 
+	public String getM_DiscountSchema_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_DiscountSchema_UU);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -263,7 +305,7 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -271,13 +313,14 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Process Now.
-		@param Processing Process Now	  */
+		@param Processing Process Now
+	*/
 	public void setProcessing (boolean Processing)
 	{
 		set_Value (COLUMNNAME_Processing, Boolean.valueOf(Processing));
@@ -285,22 +328,21 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 
 	/** Get Process Now.
 		@return Process Now	  */
-	public boolean isProcessing () 
+	public boolean isProcessing()
 	{
 		Object oo = get_Value(COLUMNNAME_Processing);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Script.
-		@param Script 
-		Dynamic Java Language Script to calculate result
-	  */
+		@param Script Dynamic Java Language Script to calculate result
+	*/
 	public void setScript (String Script)
 	{
 		set_Value (COLUMNNAME_Script, Script);
@@ -309,15 +351,14 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get Script.
 		@return Dynamic Java Language Script to calculate result
 	  */
-	public String getScript () 
+	public String getScript()
 	{
 		return (String)get_Value(COLUMNNAME_Script);
 	}
 
 	/** Set Valid from.
-		@param ValidFrom 
-		Valid from including this date (first day)
-	  */
+		@param ValidFrom Valid from including this date (first day)
+	*/
 	public void setValidFrom (Timestamp ValidFrom)
 	{
 		set_Value (COLUMNNAME_ValidFrom, ValidFrom);
@@ -326,7 +367,7 @@ public class X_M_DiscountSchema extends PO implements I_M_DiscountSchema, I_Pers
 	/** Get Valid from.
 		@return Valid from including this date (first day)
 	  */
-	public Timestamp getValidFrom () 
+	public Timestamp getValidFrom()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_ValidFrom);
 	}

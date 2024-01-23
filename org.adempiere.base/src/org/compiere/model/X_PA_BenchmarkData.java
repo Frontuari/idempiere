@@ -25,21 +25,64 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for PA_BenchmarkData
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="PA_BenchmarkData")
+public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_PA_BenchmarkData (Properties ctx, int PA_BenchmarkData_ID, String trxName)
     {
       super (ctx, PA_BenchmarkData_ID, trxName);
       /** if (PA_BenchmarkData_ID == 0)
+        {
+			setBenchmarkDate (new Timestamp( System.currentTimeMillis() ));
+			setBenchmarkValue (Env.ZERO);
+			setName (null);
+			setPA_BenchmarkData_ID (0);
+			setPA_Benchmark_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_BenchmarkData (Properties ctx, int PA_BenchmarkData_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, PA_BenchmarkData_ID, trxName, virtualColumns);
+      /** if (PA_BenchmarkData_ID == 0)
+        {
+			setBenchmarkDate (new Timestamp( System.currentTimeMillis() ));
+			setBenchmarkValue (Env.ZERO);
+			setName (null);
+			setPA_BenchmarkData_ID (0);
+			setPA_Benchmark_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_BenchmarkData (Properties ctx, String PA_BenchmarkData_UU, String trxName)
+    {
+      super (ctx, PA_BenchmarkData_UU, trxName);
+      /** if (PA_BenchmarkData_UU == null)
+        {
+			setBenchmarkDate (new Timestamp( System.currentTimeMillis() ));
+			setBenchmarkValue (Env.ZERO);
+			setName (null);
+			setPA_BenchmarkData_ID (0);
+			setPA_Benchmark_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_PA_BenchmarkData (Properties ctx, String PA_BenchmarkData_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, PA_BenchmarkData_UU, trxName, virtualColumns);
+      /** if (PA_BenchmarkData_UU == null)
         {
 			setBenchmarkDate (new Timestamp( System.currentTimeMillis() ));
 			setBenchmarkValue (Env.ZERO);
@@ -56,7 +99,7 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -78,9 +121,8 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
     }
 
 	/** Set Date.
-		@param BenchmarkDate 
-		Benchmark Date
-	  */
+		@param BenchmarkDate Benchmark Date
+	*/
 	public void setBenchmarkDate (Timestamp BenchmarkDate)
 	{
 		set_Value (COLUMNNAME_BenchmarkDate, BenchmarkDate);
@@ -89,15 +131,14 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
 	/** Get Date.
 		@return Benchmark Date
 	  */
-	public Timestamp getBenchmarkDate () 
+	public Timestamp getBenchmarkDate()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_BenchmarkDate);
 	}
 
 	/** Set Value.
-		@param BenchmarkValue 
-		Benchmark Value
-	  */
+		@param BenchmarkValue Benchmark Value
+	*/
 	public void setBenchmarkValue (BigDecimal BenchmarkValue)
 	{
 		set_Value (COLUMNNAME_BenchmarkValue, BenchmarkValue);
@@ -106,7 +147,7 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
 	/** Get Value.
 		@return Benchmark Value
 	  */
-	public BigDecimal getBenchmarkValue () 
+	public BigDecimal getBenchmarkValue()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_BenchmarkValue);
 		if (bd == null)
@@ -115,9 +156,8 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -126,15 +166,14 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -143,7 +182,7 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -151,27 +190,26 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Benchmark Data.
-		@param PA_BenchmarkData_ID 
-		Performance Benchmark Data Point
-	  */
+		@param PA_BenchmarkData_ID Performance Benchmark Data Point
+	*/
 	public void setPA_BenchmarkData_ID (int PA_BenchmarkData_ID)
 	{
-		if (PA_BenchmarkData_ID < 1) 
+		if (PA_BenchmarkData_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_PA_BenchmarkData_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_PA_BenchmarkData_ID, Integer.valueOf(PA_BenchmarkData_ID));
 	}
 
 	/** Get Benchmark Data.
 		@return Performance Benchmark Data Point
 	  */
-	public int getPA_BenchmarkData_ID () 
+	public int getPA_BenchmarkData_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_PA_BenchmarkData_ID);
 		if (ii == null)
@@ -180,7 +218,8 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
 	}
 
 	/** Set PA_BenchmarkData_UU.
-		@param PA_BenchmarkData_UU PA_BenchmarkData_UU	  */
+		@param PA_BenchmarkData_UU PA_BenchmarkData_UU
+	*/
 	public void setPA_BenchmarkData_UU (String PA_BenchmarkData_UU)
 	{
 		set_Value (COLUMNNAME_PA_BenchmarkData_UU, PA_BenchmarkData_UU);
@@ -188,32 +227,32 @@ public class X_PA_BenchmarkData extends PO implements I_PA_BenchmarkData, I_Pers
 
 	/** Get PA_BenchmarkData_UU.
 		@return PA_BenchmarkData_UU	  */
-	public String getPA_BenchmarkData_UU () 
+	public String getPA_BenchmarkData_UU()
 	{
 		return (String)get_Value(COLUMNNAME_PA_BenchmarkData_UU);
 	}
 
 	public org.compiere.model.I_PA_Benchmark getPA_Benchmark() throws RuntimeException
-    {
-		return (org.compiere.model.I_PA_Benchmark)MTable.get(getCtx(), org.compiere.model.I_PA_Benchmark.Table_Name)
-			.getPO(getPA_Benchmark_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_PA_Benchmark)MTable.get(getCtx(), org.compiere.model.I_PA_Benchmark.Table_ID)
+			.getPO(getPA_Benchmark_ID(), get_TrxName());
+	}
 
 	/** Set Benchmark.
-		@param PA_Benchmark_ID 
-		Performance Benchmark
-	  */
+		@param PA_Benchmark_ID Performance Benchmark
+	*/
 	public void setPA_Benchmark_ID (int PA_Benchmark_ID)
 	{
-		if (PA_Benchmark_ID < 1) 
+		if (PA_Benchmark_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_PA_Benchmark_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_PA_Benchmark_ID, Integer.valueOf(PA_Benchmark_ID));
 	}
 
 	/** Get Benchmark.
 		@return Performance Benchmark
 	  */
-	public int getPA_Benchmark_ID () 
+	public int getPA_Benchmark_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_PA_Benchmark_ID);
 		if (ii == null)

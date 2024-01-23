@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.adempiere.base.Core;
+import org.compiere.model.SystemProperties;
 import org.idempiere.distributed.ICacheService;
 
 /**
@@ -41,12 +42,14 @@ import org.idempiere.distributed.ICacheService;
 public class CCache<K,V> implements CacheInterface, Map<K, V>, Serializable
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = -2268565219001179841L;
+	private static final long serialVersionUID = 4960404895430292476L;
 
+	/** Key:value map of cached items */
 	protected Map<K, V> cache = null;
 	
+	/** Set of key that has null value */
 	protected Set<K> nullList = null;
 
 	private String m_tableName;
@@ -55,50 +58,136 @@ public class CCache<K,V> implements CacheInterface, Map<K, V>, Serializable
 	
 	private int m_maxSize = 0;
 	
+	/** Default cache expire time in minutes **/
+	public static final int DEFAULT_EXPIRE_MINUTE = getDefaultExpireMinute();
+	
+	/**
+	 * Get default expire minute from system property (fallback to 60)
+	 * @return default expire time in minute
+	 */
+	private static int getDefaultExpireMinute() 
+	{
+		try 
+		{
+			String property = SystemProperties.getCacheExpireMinute();
+			if (property != null && property.trim().length() > 0)
+			{
+				int expireMinute = 0;
+				try
+				{
+					expireMinute = Integer.parseInt(property.trim());
+				} catch (Throwable t) {}
+				if (expireMinute > 0)
+					return expireMinute;
+			}
+		} catch (Throwable t) {}
+		return 60;
+	}
+
+	/**
+	 * Get the max size for the cache based on a system property, 
+	 * for example -DCache.MaxSize.AD_Column=15000 will set the max size for AD_Column.
+	 * @param name
+	 * @return max size for cache (-1 for no max size)
+	 */
+	private static int getCacheMaxSize(String name) 
+	{
+		try 
+		{
+			String property = SystemProperties.getCacheMaxSizeTable(name);
+			if (property != null && property.trim().length() > 0)
+			{
+				int cacheMaxSize = 0;
+				try
+				{
+					cacheMaxSize = Integer.parseInt(property.trim());
+				} catch (Throwable t) {}
+				if (cacheMaxSize > 0)
+					return cacheMaxSize;
+			}
+		} catch (Throwable t) {}
+		return -1;
+	}
+	
+	/**
+	 * @param name
+	 * @param initialCapacity
+	 */
 	public CCache (String name, int initialCapacity)
 	{
 		this(name, name, initialCapacity);
 	}
 	
+	/**
+	 * @param name
+	 * @param initialCapacity
+	 * @param expireMinutes
+	 */
 	public CCache (String name, int initialCapacity, int expireMinutes)
 	{
 		this(name, initialCapacity, expireMinutes, false);
 	}
 	
+	/**
+	 * @param name
+	 * @param initialCapacity
+	 * @param expireMinutes
+	 * @param distributed
+	 */
 	public CCache (String name, int initialCapacity, int expireMinutes, boolean distributed)
 	{
 		this(name, name, initialCapacity, expireMinutes, distributed);
 	}
 	
+	/**
+	 * @param name
+	 * @param initialCapacity
+	 * @param expireMinutes
+	 * @param distributed
+	 * @param maxSize
+	 */
 	public CCache (String name, int initialCapacity, int expireMinutes, boolean distributed, int maxSize)
 	{
 		this(name, name, initialCapacity, expireMinutes, distributed, maxSize);
 	}
 	
 	/**
-	 * 	Adempiere Cache - expires after 2 hours
+	 *  @param tableName
 	 * 	@param name (table) name of the cache
-	 * 	@param initialCapacity initial capacity
+	 * 	@param initialCapacity initial capacity // ignored
 	 */
 	public CCache (String tableName, String name, int initialCapacity)
 	{
 		this (tableName, name, initialCapacity, false);
 	}	//	CCache
 
+	/**
+	 * @param tableName
+	 * @param name
+	 * @param initialCapacity
+	 * @param distributed
+	 */
 	public CCache (String tableName, String name, int initialCapacity, boolean distributed)
 	{
-		this (tableName, name, initialCapacity, 60, distributed);
+		this (tableName, name, initialCapacity, DEFAULT_EXPIRE_MINUTE, distributed);
 	}		
 	
+	/**
+	 * @param tableName
+	 * @param name
+	 * @param initialCapacity
+	 * @param expireMinutes
+	 * @param distributed
+	 */
 	public CCache (String tableName, String name, int initialCapacity, int expireMinutes, boolean distributed)
 	{
 		this(tableName, name, initialCapacity, expireMinutes, distributed, CacheMgt.MAX_SIZE);
 	}
 	
 	/**
-	 * 	Adempiere Cache
+	 *  @param tableName
 	 * 	@param name (table) name of the cache
-	 * 	@param initialCapacity initial capacity
+	 * 	@param initialCapacity initial capacity // ignored
 	 * 	@param expireMinutes expire after minutes (0=no expire)
 	 *  @param distributed
 	 *  @param maxSize ignore if distributed=true
@@ -108,7 +197,11 @@ public class CCache<K,V> implements CacheInterface, Map<K, V>, Serializable
 		m_name = name;
 		m_tableName = tableName;
 		setExpireMinutes(expireMinutes);
-		m_maxSize = maxSize; 
+		int propMaxSize = getCacheMaxSize(name);
+		if (propMaxSize >= 0)
+			m_maxSize = propMaxSize;
+		else
+			m_maxSize = maxSize; 
 		cache = CacheMgt.get().register(this, distributed);
 		m_distributed = distributed;
 		if (distributed) {
@@ -149,6 +242,10 @@ public class CCache<K,V> implements CacheInterface, Map<K, V>, Serializable
 		return m_name;
 	}	//	getName
 
+	/**
+	 * Get table name
+	 * @return table name
+	 */
 	public String getTableName()
 	{
 		return m_tableName;
@@ -265,7 +362,6 @@ public class CCache<K,V> implements CacheInterface, Map<K, V>, Serializable
 		}
 		m_justReset = true;
 	}	//	clear
-
 	
 	/**
 	 *	@see java.util.Map#containsKey(java.lang.Object)
@@ -454,19 +550,42 @@ public class CCache<K,V> implements CacheInterface, Map<K, V>, Serializable
 	public void newRecord(int record_ID) {
 	}
 
+	/**
+	 * 
+	 * @return max size of cache
+	 */
 	public int getMaxSize() {
 		return m_maxSize;
 	}
 	
+	/**
+	 * Is cache distributed
+	 * @return true if cache is distributed (using hazelcast)
+	 */
 	public boolean isDistributed() {
 		return m_distributed;
 	}
 	
+	/**
+	 * Get cache hit count
+	 * @return cache hit count
+	 */
 	public long getHit() {
 		return m_hit.get();
 	}
 	
+	/**
+	 * Get cache miss count
+	 * @return cache miss count
+	 */
 	public long getMiss() {
 		return m_miss.get();
 	}	
+	
+	/**
+	 * @return true if cache has expire
+	 */
+	public boolean isExpire() {
+		return m_expire > 0 && m_timeExp > 0 && m_timeExp < System.currentTimeMillis();
+	}
 }	//	CCache

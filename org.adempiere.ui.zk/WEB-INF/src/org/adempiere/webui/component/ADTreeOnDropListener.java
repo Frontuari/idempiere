@@ -14,19 +14,28 @@ package org.adempiere.webui.component;
 
 import java.util.logging.Level;
 
+import org.adempiere.webui.adwindow.ADTabpanel;
+import org.adempiere.webui.adwindow.ADWindow;
+import org.adempiere.webui.adwindow.ADWindowContent;
+import org.adempiere.webui.adwindow.IADTabpanel;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.TreeUtils;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.compiere.model.MTree;
 import org.compiere.model.MTreeNode;
+import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
+import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.DropEvent;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.DefaultTreeNode;
 import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Menupopup;
@@ -35,15 +44,14 @@ import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.Treerow;
 
 /**
- * 
+ * Handle on drop event of tree node
  * @author Low Heng Sin
- *
  */
 public class ADTreeOnDropListener implements EventListener<Event> {
 	
 	private SimpleTreeModel treeModel;
 	private MTree mTree;
-	private int windowNo;
+	private int windowNo;	
 	private Tree tree;
 	
 	private static final CLogger log = CLogger.getCLogger(ADTreeOnDropListener.class);
@@ -85,7 +93,8 @@ public class ADTreeOnDropListener implements EventListener<Event> {
 	 */
 	private void moveNode(DefaultTreeNode<Object> movingNode, DefaultTreeNode<Object> toNode)
 	{
-		log.info(movingNode.toString() + " to " + toNode.toString());
+		if (log.isLoggable(Level.INFO))
+			log.info(movingNode.toString() + " to " + toNode.toString());
 
 		if (movingNode == toNode)
 			return;
@@ -102,9 +111,6 @@ public class ADTreeOnDropListener implements EventListener<Event> {
 			int path[] = treeModel.getPath(toNode);
 			Treeitem toItem = tree.renderItemByPath(path);
 			
-			//tree.setSelectedItem(toItem);
-			//Events.sendEvent(tree, new Event(Events.ON_SELECT, tree));
-
 			MenuListener listener = new MenuListener(movingNode, toNode);
 
 			Menupopup popup = new Menupopup();
@@ -124,6 +130,12 @@ public class ADTreeOnDropListener implements EventListener<Event> {
 		
 	}	//	moveNode
 	
+	/**
+	 * Move movingNode to after toNode or into toNode (if moveInto is true)
+	 * @param movingNode
+	 * @param toNode
+	 * @param moveInto true to insert movingNode into summary folder node
+	 */
 	private void moveNode(DefaultTreeNode<Object> movingNode, DefaultTreeNode<Object> toNode, boolean moveInto)
 	{
 		DefaultTreeNode<Object> newParent;
@@ -155,30 +167,18 @@ public class ADTreeOnDropListener implements EventListener<Event> {
 		}
 		@SuppressWarnings("unused")
 		Treeitem movingItem = tree.renderItemByPath(path);		
-		//tree.setSelectedItem(movingItem);
-		//Events.sendEvent(tree, new Event(Events.ON_SELECT, tree));
 
 		//	***	Save changes to disk
 		Trx trx = Trx.get (Trx.createTrxName("ADTree"), true);
 		trx.setDisplayName(getClass().getName()+"_moveNode");
 		try
 		{
-			@SuppressWarnings("unused")
-			int no = 0;
 			MTreeNode oldMParent = (MTreeNode) oldParent.getData();
 			for (int i = 0; i < oldParent.getChildCount(); i++)
 			{
 				DefaultTreeNode<?> nd = (DefaultTreeNode<?>)oldParent.getChildAt(i);
 				MTreeNode md = (MTreeNode) nd.getData();
-				StringBuilder sql = new StringBuilder("UPDATE ");
-				sql.append(mTree.getNodeTableName())
-					.append(" SET Parent_ID=").append(oldMParent.getNode_ID())
-					.append(", SeqNo=").append(i)
-					.append(", Updated=getDate()")
-					.append(" WHERE AD_Tree_ID=").append(mTree.getAD_Tree_ID())
-					.append(" AND Node_ID=").append(md.getNode_ID());
-				if (log.isLoggable(Level.FINE)) log.fine(sql.toString());
-				no = DB.executeUpdate(sql.toString(),trx.getTrxName());
+				updateNodePO(oldMParent, md, i, trx.getTrxName());
 			}
 			if (oldParent != newParent) 
 			{
@@ -187,30 +187,58 @@ public class ADTreeOnDropListener implements EventListener<Event> {
 				{
 					DefaultTreeNode<?> nd = (DefaultTreeNode<?>)newParent.getChildAt(i);
 					MTreeNode md = (MTreeNode) nd.getData();
-					StringBuilder sql = new StringBuilder("UPDATE ");
-					sql.append(mTree.getNodeTableName())
-						.append(" SET Parent_ID=").append(newMParent.getNode_ID())
-						.append(", SeqNo=").append(i)
-						.append(", Updated=getDate()")
-						.append(" WHERE AD_Tree_ID=").append(mTree.getAD_Tree_ID())
-						.append(" AND Node_ID=").append(md.getNode_ID());
-					if (log.isLoggable(Level.FINE)) log.fine(sql.toString());
-					DB.executeUpdateEx(sql.toString(),trx.getTrxName());
+					updateNodePO(newMParent, md, i, trx.getTrxName());
 				}
 			}
 			//	COMMIT          *********************
 			trx.commit(true);
+			
+			Component c = SessionManager.getAppDesktop().getActiveWindow();
+			ADWindow adwindow = ADWindow.findADWindow(c);
+			if (adwindow != null) {
+				ADWindowContent adwindowContent = adwindow.getADWindowContent();
+				if (trx.hasChangesMadeByEventListener()) {
+					Clients.showBusy(null);
+					Executions.schedule(c.getDesktop(), e -> {
+						adwindowContent.onRefresh();
+						Executions.schedule(c.getDesktop(), e1 -> Clients.clearBusy(), new Event("onEchangeIndicatorchoClearBusy"));
+					}, new Event("onPostTreeOnDrop"));
+				} else {
+					adwindowContent.focusToActivePanel();
+					IADTabpanel selected = adwindowContent.getADTab().getSelectedTabpanel();
+					if (selected instanceof ADTabpanel) {
+						((ADTabpanel)selected).setSelectedNode();
+					}
+				}
+			}
 		}
         catch (Exception e)
 		{
 			trx.rollback();
-			FDialog.error(windowNo, tree, "TreeUpdateError", e.getLocalizedMessage());
+			Dialog.error(windowNo, "TreeUpdateError", e.getLocalizedMessage());
 		}
 		finally
 		{
 			trx.close();
 			trx = null;
 		}
+	}
+	
+	/**
+	 * Update parent_id and seqno of mtnMovingNode
+	 * @param mtnParentNode
+	 * @param mtnMovingNode
+	 * @param NodeIndex
+	 * @param trxName
+	 */
+	private void updateNodePO(MTreeNode mtnParentNode, MTreeNode mtnMovingNode, int NodeIndex, String trxName) {
+		StringBuilder whereClause = new StringBuilder("AD_Tree_ID=").append(mTree.getAD_Tree_ID())
+				.append(" AND Node_ID=").append(mtnMovingNode.getNode_ID());
+		PO mnPO = new Query(Env.getCtx(), mTree.getNodeTableName(), whereClause.toString(), trxName).first();
+		mnPO.set_ValueNoCheck("Parent_ID", mtnParentNode.getNode_ID());
+		mnPO.set_ValueNoCheck("SeqNo", NodeIndex);
+		if (mnPO.is_Changed()) 
+			mnPO.saveEx(trxName);
 	}
 	
 	class MenuListener implements EventListener<Event> {

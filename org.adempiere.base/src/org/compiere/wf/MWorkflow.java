@@ -23,7 +23,9 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -46,25 +48,26 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutablePOSupport;
 import org.idempiere.cache.ImmutablePOCache;
 
 /**
- *	WorkFlow Model
+ *	Extended WorkFlow Model for AD_Workflow
  *
  * 	@author 	Jorg Janke
  * 	@version 	$Id: MWorkflow.java,v 1.4 2006/07/30 00:51:05 jjanke Exp $
  * 
- * @author Teo Sarca, www.arhipac.ro
+ *  @author Teo Sarca, www.arhipac.ro
  * 			<li>FR [ 2214883 ] Remove SQL code and Replace for Query
  * 			<li>BF [ 2665963 ] Copy Workflow name in Activity name
- * @author Silvano Trinchero, www.freepath.it
+ *  @author Silvano Trinchero, www.freepath.it
  * 			<li>IDEMPIERE-3209 changed functions to public to improve integration support
  */
 public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id 
 	 */
 	private static final long serialVersionUID = 727250581144217545L;
 
@@ -86,7 +89,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	 */
 	public static MWorkflow get (Properties ctx, int AD_Workflow_ID)
 	{
-		String key = Env.getAD_Language(ctx) + "_" + AD_Workflow_ID;
+		String key = Env.getAD_Language(ctx) + "_" + Env.getAD_Client_ID(ctx) + "_" + AD_Workflow_ID;
 		MWorkflow retValue = s_cache.get(ctx, key, e -> new MWorkflow(ctx, e));
 		if (retValue != null)
 			return retValue;
@@ -115,73 +118,88 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}
 	
 	/**
-	 * 	Get Doc Value Workflow
+	 * 	Get Doc Value Workflows
 	 *	@param ctx context
 	 *	@param AD_Client_ID client
 	 *	@param AD_Table_ID table
+	 *  @param trxName
 	 *	@return document value workflow array or null
 	 */
 	public static synchronized MWorkflow[] getDocValue (Properties ctx, int AD_Client_ID, int AD_Table_ID
-			, String trxName //Bug 1568766 Trx should be kept all along the road		
-	)
+			, String trxName)
 	{
-		String key = "C" + AD_Client_ID + "T" + AD_Table_ID;
 		//	Reload
-		if (s_cacheDocValue.isReset())
+		Map<Integer, MWorkflow[]> cachedMap = s_cacheDocValue.get(AD_Client_ID);
+		if (cachedMap == null)
 		{
-			final String whereClause = "WorkflowType=? AND IsValid=?";
-			List<MWorkflow> workflows = new Query(ctx, Table_Name, whereClause, trxName)
-				.setParameters(new Object[]{WORKFLOWTYPE_DocumentValue, true})
-				.setOnlyActiveRecords(true)
-				.setOrderBy("AD_Client_ID, AD_Table_ID")
-				.list();
+			final String whereClause = "WorkflowType=? AND IsValid=? AND AD_Client_ID=?";
+			List<MWorkflow> workflows;
+			workflows = new Query(ctx, Table_Name, whereClause, trxName)
+					.setParameters(new Object[]{WORKFLOWTYPE_DocumentValue, true, Env.getAD_Client_ID(ctx)})
+					.setOnlyActiveRecords(true)
+					.setOrderBy("AD_Table_ID")
+					.list();
+			cachedMap = new HashMap<Integer, MWorkflow[]>();
+			s_cacheDocValue.put(AD_Client_ID, cachedMap);
 			ArrayList<MWorkflow> list = new ArrayList<MWorkflow>();
-			String oldKey = "";
-			String newKey = null;
+			int previousTableId = -1;
+			int currentTableId = -1;
 			for (MWorkflow wf : workflows)
 			{
-				newKey = "C" + wf.getAD_Client_ID() + "T" + wf.getAD_Table_ID();
-				if (!newKey.equals(oldKey) && list.size() > 0)
+				currentTableId = wf.getAD_Table_ID();
+				if (currentTableId !=  previousTableId && list.size() > 0)
 				{
-					s_cacheDocValue.put (oldKey, list.stream().map(e -> {return new MWorkflow(Env.getCtx(), e);}).toArray(MWorkflow[]::new));
+					cachedMap.put (previousTableId, list.stream().map(e -> {return new MWorkflow(Env.getCtx(), e);}).toArray(MWorkflow[]::new));
 					list = new ArrayList<MWorkflow>();
 				}
-				oldKey = newKey;
+				previousTableId = currentTableId;
 				list.add(wf);
 			}
 			
 			//	Last one
 			if (list.size() > 0)
 			{
-				s_cacheDocValue.put (oldKey, list.stream().map(e -> {return new MWorkflow(Env.getCtx(), e);}).toArray(MWorkflow[]::new));
+				cachedMap.put (previousTableId, list.stream().map(e -> {return new MWorkflow(Env.getCtx(), e);}).toArray(MWorkflow[]::new));
 			}
-			if (s_log.isLoggable(Level.CONFIG)) s_log.config("#" + s_cacheDocValue.size());
+			if (s_log.isLoggable(Level.CONFIG)) s_log.config("#" + cachedMap.size());
 		}
 		//	Look for Entry
-		MWorkflow[] retValue = (MWorkflow[])s_cacheDocValue.get(key);
-		//hengsin: this is not threadsafe
-		/*
-		//set trxName to all workflow instance
-		if ( retValue != null && retValue.length > 0 )
-		{
-			for(int i = 0; i < retValue.length; i++)
-			{
-				retValue[i].set_TrxName(trxName);
-			}
-		}*/
+		MWorkflow[] retValue = (MWorkflow[])cachedMap.get(AD_Table_ID);
 		return retValue != null ? Arrays.stream(retValue).map(e -> {return new MWorkflow(ctx, e, trxName);}).toArray(MWorkflow[]::new) : null;
 	}	//	getDocValue
 	
-	
 	/**	Single Cache					*/
-	private static ImmutablePOCache<String,MWorkflow>	s_cache = new ImmutablePOCache<String,MWorkflow>(Table_Name, Table_Name+"|Language_Workflow", 20);
+	private static ImmutablePOCache<String,MWorkflow>	s_cache = new ImmutablePOCache<String,MWorkflow>(Table_Name, Table_Name, 20);
 	/**	Document Value Cache			*/
-	private static CCache<String,MWorkflow[]>	s_cacheDocValue = new CCache<String,MWorkflow[]> (Table_Name, Table_Name+"|AD_Client_Table", 5);
+	private static final CCache<Integer,Map<Integer, MWorkflow[]>> s_cacheDocValue = new CCache<> (Table_Name, Table_Name+"|DocumentValue", 5) {
+		/**
+		 * generated serial id
+		 */
+		private static final long serialVersionUID = 2548097748351277269L;
+
+		@Override
+		public int reset(int recordId) {
+			return reset();
+		}		
+	};
 	/**	Static Logger	*/
 	private static CLogger	s_log	= CLogger.getCLogger (MWorkflow.class);
-	
-	
-	/**************************************************************************
+		
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_Workflow_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MWorkflow(Properties ctx, String AD_Workflow_UU, String trxName) {
+        super(ctx, AD_Workflow_UU, trxName);
+		if (Util.isEmpty(AD_Workflow_UU))
+			setInitialDefaults();
+		loadTrl();
+		loadNodes();
+    }
+
+	/**
 	 * 	Create/Load Workflow
 	 * 	@param ctx Context
 	 * 	@param AD_Workflow_ID ID
@@ -191,27 +209,32 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	{
 		super (ctx, AD_Workflow_ID, trxName);
 		if (AD_Workflow_ID == 0)
-		{
-		//	setAD_Workflow_ID (0);
-		//	setValue (null);
-		//	setName (null);
-			setAccessLevel (ACCESSLEVEL_Organization);
-			setAuthor ("ComPiere, Inc.");
-			setDurationUnit(DURATIONUNIT_Day);
-			setDuration (1);
-			setEntityType (ENTITYTYPE_UserMaintained);	// U
-			setIsDefault (false);
-			setPublishStatus (PUBLISHSTATUS_UnderRevision);	// U
-			setVersion (0);
-			setCost (Env.ZERO);
-			setWaitingTime (0);
-			setWorkingTime (0);
-			setIsBetaFunctionality(false);
-		}
+			setInitialDefaults();
 		loadTrl();
 		loadNodes();
 	}	//	MWorkflow
 	
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		//	setAD_Workflow_ID (0);
+		//	setValue (null);
+		//	setName (null);
+		setAccessLevel (ACCESSLEVEL_Organization);
+		setAuthor ("ComPiere, Inc.");
+		setDurationUnit(DURATIONUNIT_Day);
+		setDuration (1);
+		setEntityType (ENTITYTYPE_UserMaintained);	// U
+		setIsDefault (false);
+		setPublishStatus (PUBLISHSTATUS_UnderRevision);	// U
+		setVersion (0);
+		setCost (Env.ZERO);
+		setWaitingTime (0);
+		setWorkingTime (0);
+		setIsBetaFunctionality(false);
+	}
+
 	/**
 	 * 	Load Constructor
 	 * 	@param ctx context
@@ -226,7 +249,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}	//	Workflow
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MWorkflow(MWorkflow copy) 
@@ -235,7 +258,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -245,7 +268,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -315,17 +338,16 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	 */
 	private void loadNodes()
 	{
-		m_nodes = new Query(getCtx(), MWFNode.Table_Name, "AD_WorkFlow_ID=?", get_TrxName())
-			.setParameters(new Object[]{get_ID()})
+		m_nodes = new Query(getCtx(), MWFNode.Table_Name, "AD_WorkFlow_ID=? AND AD_Client_ID IN (0, ?)", get_TrxName())
+			.setParameters(get_ID(), Env.getAD_Client_ID(Env.getCtx()))
 			.setOnlyActiveRecords(true)
 			.list();
 		if (m_nodes.size() > 0 && is_Immutable())
 			m_nodes.stream().forEach(e -> e.markImmutable());
 		if (log.isLoggable(Level.FINE)) log.fine("#" + m_nodes.size());
 	}	//	loadNodes
-
 	
-	/**************************************************************************
+	/**
 	 * 	Get Number of Nodes
 	 * 	@return number of nodes
 	 */
@@ -359,7 +381,9 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 		return retValue;
 	}	//	getNodes
 
-
+	/**
+	 * Reload all nodes
+	 */
 	public void reloadNodes() {
 		m_nodes = null;
 		loadNodes();
@@ -367,7 +391,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 
 	/**
 	 * 	Get the first node
-	 * 	@return array of next nodes
+	 * 	@return first workflow node
 	 */
 	public MWFNode getFirstNode()
 	{
@@ -462,32 +486,10 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}	//	getNodesInOrder
 
 	/**
-	 * 	Add Nodes recursively (depth first) to Ordered List
-	 *  @param list list to add to
-	 * 	@param AD_WF_Node_ID start node id
-	 * 	@param AD_Client_ID for client
-	 */
-	/*private void addNodesDF (ArrayList<MWFNode> list, int AD_WF_Node_ID, int AD_Client_ID)
-	{
-		MWFNode node = getNode (AD_WF_Node_ID);
-		if (node != null && !list.contains(node))
-		{
-			list.add(node);
-			//	Get Dependent
-			MWFNodeNext[] nexts = node.getTransitions(AD_Client_ID);
-			for (int i = 0; i < nexts.length; i++)
-			{
-				if (nexts[i].isActive())
-					addNodesDF (list, nexts[i].getAD_WF_Next_ID(), AD_Client_ID);
-			}
-		}
-	}	//	addNodesDF*/
-
-	/**
 	 * 	Add Nodes recursively (sibling first) to Ordered List
 	 *  @param list list to add to
 	 * 	@param AD_WF_Node_ID start node id
-	 * 	@param AD_Client_ID for client
+	 * 	@param AD_Client_ID
 	 */
 	private void addNodesSF (ArrayList<MWFNode> list, int AD_WF_Node_ID, int AD_Client_ID)
 	{
@@ -519,10 +521,10 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 		}
 	}	//	addNodesSF
 	
-	/**************************************************************************
-	 * 	Get first transition (Next Node) of ID
-	 * 	@param AD_WF_Node_ID id
-	 * 	@param AD_Client_ID for client
+	/**
+	 * 	Get first transition (Next Node) node id
+	 * 	@param AD_WF_Node_ID from node id
+	 * 	@param AD_Client_ID 
 	 * 	@return next AD_WF_Node_ID or 0
 	 */
 	public int getNext (int AD_WF_Node_ID, int AD_Client_ID)
@@ -542,9 +544,9 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}	//	getNext
 
 	/**
-	 * 	Get Transitions (NodeNext) of ID
-	 * 	@param AD_WF_Node_ID id
-	 * 	@param AD_Client_ID for client
+	 * 	Get Transitions (NodeNext) node id
+	 * 	@param AD_WF_Node_ID from node id
+	 * 	@param AD_Client_ID
 	 * 	@return array of next nodes
 	 */
 	public MWFNodeNext[] getNodeNexts (int AD_WF_Node_ID, int AD_Client_ID)
@@ -561,9 +563,9 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}	//	getNext
 	
 	/**
-	 * 	Get (first) Previous Node of ID
-	 * 	@param AD_WF_Node_ID id
-	 * 	@param AD_Client_ID for client
+	 * 	Get (first) Previous Node ID
+	 * 	@param AD_WF_Node_ID from node id
+	 * 	@param AD_Client_ID
 	 * 	@return next AD_WF_Node_ID or 0
 	 */
 	public int getPrevious (int AD_WF_Node_ID, int AD_Client_ID)
@@ -582,10 +584,10 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}	//	getPrevious
 
 	/**
-	 * 	Get very Last Node
+	 * 	Get Last Node id
 	 * 	@param AD_WF_Node_ID ignored
-	 * 	@param AD_Client_ID for client
-	 * 	@return next AD_WF_Node_ID or 0
+	 * 	@param AD_Client_ID
+	 * 	@return last AD_WF_Node_ID or 0
 	 */
 	public int getLast (int AD_WF_Node_ID, int AD_Client_ID)
 	{
@@ -597,9 +599,9 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 
 	/**
 	 * 	Is this the first Node
-	 * 	@param AD_WF_Node_ID id
-	 * 	@param AD_Client_ID for client
-	 * 	@return true if first node
+	 * 	@param AD_WF_Node_ID node id
+	 * 	@param AD_Client_ID
+	 * 	@return true if node id is first node
 	 */
 	public boolean isFirst (int AD_WF_Node_ID, int AD_Client_ID)
 	{
@@ -608,18 +610,17 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 
 	/**
 	 * 	Is this the last Node
-	 * 	@param AD_WF_Node_ID id
-	 * 	@param AD_Client_ID for client
-	 * 	@return true if last node
+	 * 	@param AD_WF_Node_ID node id
+	 * 	@param AD_Client_ID 
+	 * 	@return true if node id is last node
 	 */
 	public boolean isLast (int AD_WF_Node_ID, int AD_Client_ID)
 	{
 		MWFNode[] nodes = getNodesInOrder(AD_Client_ID);
 		return AD_WF_Node_ID == nodes[nodes.length-1].getAD_WF_Node_ID();
 	}	//	isLast
-
 	
-	/**************************************************************************
+	/**
 	 * 	Get Name
 	 * 	@param translated translated
 	 * 	@return Name
@@ -659,6 +660,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder ("MWorkflow[");
@@ -667,11 +669,12 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 		return sb.toString ();
 	} //	toString
 	
-	/**************************************************************************
+	/**
 	 * 	Before Save
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		validate();
@@ -684,6 +687,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	 *  @param success success
 	 *  @return true if save complete (if not overwritten true)
 	 */
+	@Override
 	protected boolean afterSave (boolean newRecord, boolean success)
 	{
 		if (log.isLoggable(Level.FINE)) log.fine("Success=" + success);
@@ -724,7 +728,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 		return success;
 	}   //  afterSave
 
-	/**************************************************************************
+	/**
 	 * 	Start Workflow.
 	 * 	@param pi Process Info (Record_ID)
 	 *  @deprecated
@@ -735,9 +739,10 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 		return start(pi, null);
 	}
 	
-	/**************************************************************************
+	/**
 	 * 	Start Workflow.
-	 * 	@param pi Process Info (Record_ID)
+	 * 	@param pi Process Info
+	 *  @param trxName
 	 *	@return process
 	 */
 	public MWFProcess start (ProcessInfo pi, String trxName)
@@ -754,16 +759,28 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 			retValue = new MWFProcess (this, pi, trxName != null ? trxName : localTrx.getTrxName());
 			retValue.saveEx();
 			pi.setSummary(Msg.getMsg(getCtx(), "Processing"));
-			retValue.startWork();			
+			retValue.startWork();
 			if (localTrx != null)
 				localTrx.commit(true);
+			retValue.checkCloseActivities(trxName != null ? trxName : localTrx.getTrxName());
 		}
 		catch (Exception e)
 		{
 			if (localTrx != null)
 				localTrx.rollback();
 			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
-			pi.setSummary(e.getMessage(), true);
+			StringBuilder msg = new StringBuilder();
+			if (retValue != null)
+			{
+				StateEngine state = retValue.getState();
+				if (!Util.isEmpty(retValue.getProcessMsg()) && (state.isTerminated() || state.isAborted()))
+				{
+					msg.append(retValue.getProcessMsg());
+					msg.append("\n");
+				}				
+			}
+			msg.append(e.getMessage());
+			pi.setSummary(msg.toString(), true);
 			retValue = null;
 		}
 		finally 
@@ -788,7 +805,9 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	 * 	Start Workflow and Wait for completion.
 	 * 	@param pi process info with Record_ID record for the workflow
 	 *	@return process
+	 *  @deprecated workflow process run in the same thread, this is meaningless
 	 */
+	@Deprecated
 	public MWFProcess startWait (ProcessInfo pi)
 	{
 		final int SLEEP = 500;		//	1/2 sec
@@ -809,7 +828,6 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 				pi.setIsTimeout(true);
 				return process;
 			}
-		//	System.out.println("--------------- " + loops + ": " + state);
 			try
 			{
 				Thread.sleep(SLEEP);
@@ -856,8 +874,8 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}	//	getDurationBaseSec
 		
 	/**
-	 * 	Get Duration CalendarField
-	 *	@return Calendar.MINUTE, etc.
+	 * 	Get Duration Calendar Field
+	 *	@return Calendar field (Calendar.MINUTE, etc)
 	 */
 	public int getDurationCalendarField()
 	{
@@ -877,11 +895,10 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 			return Calendar.YEAR;
 		return Calendar.MINUTE;
 	}	//	getDurationCalendarField
-
 	
-	/**************************************************************************
+	/**
 	 * 	Validate workflow.
-	 * 	Sets Valid flag
+	 * 	Sets Valid flag.
 	 *	@return errors or ""
 	 */
 	public String validate()
@@ -894,8 +911,6 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 		if (WORKFLOWTYPE_DocumentValue.equals(getWorkflowType()) 
 			&& (getDocValueLogic() == null || getDocValueLogic().length() == 0))
 			errors.append(" - No Document Value Logic");
-		//
-		
 		//
 		if (getWorkflowType().equals(MWorkflow.WORKFLOWTYPE_Manufacturing))
 		{
@@ -910,96 +925,9 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 		return errors.toString();
 	}	//	validate
 	
-	
-	
-	/**************************************************************************
-	 * 	main
-	 *	@param args
-	 */
-	public static void main (String[] args)
-	{
-		org.compiere.Adempiere.startup(true);
-
-		//	Create Standard Document Process
-		MWorkflow wf = new MWorkflow(Env.getCtx(), 0, null);
-		wf.setValue ("Process_xx");
-		wf.setName (wf.getValue());
-		wf.setDescription("(Standard " + wf.getValue());
-		wf.setEntityType (ENTITYTYPE_Dictionary);
-		wf.saveEx();
-		//
-		MWFNode node10 = new MWFNode (wf, "10", "(Start)");
-		node10.setDescription("(Standard Node)");
-		node10.setEntityType (ENTITYTYPE_Dictionary);
-		node10.setAction(MWFNode.ACTION_WaitSleep);
-		node10.setWaitTime(0);
-		node10.setPosition(5, 5);
-		node10.saveEx();
-		wf.setAD_WF_Node_ID(node10.getAD_WF_Node_ID());
-		wf.saveEx();
-		
-		MWFNode node20 = new MWFNode (wf, "20", "(DocAuto)");
-		node20.setDescription("(Standard Node)");
-		node20.setEntityType (ENTITYTYPE_Dictionary);
-		node20.setAction(MWFNode.ACTION_DocumentAction);
-		node20.setDocAction(MWFNode.DOCACTION_None);
-		node20.setPosition(5, 120);
-		node20.saveEx();
-		MWFNodeNext tr10_20 = new MWFNodeNext(node10, node20.getAD_WF_Node_ID());
-		tr10_20.setEntityType (ENTITYTYPE_Dictionary);
-		tr10_20.setDescription("(Standard Transition)");
-		tr10_20.setSeqNo(100);
-		tr10_20.saveEx();
-		
-		MWFNode node100 = new MWFNode (wf, "100", "(DocPrepare)");
-		node100.setDescription("(Standard Node)");
-		node100.setEntityType (ENTITYTYPE_Dictionary);
-		node100.setAction(MWFNode.ACTION_DocumentAction);
-		node100.setDocAction(MWFNode.DOCACTION_Prepare);
-		node100.setPosition(170, 5);
-		node100.saveEx();
-		MWFNodeNext tr10_100 = new MWFNodeNext(node10, node100.getAD_WF_Node_ID());
-		tr10_100.setEntityType (ENTITYTYPE_Dictionary);
-		tr10_100.setDescription("(Standard Approval)");
-		tr10_100.setIsStdUserWorkflow(true);
-		tr10_100.setSeqNo(10);
-		tr10_100.saveEx();
-		
-		MWFNode node200 = new MWFNode (wf, "200", "(DocComplete)");
-		node200.setDescription("(Standard Node)");
-		node200.setEntityType (ENTITYTYPE_Dictionary);
-		node200.setAction(MWFNode.ACTION_DocumentAction);
-		node200.setDocAction(MWFNode.DOCACTION_Complete);
-		node200.setPosition(170, 120);
-		node200.saveEx();
-		MWFNodeNext tr100_200 = new MWFNodeNext(node100, node200.getAD_WF_Node_ID());
-		tr100_200.setEntityType (ENTITYTYPE_Dictionary);
-		tr100_200.setDescription("(Standard Transition)");
-		tr100_200.setSeqNo(100);
-		tr100_200.saveEx();
-		
-		
-		/**
-		Env.setContext(Env.getCtx(), "#AD_Client_ID ", "11");
-		Env.setContext(Env.getCtx(), "#AD_Org_ID ", "11");
-		Env.setContext(Env.getCtx(), "#AD_User_ID ", "100");
-		//
-		int AD_Workflow_ID = 115;			//	Requisition WF
-		int M_Requsition_ID = 100;
-		MRequisition req = new MRequisition (Env.getCtx(), M_Requsition_ID);
-		req.setDocStatus(DocAction.DOCSTATUS_Drafted);
-		req.saveEx();
-		Log.setTraceLevel(8);
-		System.out.println("---------------------------------------------------");
-		MWorkflow wf = MWorkflow.get (Env.getCtx(), AD_Workflow_ID);
-		**/
-	//	wf.start(M_Requsition_ID);
-		
-	}	//	main
-	
 	/**
 	 * Get AD_Workflow_ID for given M_Product_ID
-	 * @param M_Product_ID
+	 * @param product
 	 * @return AD_Workflow_ID
 	 */
 	public static int getWorkflowSearchKey(MProduct product)
@@ -1011,9 +939,9 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}
 
 	/**
-	 * Check if the workflow is valid for given date
+	 * Check if this workflow is valid for given date
 	 * @param date
-	 * @return true if valid
+	 * @return true if valid for given date
 	 */
 	public boolean isValidFromTo(Timestamp date)
 	{
@@ -1040,9 +968,9 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Run document action workflow
 	 * @param po
-	 * @param docAction
+	 * @param docAction DocAction.ACTION_*
 	 * @return ProcessInfo
 	 */
 	public static ProcessInfo runDocumentActionWorkflow(PO po, String docAction)
@@ -1060,7 +988,7 @@ public class MWorkflow extends X_AD_Workflow implements ImmutablePOSupport
 		ProcessInfo processInfo = new ProcessInfo (((DocAction)po).getDocumentInfo(),column.getAD_Process_ID(),po.get_Table_ID(),po.get_ID());
 		processInfo.setTransactionName(po.get_TrxName());
 		processInfo.setPO(po);
-		ServerProcessCtl.process(processInfo, Trx.get(processInfo.getTransactionName(), false));
+		ServerProcessCtl.process(processInfo, !Util.isEmpty(processInfo.getTransactionName(), true) ? Trx.get(processInfo.getTransactionName(), false) : null);
 		return processInfo;
 	}
 }	//	MWorkflow_ID

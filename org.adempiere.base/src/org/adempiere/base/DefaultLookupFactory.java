@@ -13,6 +13,7 @@
 package org.adempiere.base;
 
 import org.compiere.model.GridFieldVO;
+import org.compiere.model.InfoColumnVO;
 import org.compiere.model.Lookup;
 import org.compiere.model.MAccountLookup;
 import org.compiere.model.MLocationLookup;
@@ -25,9 +26,10 @@ import org.compiere.util.DisplayType;
 import static org.compiere.util.DisplayType.*; 
 
 /**
+ * Default {@link ILookupFactory} implementation for core.<br/>
+ * Create new {@link Lookup} instance by predefined display type.
  * @author Jan Thielemann - jan.thielemann@evenos.de
  * @author hengsin
- *
  */
 public class DefaultLookupFactory implements ILookupFactory{
 
@@ -74,6 +76,20 @@ public class DefaultLookupFactory implements ILookupFactory{
 			return true;
 				
 		return false;
+	}
+
+	@Override
+	public boolean isLookup(InfoColumnVO infoColumnVO) {
+		int displayType = infoColumnVO.getAD_Reference_ID();
+		if (displayType == Location
+				|| displayType == Locator
+				|| displayType == Account
+				|| displayType == PAttribute
+				|| displayType == Payment
+				|| DisplayType.isLookup(displayType))
+				return true;
+					
+			return false;
 	}
 
 }

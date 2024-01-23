@@ -18,36 +18,40 @@ package org.compiere.util;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.ModelValidationEngine;
+import org.compiere.model.SystemProperties;
 
 /**
- *	Load & Save INI Settings from property file
- *	Initiated in Adempiere.startup
- *	Settings activated in ALogin.getIni
+ *	Load and Save INI Settings from property file (idempiere.properties).<br/>
+ *	Initiated in Adempiere.startup.<br/>
  *
  *  @author     Jorg Janke
  *  @version    $Id$
  *
- * @author Teo Sarca, www.arhipac.ro
+ *  @author Teo Sarca, www.arhipac.ro
  * 			<li>FR [ 1658127 ] Select charset encoding on import
  * 			<li>FR [ 2406123 ] Ini.saveProperties fails if target directory does not exist
  */
 public final class Ini implements Serializable
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -8936090051638559660L;
 
@@ -62,10 +66,10 @@ public final class Ini implements Serializable
 	private static final String	DEFAULT_UID = 		"GardenAdmin";
 	/** Apps Password		*/
 	public static final String	P_PWD = 			"ApplicationPassword";
-	private static final String	DEFAULT_PWD = 		"GardenAdmin";
+	private static final String	DEFAULT_PWD = 		"";
 	/** Store Password		*/
 	public static final String	P_STORE_PWD = 		"StorePassword";
-	private static final boolean DEFAULT_STORE_PWD = true;
+	private static final boolean DEFAULT_STORE_PWD = false;
 	/** Trace Level			*/
 	public static final String	P_TRACELEVEL = 		"TraceLevel";
 	private static final String DEFAULT_TRACELEVEL = "WARNING";
@@ -84,7 +88,7 @@ public final class Ini implements Serializable
 	/** Data Source			*/
 	public static final String  P_CONTEXT = 		"DataSource";
 	private static final String	DEFAULT_CONTEXT	= 	"java:adempiereDB";
-	/** Look & Feel			*/
+	/** Look and Feel			*/
 	public static final String	P_UI_LOOK =			"UILookFeel";
 
     private static final String	DEFAULT_UI_LOOK =	"Adempiere";
@@ -218,8 +222,9 @@ public final class Ini implements Serializable
 
 	/**
 	 *	Save INI parameters to disk
-	 *  @param tryUserHome get user home first
+	 *  @param tryUserHome true to try user home first
 	 */
+	@SuppressWarnings("deprecation")
 	public static void saveProperties (boolean tryUserHome)
 	{
 		if (Ini.isClient() && DB.isConnected()) {
@@ -365,7 +370,7 @@ public final class Ini implements Serializable
 	}	//	deleteProperties
 
 	/**
-	 *	Load property and set to default, if not existing
+	 *	Load property and set to default, if not exists
 	 *
 	 * 	@param key   Key
 	 * 	@param defaultValue   Default Value
@@ -394,13 +399,13 @@ public final class Ini implements Serializable
 	 *  </pre>
 	 *  Can be overwritten by -DPropertyFile=myFile allowing multiple
 	 *  configurations / property files.
-	 *  @param tryUserHome get user home first
+	 *  @param tryUserHome true to try user home first, ignore for server
 	 *  @return file name
 	 */
 	public static String getFileName (boolean tryUserHome)
 	{
-		if (System.getProperty("PropertyFile") != null)
-			return System.getProperty("PropertyFile");
+		if (SystemProperties.getPropertyFile() != null)
+			return SystemProperties.getPropertyFile();
 		//
 		String base = null;
 		if (tryUserHome && s_client)
@@ -420,15 +425,13 @@ public final class Ini implements Serializable
 		return base + IDEMPIERE_PROPERTY_FILE;
 	}	//	getFileName
 
-
-	/**************************************************************************
+	/**
 	 *	Set Property
 	 *  @param key   Key
 	 *  @param value Value
 	 */
 	public static void setProperty (String key, String value)
 	{
-	//	log.finer(key + "=" + value);
 		if (s_prop == null)
 			s_prop = new Properties();
 		if (key.equals(P_WARNING) || key.equals(P_WARNING_de))
@@ -484,7 +487,6 @@ public final class Ini implements Serializable
 			return "";
 		//
 		String value = SecureEngine.decrypt(retStr, 0);
-	//	log.finer(key + "=" + value);
 		if (value == null)
 			return "";
 		return value;
@@ -509,7 +511,7 @@ public final class Ini implements Serializable
 		return getProperty (P_CACHE_WINDOW).equals("Y");
 	}	//	isCacheWindow
 
-	/**************************************************************************
+	/**
 	 *  Get Properties
 	 *
 	 * @return Ini properties
@@ -536,9 +538,6 @@ public final class Ini implements Serializable
 		buf.append("]");
 		return buf.toString();
 	}   //  toString
-
-
-	/*************************************************************************/
 
 	/** System environment prefix                                       */
 	public static final String  ENV_PREFIX = "env.";
@@ -598,14 +597,14 @@ public final class Ini implements Serializable
 	}   //  isLoaded
 
 	/**
-	 *  Get Idempiere Home from Environment
+	 *  Get iDempiere Home from Environment
 	 *  @return idempiereHome or null
 	 */
 	public static String getAdempiereHome()
 	{
-		String env = System.getProperty (ENV_PREFIX + IDEMPIERE_HOME);
+		String env = SystemProperties.getEnvIdempiereHome();
 		if (env == null || env.trim().length() == 0)
-			env = System.getProperty (IDEMPIERE_HOME);
+			env = SystemProperties.getIdempiereHome();
 		if (env == null || env.trim().length() == 0)
 		{
 			//client - user home, server - current working directory
@@ -627,7 +626,7 @@ public final class Ini implements Serializable
 	}   //  getAdempiereHome
 
 	/**
-	 *  Set Idempiere Home
+	 *  Set iDempiere Home
 	 *  @param idempiereHome IDEMPIERE_HOME
 	 */
 	public static void setAdempiereHome (String idempiereHome)
@@ -637,7 +636,7 @@ public final class Ini implements Serializable
 	}   //  setAdempiereHome
 
 	/**
-	 * 	Find Idempiere Home
+	 * 	Find iDempiere Home
 	 *	@return idempiere home or null
 	 */
 	public static String findAdempiereHome()
@@ -645,11 +644,12 @@ public final class Ini implements Serializable
 		return getAdempiereHome();
 	}	//	findAdempiereHome
 
-	/**************************************************************************
+	/**
 	 * 	Get Window Dimension
 	 *	@param AD_Window_ID window no
 	 *	@return dimension or null
 	 */
+	@Deprecated
 	public static Dimension getWindowDimension(int AD_Window_ID)
 	{
 		String key = "WindowDim" + AD_Window_ID;
@@ -676,6 +676,7 @@ public final class Ini implements Serializable
 	 *	@param AD_Window_ID window
 	 *	@param windowDimension dimension - null to remove
 	 */
+	@Deprecated
 	public static void setWindowDimension(int AD_Window_ID, Dimension windowDimension)
 	{
 		String key = "WindowDim" + AD_Window_ID;
@@ -693,6 +694,7 @@ public final class Ini implements Serializable
 	 *	@param AD_Window_ID window id
 	 *	@return location or null
 	 */
+	@Deprecated
 	public static Point getWindowLocation(int AD_Window_ID)
 	{
 		String key = "WindowLoc" + AD_Window_ID;
@@ -719,6 +721,7 @@ public final class Ini implements Serializable
 	 *	@param AD_Window_ID window
 	 *	@param windowLocation location - null to remove
 	 */
+	@Deprecated
 	public static void setWindowLocation(int AD_Window_ID, Point windowLocation)
 	{
 		String key = "WindowLoc" + AD_Window_ID;
@@ -735,6 +738,7 @@ public final class Ini implements Serializable
 	 * 	Get Divider Location
 	 *	@return location
 	 */
+	@Deprecated
 	public static int getDividerLocation()
 	{
 		String key = "Divider";
@@ -755,6 +759,7 @@ public final class Ini implements Serializable
 	 * 	Set Divider Location
 	 *	@param dividerLocation location
 	 */
+	@Deprecated
 	public static void setDividerLocation(int dividerLocation)
 	{
 		String key = "Divider";
@@ -790,8 +795,101 @@ public final class Ini implements Serializable
 		return Charset.defaultCharset();
 	}
 
+	/**
+	 * Get property file name
+	 * @return property file name
+	 */
 	public static String getPropertyFileName()
 	{
 		return s_propertyFileName;
 	}
+
+	/**
+	 * Get value of a secret variable
+	 * @param secretVar secret variable name
+	 * @return value of secret variable
+	 */
+	public static String getVar(String secretVar) {
+		String cmd = getUtilsCmd("getVar");
+		String[] command = new String[] {
+				cmd,
+				secretVar
+		};
+		String retValue = runCommand(command);
+		return retValue;
+	}
+
+	/**
+	 * Set value of secret variable
+	 * @param secretVar
+	 * @param secretValue
+	 */
+	public static void setVar(String secretVar, String secretValue) {
+		String cmd = getUtilsCmd("setVar");
+		String[] command = new String[] {
+				cmd,
+				secretVar,
+				secretValue
+		};
+		runCommand(command);
+	}
+
+	/**
+	 * Get absolute path of script
+	 * @param script command script file name
+	 * @return absolute path of script
+	 */
+	private static String getUtilsCmd(String script) {
+		File utilsFolder = new File(getAdempiereHome() + File.separator + "utils");
+		if (! utilsFolder.exists()) {
+			// /utils does not exist, probably running on eclipse
+			if (Env.isWindows()) {
+				utilsFolder = new File(getAdempiereHome() + File.separator + "org.adempiere.server-feature" + File.separator + "utils.windows");
+			} else {
+				utilsFolder = new File(getAdempiereHome() + File.separator + "org.adempiere.server-feature" + File.separator + "utils.unix");
+			}
+			if (! utilsFolder.exists()) {
+				throw new AdempiereException("Folder utils does not exist");
+			}
+		}
+		File cmd = new File(utilsFolder, script + (Env.isWindows() ? ".bat" : ".sh"));
+		if (! cmd.exists() || ! cmd.canExecute()) {
+			throw new AdempiereException("File does not exist or canno execute " + cmd.getAbsolutePath());
+		}
+		return cmd.getAbsolutePath();
+	}
+
+	/**
+	 * Run shell command
+	 * @param command
+	 * @return command output
+	 */
+	public static String runCommand(String[] command) {
+		StringBuilder msg = new StringBuilder();
+		try {
+			String s;
+			Process p = Runtime.getRuntime().exec(command);
+			BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+			// read the output from the command
+			while ((s = stdInput.readLine()) != null) {
+				msg.append(s);
+			}
+			// read any errors from the attempted command
+			while ((s = stdError.readLine()) != null) {
+				msg.append(s);
+			}
+			if ( !p.waitFor(5, TimeUnit.SECONDS)) {
+				throw new AdempiereException("Timeout waiting 5 seconds for " + command[0]);
+			} 
+			if (p.exitValue() != 0) {
+				throw new Exception(msg.toString());
+			}
+		}
+		catch (Exception e) {
+			throw new AdempiereException("Could not execute " + command[0], e);
+		}
+		return msg.toString();
+	}
+
 }	//	Ini

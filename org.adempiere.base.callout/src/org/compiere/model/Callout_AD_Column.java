@@ -31,6 +31,8 @@ public class Callout_AD_Column extends CalloutEngine
 {
 	public String columnName (Properties ctx, int WindowNo, GridTab mTab, GridField mField, Object value)
 	{ // IDEMPIERE-1011 - dup code on MColumn.setmartDefaults
+		if (value == null)
+			return "";
 		I_AD_Column column = GridTabWrapper.create(mTab, I_AD_Column.class);
 		if (MColumn.isSuggestSelectionColumn(column.getColumnName(), true))
 			column.setIsSelectionColumn(true);
@@ -38,7 +40,7 @@ public class Callout_AD_Column extends CalloutEngine
 		// IDEMPIERE-1011
 		if (PO.getUUIDColumnName(column.getAD_Table().getTableName()).equals(column.getColumnName())) {
 			// UUID column
-			column.setAD_Reference_ID(DisplayType.String);
+			column.setAD_Reference_ID(DisplayType.UUID);
 			column.setAD_Val_Rule_ID(0);
 			column.setAD_Reference_Value_ID(0);
 			column.setFieldLength(36);
@@ -143,6 +145,26 @@ public class Callout_AD_Column extends CalloutEngine
 			column.setPlaceholder(element.getPlaceholder());
 		}
 
+		return "";
+	}
+	
+	public String process (Properties ctx, int WindowNo, GridTab mTab, GridField mField, Object value)
+	{
+		Integer AD_Process_ID = (Integer) value;
+		if (AD_Process_ID == null || AD_Process_ID.intValue() == 0)
+			return "";
+		
+		mTab.setValue(I_AD_Column.COLUMNNAME_AD_InfoWindow_ID, null);
+		return "";
+	}
+	
+	public String infoWindow (Properties ctx, int WindowNo, GridTab mTab, GridField mField, Object value)
+	{
+		Integer AD_InfoWindow_ID = (Integer) value;
+		if (AD_InfoWindow_ID == null || AD_InfoWindow_ID.intValue() == 0)
+			return "";
+		
+		mTab.setValue(I_AD_Column.COLUMNNAME_AD_Process_ID, null);
 		return "";
 	}
 

@@ -29,7 +29,7 @@ import org.compiere.model.ProductCost;
 import org.compiere.util.Env;
 
 /**
- * Post Order Documents.
+ * Post {@link MRequisition} Documents.
  *
  * <pre>
  *   Table:              M_Requisition
@@ -56,6 +56,7 @@ public class Doc_Requisition extends Doc
 	 *	Load Specific Document Details
 	 *  @return error message or null
 	 */
+	@Override
 	protected String loadDocumentDetails ()
 	{
 		setC_Currency_ID(NO_CURRENCY);
@@ -67,7 +68,6 @@ public class Doc_Requisition extends Doc
 		setAmount(AMTTYPE_Net, req.getTotalLines());
 		// Contained Objects
 		p_lines = loadLines (req);
-		// log.fine( "Lines=" + p_lines.length + ", Taxes=" + m_taxes.length);
 		return null;
 	}	// loadDocumentDetails
 
@@ -86,7 +86,6 @@ public class Doc_Requisition extends Doc
 			DocLine docLine = new DocLine (line, this);
 			BigDecimal Qty = line.getQty();
 			docLine.setQty (Qty, false);
-			//BigDecimal PriceActual = line.getPriceActual();
 			BigDecimal LineNetAmt = line.getLineNetAmt();
 			docLine.setAmount (LineNetAmt);	 // DR
 			list.add (docLine);
@@ -97,19 +96,18 @@ public class Doc_Requisition extends Doc
 		return dls;
 	}	// loadLines
 
-	/***************************************************************************
-	 * Get Source Currency Balance - subtracts line and tax amounts from total -
-	 * no rounding
-	 *
-	 * @return positive amount, if total invoice is bigger than lines
+	/**
+	 * Get Balance
+	 * @return balance (ZERO) - always balanced
 	 */
+	@Override
 	public BigDecimal getBalance ()
 	{
 		BigDecimal retValue = Env.ZERO;
 		return retValue;
 	}	// getBalance
 
-	/***************************************************************************
+	/**
 	 * Create Facts (the accounting logic) for POR.
 	 * <pre>
 	 * Reservation
@@ -119,6 +117,7 @@ public class Doc_Requisition extends Doc
 	 * @param as accounting schema
 	 * @return Fact
 	 */
+	@Override
 	public ArrayList<Fact> createFacts (MAcctSchema as)
 	{
 		ArrayList<Fact> facts = new ArrayList<Fact>();

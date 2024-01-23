@@ -15,19 +15,20 @@
 package org.adempiere.process;
 
 import java.sql.Timestamp;
-import java.util.logging.Level;
 
 import org.compiere.model.MPackage;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MShippingTransaction;
 import org.compiere.process.ProcessInfoLog;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 
 /**
- * 
+ * Process to perform online shipment processing for {@link MPackage}
  * @author Low Heng Sin
  *
  */
+@org.adempiere.base.annotation.Process
 public class OnlineShipmentProcess extends SvrProcess 
 {
 	@Override
@@ -36,11 +37,10 @@ public class OnlineShipmentProcess extends SvrProcess
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
-			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
     }
 	
@@ -62,62 +62,4 @@ public class OnlineShipmentProcess extends SvrProcess
 		return "@OK";
 	}
 
-/*	
-    private void validatePackage() throws Exception
-    {
-        if(m_package == null)
-            throw new Exception("No Package");
-
-        //Yvonne
-        if( m_package.get_Value(X_Shipping.COLUMN_IS_SHIP_ITN_REQ)!=null?((Boolean)m_package.get_Value(X_Shipping.COLUMN_IS_SHIP_ITN_REQ)).booleanValue():false && ( m_package.get_Value(X_Shipping.COLUMN_ITN) == null || ((String)m_package.get_Value(X_Shipping.COLUMN_ITN)).trim().length() == 0 ) )
-        {
-            int windowNo = X_Shipping.m_Window_No;
-            
-            if (Ini.isClient())
-			{
-            	try
-                {
-                    Class cl = Class.forName("org.compiere.apps.ADialog");
-                    Class paramTypes[] = {int.class, Container.class, String.class, String.class};
-                    Object params[] = {windowNo, Env.getWindow(windowNo), "Package ITN for this shipment is blank.", "Are you sure you want to continue?"};
-                    Method method = cl.getDeclaredMethod("ask", paramTypes);
-                    Boolean ok = (Boolean) method.invoke(null, params);
-                    
-                    if(!ok)
-                	{
-                		throw new Exception("Online shipment processing canceled by user.");
-                	}
-                }
-                catch (Exception ex)
-                {
-                	throw new AdempiereException(ex);
-                }
-			}
-			else
-			{
-				try
-				{
-					ClassLoader loader = Thread.currentThread().getContextClassLoader();
-					if (loader == null)
-						loader = this.getClass().getClassLoader();
-	    	    	Class<?> clazz = loader.loadClass("org.adempiere.webui.window.FDialog");
-	    	    	Class<?> clazz1 = loader.loadClass("org.zkoss.zk.ui.Component");
-	    		      
-	    	    	Method m = clazz.getMethod("ask", Integer.TYPE, clazz1, String.class, String.class);
-	    	    	Boolean returnCode = (Boolean)m.invoke(null, 0, null, "Packaget ITN for this shipment is blank.",
-                            "Are you sure you want to continue?");
-	    		    
-	    	    	if(!returnCode)
-	                {
-	    	    		throw new Exception("Online shipment processing canceled by user.");
-	                }
-				} 
-				catch (Exception e)
-				{
-					throw new AdempiereException(e);
-				}
-			}            
-        }     
-    }
-*/    
 }

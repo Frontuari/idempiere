@@ -61,7 +61,6 @@ public final class MConversionRateUtil
 
 		// Currency To
 		int C_Currency_ID_To = MClient.get(model.getCtx(), AD_Client_ID).getAcctSchema().getC_Currency_ID();
-		//~ model.set_AttrValue("C_Currency_ID_To", Integer.valueOf(C_Currency_ID_To));
 		
 		// Get Rate
 		BigDecimal rate = SetGetUtil.get_AttrValueAsBigDecimal(model, "CurrencyRate");
@@ -103,7 +102,16 @@ public final class MConversionRateUtil
 		return amt;
 	}	//	convert
 
-	/** Return the message to show when no exchange rate is found */
+	/** 
+	 * @param ctx
+	 * @param adMessage
+	 * @param currencyFromID
+	 * @param currencyToID
+	 * @param convertionTypeID
+	 * @param date
+	 * @param trxName
+	 * @return the message to show when no exchange rate is found 
+	 */
 	public static String getErrorMessage(Properties ctx, String adMessage, int currencyFromID, int currencyToID, int convertionTypeID, Timestamp date, String trxName)
 	{
 		if (convertionTypeID == 0)

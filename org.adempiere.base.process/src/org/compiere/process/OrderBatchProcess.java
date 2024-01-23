@@ -23,6 +23,7 @@ import java.sql.Timestamp;
 import java.util.logging.Level;
 
 import org.compiere.model.MOrder;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
 
@@ -33,6 +34,7 @@ import org.compiere.util.DB;
  *  @author Jorg Janke
  *  @version $Id: OrderBatchProcess.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class OrderBatchProcess extends SvrProcess
 {
 	private int			p_C_DocTypeTarget_ID = 0;
@@ -77,7 +79,7 @@ public class OrderBatchProcess extends SvrProcess
 				p_IsInvoiced = (String)para[i].getParameter();
 			}
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 
@@ -177,10 +179,6 @@ public class OrderBatchProcess extends SvrProcess
 			throw new IllegalStateException("Order Process Failed: " + order + " - " + order.getProcessMsg());
 			
 		}
-		// commented by zuhri - unreachable code
-		//addLog (0, null, null, order.getDocumentNo() + ": Error " + order.getProcessMsg());
-		//return false;
-		// end commented out by zuhri
 	}	//	process
 	
 }	//	OrderBatchProcess

@@ -24,11 +24,10 @@ import java.util.zip.ZipOutputStream;
 import org.compiere.util.CLogger;
 
 /**
+ * DB backed implementation of {@link IImageStore}
  * @author hengsin
- *
  */
 public class ImageDBStorageImpl implements IImageStore {
-
 
 	private final CLogger log = CLogger.getCLogger(getClass());
 
@@ -101,7 +100,6 @@ public class ImageDBStorageImpl implements IImageStore {
 				if (log.isLoggable(Level.FINE)) log.fine(entry.getCompressedSize() + " (" + entry.getSize() + ") "
 						+ (entry.getCompressedSize() * 100 / entry.getSize()) + "%");
 				//
-				// zip.finish();
 				zip.close();
 				deflatedData = out.toByteArray();
 				if (log.isLoggable(Level.FINE)) log.fine("Length=" + inflatedData.length);

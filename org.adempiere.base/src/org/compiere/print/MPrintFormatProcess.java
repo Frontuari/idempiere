@@ -19,6 +19,7 @@ package org.compiere.print;
 import java.math.BigDecimal;
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 
@@ -31,6 +32,7 @@ import org.compiere.process.SvrProcess;
  * 	@version 	$Id: MPrintFormatProcess.java,v 1.3 2006/07/30 00:53:02 jjanke Exp $
  *  @author		Michael Judd BF [ 2730339 ] - Error logging in MPrintFormatProcess
  */
+@org.adempiere.base.annotation.Process
 public class MPrintFormatProcess extends SvrProcess
 {
 	/** PrintFormat             */
@@ -54,8 +56,7 @@ public class MPrintFormatProcess extends SvrProcess
 			else if (name.equals("AD_Table_ID"))
 				m_AD_Table_ID = ((BigDecimal)para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter=" 
-						+ para[i].getParameterName());
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}   //  prepare
 

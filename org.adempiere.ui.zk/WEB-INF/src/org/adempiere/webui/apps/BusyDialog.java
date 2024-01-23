@@ -16,21 +16,31 @@ package org.adempiere.webui.apps;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.theme.ThemeManager;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Span;
 
 /**
- * 
+ * Blocking in progress dialog.
  * @author hengsin
  *
  */
 public class BusyDialog extends Window {
 
+	/**
+	 * generated serial id
+	 */
 	private static final long serialVersionUID = -779475945298887887L;
+	/**
+	 * Label component to display in progress message (default is Processing...).
+	 */
 	private Label label;
 
+	/**
+	 * Default constructor
+	 */
 	public BusyDialog() {
 		super();
 		LayoutUtils.addSclass("busy-dialog", this);
@@ -40,7 +50,10 @@ public class BusyDialog extends Window {
 		appendChild(box);
 		
 		Span image = new Span();
-		LayoutUtils.addSclass("busy-dialog-img", image);
+		if (ThemeManager.isUseFontIconForImage())
+			LayoutUtils.addSclass("z-icon-spinner z-icon-spin", image);
+		else
+			LayoutUtils.addSclass("busy-dialog-img", image);
 		box.appendChild(image);
 		
 		label = new Label(Msg.getMsg(Env.getCtx(), "Processing"));
@@ -51,10 +64,13 @@ public class BusyDialog extends Window {
 		setShadow(true);
 	}
 
+	/**
+	 * Update in progress message.
+	 * @param message
+	 */
 	public void statusUpdate(String message) {
 		if (label != null) {
 			label.setText(message);
-			this.invalidate();
 		}
 	}
 }

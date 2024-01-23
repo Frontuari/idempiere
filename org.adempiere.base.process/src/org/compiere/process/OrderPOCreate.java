@@ -26,6 +26,7 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MOrgInfo;
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
 import org.compiere.util.Msg;
@@ -39,6 +40,7 @@ import org.compiere.util.Msg;
  *  Contributor: Carlos Ruiz - globalqss
  *      Fix [1709952] - Process: "Generate PO from Sales order" bug
  */
+@org.adempiere.base.annotation.Process
 public class OrderPOCreate extends SvrProcess
 {
 	/**	Order Date From		*/
@@ -79,7 +81,7 @@ public class OrderPOCreate extends SvrProcess
 			else if (name.equals("IsDropShip"))
 				p_IsDropShip = ((String) para[i].getParameter()).equals("Y");
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		
 		// called from order window w/o parameters
@@ -119,11 +121,11 @@ public class OrderPOCreate extends SvrProcess
 					.append(" INNER JOIN M_Product_PO po ON (ol.M_Product_ID=po.M_Product_ID) ")
 						.append("WHERE o.C_Order_ID=ol.C_Order_ID AND po.C_BPartner_ID=?)"); 
 			if (p_DateOrdered_From != null && p_DateOrdered_To != null)
-				sql.append("AND TRUNC(o.DateOrdered) BETWEEN ? AND ?");
+				sql.append(" AND TRUNC(o.DateOrdered) BETWEEN ? AND ?");
 			else if (p_DateOrdered_From != null && p_DateOrdered_To == null)
-				sql.append("AND TRUNC(o.DateOrdered) >= ?");
+				sql.append(" AND TRUNC(o.DateOrdered) >= ?");
 			else if (p_DateOrdered_From == null && p_DateOrdered_To != null)
-				sql.append("AND TRUNC(o.DateOrdered) <= ?");
+				sql.append(" AND TRUNC(o.DateOrdered) <= ?");
 		}
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;

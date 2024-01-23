@@ -14,13 +14,14 @@ package org.compiere.model;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.Env;
-import org.idempiere.cache.ImmutablePOSupport;
 import org.idempiere.cache.ImmutablePOCache;
+import org.idempiere.cache.ImmutablePOSupport;
 
 /**
  * Model class for Process Customizations
@@ -34,7 +35,17 @@ public class MUserDefProc extends X_AD_UserDef_Proc implements ImmutablePOSuppor
 	 * 
 	 */
 	private static final long serialVersionUID = 1599140293008534080L;
-	private volatile static List<MUserDefProc> m_fullList = null;
+	private static final Map<Integer, List<MUserDefProc>> m_fullMap = new HashMap<Integer, List<MUserDefProc>>();
+
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_UserDef_Proc_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MUserDefProc(Properties ctx, String AD_UserDef_Proc_UU, String trxName) {
+        super(ctx, AD_UserDef_Proc_UU, trxName);
+    }
 
 	/**
 	 * @param ctx
@@ -43,7 +54,6 @@ public class MUserDefProc extends X_AD_UserDef_Proc implements ImmutablePOSuppor
 	 */
 	public MUserDefProc(Properties ctx, int AD_UserDef_Proc_ID, String trxName) {
 		super(ctx, AD_UserDef_Proc_ID, trxName);
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -86,17 +96,25 @@ public class MUserDefProc extends X_AD_UserDef_Proc implements ImmutablePOSuppor
 	
 	private static MUserDefProc[] getAll (Properties ctx, int processID)
 	{
-		if (m_fullList == null) {
-			m_fullList = new Query(ctx, MUserDefProc.Table_Name, "IsActive='Y'", null).list();
+		List<MUserDefProc> fullList = null;
+		synchronized (m_fullMap) {
+			fullList = m_fullMap.get(Env.getAD_Client_ID(ctx));
+			if (fullList == null) {
+				fullList = new Query(ctx, MUserDefProc.Table_Name, null, null)
+						.setOnlyActiveRecords(true)
+						.setClient_ID()
+						.list();
+				m_fullMap.put(Env.getAD_Client_ID(ctx), fullList);
+			}
 		}
 
-		if (m_fullList.size() == 0) {
+		if (fullList.size() == 0) {
 			return null;
 		}
 
 		List<MUserDefProc> list = new ArrayList<MUserDefProc>();
 
-		for (MUserDefProc udp : m_fullList) {
+		for (MUserDefProc udp : fullList) {
 			if (udp.getAD_Process_ID() == processID
 				&& udp.getAD_Client_ID() == Env.getAD_Client_ID(ctx)
 				&& (udp.getAD_Language() == null || udp.getAD_Language().equals(Env.getAD_Language(ctx)))
@@ -202,36 +220,17 @@ public class MUserDefProc extends X_AD_UserDef_Proc implements ImmutablePOSuppor
 
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
-		String whereClause = "AD_UserDef_Proc_ID!=" + get_ID();
-		List<MUserDefProc> records = new Query(getCtx(), MUserDefProc.Table_Name, whereClause, get_TrxName()).list();
-
-		if(records.size() > 0){
-			for(MUserDefProc record : records){
-				if(record.getAD_Org_ID() == getAD_Org_ID()
-						&& record.getAD_Role_ID() == getAD_Role_ID()
-						&& record.getAD_User_ID() == getAD_User_ID()
-						&& record.getAD_Process_ID() == getAD_Process_ID()){
-
-					throw new AdempiereException("Personalização de processo já existe: " + record.getName() + " - ID: " + record.get_ID());
-				}
-			}
+		synchronized (m_fullMap) {
+			m_fullMap.remove(getAD_Client_ID());
 		}
-
-		if(!newRecord){
-			MUserDefProc old = (MUserDefProc) new Query(getCtx(), MUserDefProc.Table_Name, "AD_UserDef_Proc_ID=" + get_ID(), get_TrxName()).first();
-			records = new Query(getCtx(), MUserDefProcParameter.Table_Name, "AD_UserDef_Proc_ID=" + get_ID(), get_TrxName()).list();
-
-			if(records.size() > 0 && old.getAD_Process_ID() != getAD_Process_ID())
-				throw new AdempiereException("Esta personalização de processo já possui parametros configurados.");
-		}
-
-		m_fullList = null;
 		return true;
 	}
 
 	@Override
 	protected boolean beforeDelete() {
-		m_fullList = null;
+		synchronized (m_fullMap) {
+			m_fullMap.remove(getAD_Client_ID());
+		}
 		return true;
 	}
 

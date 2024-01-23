@@ -33,6 +33,7 @@ import org.compiere.model.MCostElement;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInventory;
 import org.compiere.model.MInventoryLine;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProduct;
 import org.compiere.util.AdempiereSystemError;
 import org.compiere.util.AdempiereUserError;
@@ -47,6 +48,7 @@ import org.compiere.util.Util;
  *  @author Jorg Janke
  *  @version $Id: CostUpdate.java,v 1.3 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class CostUpdate extends SvrProcess
 {
 	/**	Product Category		*/
@@ -91,7 +93,6 @@ public class CostUpdate extends SvrProcess
 		for (int i = 0; i < para.length; i++)
 		{
 			String name = para[i].getParameterName();
-		//	log.fine("prepare - " + para[i]);
 			if (para[i].getParameter() == null)
 				;
 			else if (name.equals("M_Product_Category_ID"))
@@ -105,7 +106,7 @@ public class CostUpdate extends SvrProcess
 			else if (name.equals("C_DocType_ID"))
 				p_C_DocType_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);		
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare	
 

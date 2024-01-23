@@ -19,7 +19,6 @@ package org.compiere.model;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -27,10 +26,13 @@ import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.compiere.util.ValueNamePair;
+import org.idempiere.cache.ImmutablePOCache;
+import org.idempiere.cache.ImmutablePOSupport;
 
 /**
- *  Reference List Value
+ *  List Values for {@link X_AD_Reference#VALIDATIONTYPE_ListValidation}
  *
  *  @author Jorg Janke
  *  @version $Id: MRefList.java,v 1.3 2006/07/30 00:58:18 jjanke Exp $
@@ -39,12 +41,14 @@ import org.compiere.util.ValueNamePair;
  *  		<li>BF [ 1748449 ] Info Account - Posting Type is not translated
  *  		<li>FR [ 2694043 ] Query. first/firstOnly usage best practice
  */
-public class MRefList extends X_AD_Ref_List
+public class MRefList extends X_AD_Ref_List implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = -3612793187620297377L;
+	private static final long serialVersionUID = -2704284822855131148L;
+	/**	RefList Value Cache						*/
+	private static ImmutablePOCache<String,MRefList> s_ref_value_cache	= new ImmutablePOCache<String,MRefList>(Table_Name, 40);
 
 	/**
 	 * 	Get Reference List 
@@ -54,12 +58,47 @@ public class MRefList extends X_AD_Ref_List
 	 *	@param trxName transaction
 	 *	@return List or null
 	 */
-	public static MRefList get (Properties ctx, int AD_Reference_ID, String Value, String trxName)
+	public static synchronized MRefList get (Properties ctx, int AD_Reference_ID, String Value, String trxName)
 	{
-		return new Query(ctx, Table_Name, "AD_Reference_ID=? AND Value=?", trxName)
+		StringBuilder sb = new StringBuilder(String.valueOf(AD_Reference_ID))
+								.append("|")
+								.append(Value);
+		String key = sb.toString();
+		MRefList rl = s_ref_value_cache.get(ctx, key, e -> new MRefList(ctx, e));
+		if (rl == null)
+		{
+			rl = new Query(ctx, Table_Name, "AD_Reference_ID=? AND Value=?", trxName)
 					.setParameters(AD_Reference_ID, Value)
-					.firstOnly();
+					.first();
+			if (rl != null)
+			{
+				s_ref_value_cache.put(key, rl, e -> new MRefList(Env.getCtx(), e));
+			}
+		}
+		return rl;
 	}	//	get
+
+	/**
+	 * Copy constructor
+	 * @param ctx
+	 * @param copy
+	 */
+	public MRefList(Properties ctx, MRefList copy) 
+	{
+		this(ctx, copy, (String) null);
+	}
+	
+	/**
+	 * Copy constructor
+	 * @param ctx
+	 * @param copy
+	 * @param trxName
+	 */
+	public MRefList(Properties ctx, MRefList copy, String trxName) 
+	{
+		this(ctx, 0, trxName);
+		copyPO(copy);
+	}
 	
 	/**
 	 * Get Reference List Value Name (cached)
@@ -75,11 +114,11 @@ public class MRefList extends X_AD_Ref_List
 	}
 
 	/**
-	 * Get Reference List Value Name (cached)
-	 * @param Language
+	 * Get Reference List Name for Value (cached)
+	 * @param AD_Language
 	 * @param AD_Reference_ID reference
-	 * @param Value value
-	 * @return List or ""
+	 * @param Value list value
+	 * @return List Name or ""
 	 */
 	public static String getListName (String AD_Language, int AD_Reference_ID, String Value)
 	{
@@ -128,14 +167,13 @@ public class MRefList extends X_AD_Ref_List
 		//
 		return retValue;
 	}	//	getListName
-	
-	
+		
 	/**
-	 * Get Reference List Value Description (cached)
+	 * Get Reference List Description (cached) for Value
 	 * @param ctx context
-	 * @param ListName reference
-	 * @param Value value
-	 * @return List or null
+	 * @param ListName list name
+	 * @param Value list value
+	 * @return List Description or null
 	 */
 	public static String getListDescription (Properties ctx, String ListName, String Value)
 	{
@@ -144,11 +182,11 @@ public class MRefList extends X_AD_Ref_List
 	}
 
 	/**
-	 * Get Reference List Value Description (cached)
-	 * @param Language
-	 * @param ListName reference
-	 * @param Value value
-	 * @return List or null
+	 * Get Reference List Description (cached) for Value
+	 * @param AD_Language
+	 * @param ListName list name
+	 * @param Value list value
+	 * @return List Description or null
 	 */
 	public static String getListDescription (String AD_Language, String ListName, String Value)
 	{
@@ -202,62 +240,101 @@ public class MRefList extends X_AD_Ref_List
 	}	//	getListDescription
 	
 	/**
-	 * Get Reference List (translated)
+	 * Get Reference List (translated name) entries
 	 * @param ctx context
 	 * @param AD_Reference_ID reference
-	 * @param optional if true add "",""
-	 * @return List or null
+	 * @param optional if true add ValueNamePair("","") to list entries return
+	 * @return Array of ValueNamePair(list value, translated list name) or null
 	 */
 	public static ValueNamePair[] getList (Properties ctx, int AD_Reference_ID, boolean optional)
 	{
-		String ad_language = Env.getAD_Language(ctx);
-		boolean isBaseLanguage = Env.isBaseLanguage(ad_language, "AD_Ref_List");
-		String sql = isBaseLanguage ?
-			"SELECT Value, Name FROM AD_Ref_List WHERE AD_Reference_ID=? AND IsActive='Y' ORDER BY Name"
-			:
-			"SELECT r.Value, t.Name FROM AD_Ref_List_Trl t"
-			+ " INNER JOIN AD_Ref_List r ON (r.AD_Ref_List_ID=t.AD_Ref_List_ID)"
-			+ " WHERE r.AD_Reference_ID=? AND t.AD_Language=? AND r.IsActive='Y'"
-			+ " ORDER BY t.Name"
-		;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		ArrayList<ValueNamePair> list = new ArrayList<ValueNamePair>();
-		if (optional)
-			list.add(new ValueNamePair("", ""));
-		try
-		{
-			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, AD_Reference_ID);
-			if (!isBaseLanguage)
-				pstmt.setString(2, ad_language);
-			rs = pstmt.executeQuery();
-			while (rs.next())
-				list.add(new ValueNamePair(rs.getString(1), rs.getString(2)));
-		}
-		catch (SQLException e)
-		{
-			s_log.log(Level.SEVERE, sql, e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null; pstmt = null;
-		}
-		ValueNamePair[] retValue = new ValueNamePair[list.size()];
-		list.toArray(retValue);
-		return retValue;		
-	}	//	getList
+		return getList(ctx, AD_Reference_ID, optional, "");
+	} // getList
 
+	/**
+	 * Get Reference List (translated name) entries
+	 * @param ctx context
+	 * @param AD_Reference_ID reference
+	 * @param optional if true add ValueNamePair("","") to list entries return
+	 * @param orderBy (Null,"" or N)-Name, V-Value, D-Default (IsOrderByValue)
+	 * @return Array of ValueNamePair(list value, translated list name) or null
+	 */
+	public static ValueNamePair[] getList (Properties ctx, int AD_Reference_ID, boolean optional, String orderBy) {
+		return getList(ctx, AD_Reference_ID, optional, "", orderBy);
+	}
+	
+	/**
+	 * Get Reference List (translated name) entries
+	 * @param ctx context
+	 * @param AD_Reference_ID reference
+	 * @param optional if true add ValueNamePair("","") to list entries return
+	 * @param additionalWhereClause
+	 * @param orderBy (Null,"" or N)-Name, V-Value, D-Default (IsOrderByValue)
+	 * @return Array of ValueNamePair(list value, translated list name) or null
+	 */
+	public static ValueNamePair[] getList (Properties ctx, int AD_Reference_ID, boolean optional, String additionalWhereClause, String orderBy) {
+
+		String language = Env.getAD_Language(ctx);
+		boolean orderByValue = MReference.get(AD_Reference_ID).isOrderByValue();
+		if (Util.isEmpty(orderBy) || "N".equals(orderBy))
+			orderByValue = false;
+		else if ("V".equals(orderBy))
+			orderByValue = true;
+		StringBuilder sql = new StringBuilder ("SELECT AD_Ref_List.Value,");
+		MClient client = MClient.get(Env.getCtx());
+		StringBuilder AspFilter = new StringBuilder();
+		if ( client.isUseASP() ) {
+			AspFilter.append(" AND AD_Ref_List.AD_Ref_List_ID NOT IN ( ")
+			.append(" SELECT li.AD_Ref_List_ID")
+			.append(" FROM ASP_Ref_List li")
+			.append(" INNER JOIN ASP_Level l ON ( li.ASP_Level_ID = l.ASP_Level_ID)")
+			.append(" INNER JOIN ASP_ClientLevel cl on (l.ASP_Level_ID = cl.ASP_Level_ID)")
+			.append(" INNER JOIN AD_Client c on (cl.AD_Client_ID = c.AD_Client_ID)")
+			.append(" WHERE li.AD_Reference_ID=").append(AD_Reference_ID)
+			.append(" AND li.IsActive='Y'")
+			.append(" AND c.AD_Client_ID=").append(client.getAD_Client_ID())
+			.append(" AND li.ASP_Status='H')");
+		}
+
+		if (Env.isBaseLanguage(language, "AD_Ref_List"))
+			sql.append("AD_Ref_List.Name,AD_Ref_List.IsActive FROM AD_Ref_List ");
+		else
+			sql.append("trl.Name, AD_Ref_List.IsActive ")
+			.append("FROM AD_Ref_List INNER JOIN AD_Ref_List_Trl trl ")
+			.append(" ON (AD_Ref_List.AD_Ref_List_ID=trl.AD_Ref_List_ID AND trl.AD_Language='")
+			.append(language).append("')");
+		sql.append(" WHERE AD_Ref_List.AD_Reference_ID=").append(AD_Reference_ID);
+
+		if (!Util.isEmpty(additionalWhereClause, true))
+			sql.append(" AND (").append(additionalWhereClause).append(")");
+
+		sql.append(AspFilter.toString());
+		if (orderByValue)
+			sql.append(" ORDER BY 1");
+		else
+			sql.append(" ORDER BY 2");
+
+		return DB.getValueNamePairs(sql.toString(), optional, null);
+	}	//	getList
 
 	/**	Logger							*/
 	private static CLogger		s_log = CLogger.getCLogger (MRefList.class);
 	/** Value Cache						*/
 	private static CCache<String,String> s_cache = new CCache<String,String>(Table_Name, 20);
 
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_Ref_List_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MRefList(Properties ctx, String AD_Ref_List_UU, String trxName) {
+        super(ctx, AD_Ref_List_UU, trxName);
+		if (Util.isEmpty(AD_Ref_List_UU))
+			setInitialDefaults();
+    }
 
-	/**************************************************************************
-	 * 	Persistency Constructor
+	/**
 	 *	@param ctx context
 	 *	@param AD_Ref_List_ID id
 	 *	@param trxName transaction
@@ -266,17 +343,18 @@ public class MRefList extends X_AD_Ref_List
 	{
 		super (ctx, AD_Ref_List_ID, trxName);
 		if (AD_Ref_List_ID == 0)
-		{
-		//	setAD_Reference_ID (0);
-		//	setAD_Ref_List_ID (0);
-			setEntityType (ENTITYTYPE_UserMaintained);	// U
-		//	setName (null);
-		//	setValue (null);
-		}
+			setInitialDefaults();
 	}	//	MRef_List
 
 	/**
-	 * 	Load Contructor
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setEntityType (ENTITYTYPE_UserMaintained);	// U
+	}
+
+	/**
+	 * 	Load Constructor
 	 *	@param ctx context
 	 *	@param rs result
 	 *	@param trxName transaction
@@ -290,10 +368,19 @@ public class MRefList extends X_AD_Ref_List
 	 *	String Representation
 	 * 	@return Name
 	 */
+	@Override
 	public String toString()
 	{
 		return getName();
 	}	//	toString
 
+	@Override
+	public PO markImmutable() {
+		if (is_Immutable())
+			return this;
+
+		makeImmutable();
+		return this;
+	}
 
 }	//	MRef_List

@@ -22,44 +22,101 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
+
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
+import org.compiere.util.Util;
+import org.idempiere.cache.ImmutableIntPOCache;
+import org.idempiere.cache.ImmutablePOSupport;
 
 /**
- *	Menu Model
+ *	Application Menu Model
  *	
  *  @author Jorg Janke
  *  @author victor.perez@e-evolution.com
- *  @see FR [ 1966326 ] Is necessary create method to get ID menu use menu Name http://sourceforge.net/tracker/index.php?func=detail&aid=1966326&group_id=176962&atid=879335
+ *  see FR [ 1966326 ] Is necessary create method to get ID menu use menu Name https://sourceforge.net/p/adempiere/feature-requests/426/
  *  @author red1 - FR: [ 2214883 ] Remove SQL code and Replace for Query
  *  @version $Id: MMenu.java,v 1.3 2006/07/30 00:58:18 jjanke Exp $
  */
-public class MMenu extends X_AD_Menu
+public class MMenu extends X_AD_Menu implements ImmutablePOSupport
 {
-
 	/**
-	 * 
+	 * generated serial id 
 	 */
-	private static final long serialVersionUID = -6671861281736697100L;
+	private static final long serialVersionUID = 8157805998814206274L;
+	/** Cache */
+	private static ImmutableIntPOCache<Integer, MMenu>	s_cache				= new ImmutableIntPOCache<Integer, MMenu>(Table_Name, 50);
 
 	/**
-	 * Get menues with where clause
+	 * Get Menu method from cache (immutable)
+	 * 
+	 * @param AD_Menu_ID menu id
+	 */
+	public static MMenu get(int AD_Menu_ID)
+	{
+		return get(Env.getCtx(), AD_Menu_ID);
+	}
+
+	/**
+	 * Get Menu method from cache (immutable)
+	 * 
+	 * @param ctx
+	 * @param AD_Menu_ID menu id
+	 */
+	public static MMenu get(Properties ctx, int AD_Menu_ID)
+	{
+		if (s_cache.containsKey(AD_Menu_ID))
+			return s_cache.get(ctx, AD_Menu_ID, e -> new MMenu(Env.getCtx(), e));
+
+		MMenu menu = new MMenu(Env.getCtx(), AD_Menu_ID, (String)null);
+		if (menu.get_ID() == AD_Menu_ID)
+		{
+			s_cache.put(AD_Menu_ID, menu, e -> new MMenu(Env.getCtx(), e));
+			return menu;
+		}
+		return null;
+	}
+
+	/**
+	 * @param ctx
+	 * @param copy
+	 */
+	public MMenu(Properties ctx, MMenu copy)
+	{
+		this(ctx, copy, (String) null);
+	}
+
+	/**
+	 * @param ctx
+	 * @param copy
+	 * @param trxName
+	 */
+	public MMenu(Properties ctx, MMenu copy, String trxName)
+	{
+		this(ctx, 0, trxName);
+		copyPO(copy);
+	}
+
+	/**
+	 * Get menus with where clause
 	 * @param ctx context
 	 * @param whereClause where clause w/o the actual WHERE
-	 * @return MMenu
+	 * @return MMenu[]
 	 * @deprecated
 	 */
+	@Deprecated
 	public static MMenu[] get (Properties ctx, String whereClause)
 	{
 		return get(ctx, whereClause, null);
 	}
 	
 	/**
-	 * Get menues with where clause
+	 * Get menus with where clause
 	 * @param ctx context
 	 * @param whereClause where clause w/o the actual WHERE
 	 * @param trxName transaction
-	 * @return MMenu
+	 * @return array of MMenu
 	 */
 	public static MMenu[] get (Properties ctx, final String whereClause, String trxName)
 	{
@@ -74,7 +131,19 @@ public class MMenu extends X_AD_Menu
 	/**	Static Logger	*/
 	private static CLogger	s_log	= CLogger.getCLogger (MMenu.class);
 	
-	/**************************************************************************
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_Menu_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MMenu(Properties ctx, String AD_Menu_UU, String trxName) {
+        super(ctx, AD_Menu_UU, trxName);
+		if (Util.isEmpty(AD_Menu_UU))
+			setInitialDefaults();
+    }
+
+	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
 	 *	@param AD_Menu_ID id
@@ -84,14 +153,18 @@ public class MMenu extends X_AD_Menu
 	{
 		super (ctx, AD_Menu_ID, trxName);
 		if (AD_Menu_ID == 0)
-		{
-			setEntityType (ENTITYTYPE_UserMaintained);	// U
-			setIsReadOnly (false);	// N
-			setIsSOTrx (false);
-			setIsSummary (false);
-		//	setName (null);
-		}
+			setInitialDefaults();
 	}	//	MMenu
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setEntityType (ENTITYTYPE_UserMaintained);	// U
+		setIsReadOnly (false);	// N
+		setIsSOTrx (false);
+		setIsSummary (false);
+	}
 
 	/**
 	 * 	Load Contrusctor
@@ -109,6 +182,7 @@ public class MMenu extends X_AD_Menu
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		//	Reset info
@@ -135,14 +209,14 @@ public class MMenu extends X_AD_Menu
 			setAD_InfoWindow_ID(0);
 		return true;
 	}	//	beforeSave
-	
-	
+		
 	/**
 	 * 	After Save
 	 *	@param newRecord new
 	 *	@param success success
 	 *	@return success
 	 */
+	@Override
 	protected boolean afterSave (boolean newRecord, boolean success)
 	{
 		if (!success)
@@ -167,8 +241,8 @@ public class MMenu extends X_AD_Menu
 	/**
 	 *  FR [ 1966326 ]
 	 * 	get Menu ID
-	 *	@param String Menu Name
-	 *	@return int retValue
+	 *	@param menuName Menu Name
+	 *	@return AD_Menu_ID or 0 (not found) or -1 (has error)
 	 */
 	public static int getMenu_ID(String menuName) {
 		int retValue = 0;
@@ -194,5 +268,46 @@ public class MMenu extends X_AD_Menu
 		}
 		return retValue;
 	}
-	
+
+	@Override
+	public PO markImmutable() {
+		if(is_Immutable())
+			return this;
+		
+		makeImmutable();
+		return this;
+	}
+
+	/** 
+	 * @return name using UserDef module ; if nothing is defined, fallback to the translated name 
+	 */
+	public String getDisplayedName() {
+
+		if (!Util.isEmpty(getAction())) {
+			if (ACTION_Window.equals(getAction())) {
+				MUserDefWin userDef = MUserDefWin.getBestMatch(getCtx(), getAD_Window_ID());
+				if (userDef != null) {
+					if (userDef.getName() != null)
+						return userDef.getName();
+				}
+			}
+			else if (ACTION_Process.equals(getAction()) || ACTION_Report.equals(getAction())) {
+				MUserDefProc userDef = MUserDefProc.getBestMatch(getCtx(), getAD_Process_ID());
+				if (userDef != null) {
+					if (userDef.getName() != null)
+						return userDef.getName();
+				}
+			}
+			else if (ACTION_Info.equals(getAction())) {
+				MUserDefInfo userDef = MUserDefInfo.getBestMatch(getCtx(), getAD_InfoWindow_ID());
+				if (userDef != null) {
+					if (userDef.getName() != null)
+						return userDef.getName();
+				}
+			}
+		}
+
+		return get_Translation(MMenu.COLUMNNAME_Name);
+	}
+
 }	//	MMenu

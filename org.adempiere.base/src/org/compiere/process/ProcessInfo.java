@@ -22,15 +22,20 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.adempiere.util.IProcessUI;
 import org.compiere.model.MPInstance;
+import org.compiere.model.MPInstanceLog;
 import org.compiere.model.MPInstancePara;
 import org.compiere.model.MProcess;
 import org.compiere.model.MSession;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.model.X_AD_PInstance_Log;
+import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
@@ -43,14 +48,16 @@ import org.compiere.util.Util;
  *  @author     Jorg Janke
  *  @version    $Id: ProcessInfo.java,v 1.2 2006/07/30 00:54:44 jjanke Exp $
  *  @author victor.perez@e-evolution.com 
- *  @see FR 1906632 http://sourceforge.net/tracker/?func=detail&atid=879335&aid=1906632&group_id=176962
+ *  see FR 1906632 https://sourceforge.net/p/adempiere/feature-requests/382/
  */
 public class ProcessInfo implements Serializable
 {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -4600747909096993053L;
+	private static final long serialVersionUID = 8134286335553869253L;
+
+	private static final CLogger logger = CLogger.getCLogger(ProcessInfo.class);
 
 	/**
 	 *  Constructor
@@ -59,12 +66,26 @@ public class ProcessInfo implements Serializable
 	 *  @param Table_ID AD_Table_ID
 	 *  @param Record_ID Record_ID
 	 */
-	public ProcessInfo (String Title, int AD_Process_ID, int Table_ID, int Record_ID)
+	public ProcessInfo(String Title, int AD_Process_ID, int Table_ID, int Record_ID)
+	{
+		this (Title, AD_Process_ID, Table_ID, Record_ID, null);
+	}
+
+	/**
+	 *  Constructor
+	 *  @param Title Title
+	 *  @param AD_Process_ID AD_Process_ID
+	 *  @param Table_ID AD_Table_ID
+	 *  @param Record_ID Record ID
+	 *  @param Record_UU Record UUID
+	 */
+	public ProcessInfo(String Title, int AD_Process_ID, int Table_ID, int Record_ID, String Record_UU)
 	{
 		setTitle (Title);
 		setAD_Process_ID(AD_Process_ID);
 		setTable_ID (Table_ID);
 		setRecord_ID (Record_ID);
+		setRecord_UU (Record_UU);
 		if (Ini.isPropertyBool(Ini.P_PRINTPREVIEW))
 			m_printPreview = true;
 		else
@@ -92,6 +113,8 @@ public class ProcessInfo implements Serializable
 	private int					m_Table_ID;
 	/** Record ID if the Process    */
 	private int					m_Record_ID;
+	/** Record UUID if the Process    */
+	private String				m_Record_UU;
 	/** User_ID        					*/
 	private Integer	 			m_AD_User_ID;
 	/** Client_ID        				*/
@@ -140,6 +163,9 @@ public class ProcessInfo implements Serializable
 	/**	Record IDs				*/
 	private List <Integer>		m_Record_IDs = null;
 
+	/**	Record UUs				*/
+	private List <String>		m_Record_UUs = null;
+
 	/** Export					*/
 	private boolean				m_export = false;
 	
@@ -148,7 +174,10 @@ public class ProcessInfo implements Serializable
 	
 	/**	Export File				*/
 	private File				m_exportFile = null;
-
+	
+	/** Report Override Tab */
+	private boolean				m_IsReplaceTabContent = false;
+	
 	/** Row count */
 	private int m_rowCount;
 
@@ -159,6 +188,13 @@ public class ProcessInfo implements Serializable
 	private boolean isSummary = false;
 	
 	private int languageID = 0;
+	
+	private String showHelp = null;
+
+	private int m_AD_Scheduler_ID = 0;
+	
+	/** For scheduler: true to notify scheduler recipients with process execution result using AD_Scheduler.R_MailTexT_ID mail template (if define). Default is true. **/
+	private boolean isNotifyRecipients = true;
 	
 	public int getLanguageID() {
 		return languageID;
@@ -186,6 +222,22 @@ public class ProcessInfo implements Serializable
 	}
 
 	/**
+	 * Set Show Help
+	 * @param showHelp
+	 */
+	public void setShowHelp(String showHelp) {
+		this.showHelp = showHelp;
+	}
+
+	/**
+	 * Get Show Help
+	 * @return String
+	 */
+	public String getShowHelp() {
+		return this.showHelp;
+	}
+
+	/**
 	 *  String representation
 	 *  @return String representation
 	 */
@@ -198,6 +250,8 @@ public class ProcessInfo implements Serializable
 			sb.append(",AD_PInstance_ID=").append(m_AD_PInstance_ID);
 		if (m_Record_ID != 0)
 			sb.append(",Record_ID=").append(m_Record_ID);
+		if (!Util.isEmpty(m_Record_UU))
+			sb.append(",Record_UU=").append(m_Record_UU);
 		if (m_ClassName != null)
 			sb.append(",ClassName=").append(m_ClassName);
 		sb.append(",Error=").append(isError());
@@ -397,7 +451,7 @@ public class ProcessInfo implements Serializable
 	}
 	/**
 	 * 
-	 * @param AD_PInstance_ID int
+	 * @param infoWindowID int
 	 */
 	public void setAD_InfoWindow_ID(int infoWindowID)
 	{
@@ -525,6 +579,23 @@ public class ProcessInfo implements Serializable
 	public void setRecord_ID(int Record_ID)
 	{
 		m_Record_ID = Record_ID;
+	}
+
+	/**
+	 * Method getRecord_UU
+	 * @return String
+	 */
+	public String getRecord_UU()
+	{
+		return m_Record_UU;
+	}
+	/**
+	 * Method setRecord_UU
+	 * @param Record_UU int
+	 */
+	public void setRecord_UU(String Record_UU)
+	{
+		m_Record_UU = Record_UU;
 	}
 
 	/**
@@ -662,6 +733,90 @@ public class ProcessInfo implements Serializable
 	}	//	getLogs
 
 	/**
+	 * 	Save Status Log to DB immediately
+	 *	@param P_ID Process ID
+	 *	@param P_Date Process Date
+	 *	@param P_Number Process Number
+	 *	@param P_Msg Process Message
+	 *	@return String AD_PInstance_Log_UU
+	 */
+	public String saveStatus (int P_ID, Timestamp P_Date, BigDecimal P_Number, String P_Msg)
+	{
+		return saveLog (new ProcessInfoLog (P_ID, P_Date, P_Number, P_Msg, 0, 0, X_AD_PInstance_Log.PINSTANCELOGTYPE_Status));
+	}	//	saveLog
+	
+	/**
+	 * 	Save Progress Log to DB immediately
+	 *	@param P_ID Process ID
+	 *	@param P_Date Process Date
+	 *	@param P_Number Process Number
+	 *	@param P_Msg Process Message
+	 *	@return String AD_PInstance_Log_UU
+	 */
+	public String saveProgress (int P_ID, Timestamp P_Date, BigDecimal P_Number, String P_Msg)
+	{
+		return saveLog (new ProcessInfoLog (P_ID, P_Date, P_Number, P_Msg, 0, 0, X_AD_PInstance_Log.PINSTANCELOGTYPE_Progress));
+	}	//	saveLog
+
+	/**
+	 * 	Save Log to DB immediately
+	 *	@param logEntry log entry
+	 *	@return String AD_PInstance_Log_UU
+	 */
+	public String saveLog (ProcessInfoLog logEntry)
+	{
+		if (logEntry == null)
+			return "";
+		MPInstanceLog il = new MPInstanceLog(getAD_PInstance_ID(), 
+				logEntry.getLog_ID(), 
+				logEntry.getP_Date(),
+				logEntry.getP_ID(), 
+				logEntry.getP_Number(), 
+				logEntry.getP_Msg(),
+				logEntry.getAD_Table_ID(), 
+				logEntry.getRecord_ID(),
+				logEntry.getPInstanceLogType());
+		il.saveEx();
+		return il.getAD_PInstance_Log_UU();
+	}	//	saveLog
+	
+	/**
+	 * 	Update Progress Log to DB immediately
+	 *	@param pInstanceLogUU AD_PInstance_Log_UU
+	 *	@param P_ID Process ID
+	 *	@param P_Date Process Date
+	 *	@param P_Number Process Number
+	 *	@param P_Msg Process Message
+	 *	@return true if log is successfully updated
+	 */
+	public boolean updateProgress (String pInstanceLogUU, int P_ID, Timestamp P_Date, BigDecimal P_Number, String P_Msg)
+	{
+		return updateLog (new ProcessInfoLog (pInstanceLogUU, P_ID, P_Date, P_Number, P_Msg, X_AD_PInstance_Log.PINSTANCELOGTYPE_Progress));
+	}	//	updateLog
+	
+	/**
+	 * 	Update existing Log immediately
+	 *	@param logEntry log entry
+	 *	@return true if log is successfully updated
+	 */
+	public boolean updateLog (ProcessInfoLog logEntry)
+	{
+		if (logEntry == null)
+			return false;
+		MPInstanceLog il = new MPInstanceLog(logEntry.getAD_PInstance_Log_UU(),
+				getAD_PInstance_ID(), 
+				logEntry.getLog_ID(), 
+				logEntry.getP_Date(),
+				logEntry.getP_ID(), 
+				logEntry.getP_Number(), 
+				logEntry.getP_Msg(),
+				logEntry.getAD_Table_ID(), 
+				logEntry.getRecord_ID(),
+				logEntry.getPInstanceLogType());
+		return il.update();
+	}	//	saveLog
+	
+	/**
 	 * Method getIDs
 	 * @return int[]
 	 */
@@ -763,7 +918,7 @@ public class ProcessInfo implements Serializable
 	//FR 1906632
 	/**
 	 * Set PDF file generate to Jasper Report
-	 * @param PDF File 
+	 * @param f PDF File 
 	 */
 	public void setPDFReport(File f)
 	{
@@ -772,7 +927,6 @@ public class ProcessInfo implements Serializable
 	
 	/**
 	 * Get PDF file generate to Jasper Report
-	 * @param f
 	 */
 	public File getPDFReport()
 	{
@@ -808,7 +962,7 @@ public class ProcessInfo implements Serializable
 	
 	/**
 	 * Set Export File Extension
-	 * @param exportFileOfType
+	 * @param exportFileExtension
 	 */
 	public void setExportFileExtension(String exportFileExtension)
 	{
@@ -841,6 +995,16 @@ public class ProcessInfo implements Serializable
 	public void setRecord_IDs(List<Integer> Record_IDs)
 	{
 		m_Record_IDs = Record_IDs;
+	}
+
+	public List<String> getRecord_UUs()
+	{
+		return m_Record_UUs;
+	}
+
+	public void setRecord_UUs(List<String> Record_UUs)
+	{
+		m_Record_UUs = Record_UUs;
 	}
 
 	public void setRowCount(int rowCount) {
@@ -885,21 +1049,32 @@ public class ProcessInfo implements Serializable
 		if (lastRebootDate == null)
 			return false;
 		
-		List<MPInstance> processInstanceList = new Query(Env.getCtx(), MPInstance.Table_Name, " AD_Process_ID=? AND AD_User_ID=? AND IsProcessing='Y' AND record_ID = ? AND Created > ? ", null)
-				.setParameters(getAD_Process_ID(), getAD_User_ID(), getRecord_ID(), lastRebootDate)
+		StringBuilder whereClause = new StringBuilder(
+				"AD_Process_ID=? AND IsProcessing='Y' AND Record_ID = ? AND Created > ?");
+		List<Object> queryParams = new ArrayList<>(Arrays.asList(getAD_Process_ID(), getRecord_ID(), lastRebootDate));
+
+		if (   MProcess.ALLOWMULTIPLEEXECUTION_NotFromSameUser.equals(multipleExecutions)
+			|| MProcess.ALLOWMULTIPLEEXECUTION_NotFromSameUserAndParameters.equals(multipleExecutions)) {
+			whereClause.append(" AND AD_User_ID = ? ");
+			queryParams.add(getAD_User_ID());
+		}
+
+		List<MPInstance> processInstanceList = new Query(Env.getCtx(), MPInstance.Table_Name, whereClause.toString(), null)
+				.setParameters(queryParams)
 				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.list();
-		
+				.setOnlyActiveRecords(true).list();
+
 		if (processInstanceList == null || processInstanceList.isEmpty())
 			return false;
-		
-		//Never allow multiple executions
-		if (multipleExecutions.equals(MProcess.ALLOWMULTIPLEEXECUTION_DisallowMultipleExecutions)) 
+
+		// Do not allow concurrent executions
+		if (   MProcess.ALLOWMULTIPLEEXECUTION_NotFromSameUser.equals(multipleExecutions)
+			|| MProcess.ALLOWMULTIPLEEXECUTION_NotFromAnyUser.equals(multipleExecutions))
 			return true;
-		
-		//Disallow multiple executions with the same params
-		if (multipleExecutions.equals(MProcess.ALLOWMULTIPLEEXECUTION_DisallowMultipleExecutionsWithTheSameParameters)) {
+
+		// Do not allow concurrent executions with the same params
+		if (   MProcess.ALLOWMULTIPLEEXECUTION_NotFromAnyUserAndSameParameters.equals(multipleExecutions)
+			|| MProcess.ALLOWMULTIPLEEXECUTION_NotFromSameUserAndParameters.equals(multipleExecutions)) {
 			for (MPInstance instance : processInstanceList) {
 				if (instance.equalParameters(params))
 					return true;
@@ -910,7 +1085,7 @@ public class ProcessInfo implements Serializable
 	}
 	
 	private Timestamp getLastServerRebootDate() {
-		MSession currentSession = MSession.get(Env.getCtx(), false);
+		MSession currentSession = MSession.get(Env.getCtx());
 		if (currentSession == null)
 			return null;
 		
@@ -920,6 +1095,10 @@ public class ProcessInfo implements Serializable
 				.setOnlyActiveRecords(true)
 				.first();
 
+		if (lastServerSession == null) {
+			logger.severe("There is no 'Server' record in AD_Session, this can indicate that the server plugin didn't start correctly.  Please verify, this can affect scheduled processes, idempiereMonitor, etc.");
+			return null;
+		}
 		return lastServerSession.getCreated();
 	}
 
@@ -932,5 +1111,49 @@ public class ProcessInfo implements Serializable
 	public IProcessUI getProcessUI() {
 		return processUI;
 	}
+
+	/**
+	 * Determines, if current tab content should be replaced, or a new tab should be opened
+	 * @return true, if current tab content should be replaced
+	 */
+	public boolean isReplaceTabContent() {
+		return m_IsReplaceTabContent;
+	}
+
+	/**
+	 * Sets, if current tab content should be replaced, or a new tab should be opened
+	 */
+	public void setReplaceTabContent() {
+		this.m_IsReplaceTabContent = !(MSysConfig.getBooleanValue(MSysConfig.ZK_REPORT_TABLE_OPEN_IN_NEW_TAB, false, Env.getAD_Client_ID(Env.getCtx())));
+	}
+
+	/**
+	 * 
+	 * @return AD_Scheduler_ID or 0 if not running from scheduler
+	 */
+	public int getAD_Scheduler_ID() {
+		return m_AD_Scheduler_ID;
+	}
+
+	/**
+	 * 
+	 * @param AD_Scheduler_ID
+	 */
+	public void setAD_Scheduler_ID(int AD_Scheduler_ID) {
+		this.m_AD_Scheduler_ID = AD_Scheduler_ID;
+	}
 	
+	/**
+	 * @return true if scheduler should notify scheduler recipients with process execution result
+	 */
+	public boolean isNotifyRecipients() {
+		return isNotifyRecipients;
+	}
+
+	/**
+	 * @param isNotifyRecipients if true, scheduler should notify scheduler recipients with process execution result
+	 */
+	public void setNotifyRecipients(boolean isNotifyRecipients) {
+		this.isNotifyRecipients = isNotifyRecipients;
+	}
 }   //  ProcessInfo

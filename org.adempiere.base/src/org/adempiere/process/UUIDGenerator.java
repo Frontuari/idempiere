@@ -26,6 +26,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.DBException;
 import org.compiere.model.MColumn;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MTable;
 import org.compiere.model.M_Element;
 import org.compiere.model.PO;
@@ -42,16 +43,19 @@ import org.compiere.util.Util;
 import org.compiere.util.ValueNamePair;
 
 /**
- * Add UUID column (tableName_UU) to table and update existing records with new UUID.
+ * Add UUID column (tableName_UU) to table and update existing records with new UUID.<br/>
  * Warning: this process is only safe to run if it have exclusive access to database.
  * @author hengsin
  *
  */
+@org.adempiere.base.annotation.Process
 public class UUIDGenerator extends SvrProcess {
 
 	private String tableName;
 
 	private boolean isFillUUID = false;
+
+	private boolean isClearUUID = false;
 
 	/**	Logger							*/
 	private static final CLogger log = CLogger.getCLogger(UUIDGenerator.class);
@@ -68,8 +72,10 @@ public class UUIDGenerator extends SvrProcess {
 				tableName = param.getParameter().toString();
 			else if (param.getParameterName().equals("IsFillUUID"))
 				isFillUUID = param.getParameterAsBoolean();
+			else if (param.getParameterName().equals("IsClearUUID"))
+				isClearUUID = param.getParameterAsBoolean();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + param.getParameterName());
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), param);
 		}
 	}
 
@@ -115,7 +121,7 @@ public class UUIDGenerator extends SvrProcess {
 					}
 					mColumn.setAD_Element_ID(AD_Element_ID);
 					mColumn.setColumnName(columnName);
-					mColumn.setAD_Reference_ID(DisplayType.String);
+					mColumn.setAD_Reference_ID(DisplayType.UUID);
 					mColumn.setEntityType("U");
 					mColumn.setFieldLength(36);
 					mColumn.setName(columnName);
@@ -127,35 +133,38 @@ public class UUIDGenerator extends SvrProcess {
 
 					//update db
 					if (isFillUUID) {
-						// COMMENT NEXT LINE ON RELEASE WORK
 						String msg = updateUUID(mColumn, null);
 						if (! Util.isEmpty(msg)) {
 							addBufferLog(0, null, null, msg, 0, 0);
 						}
 					}
 				} else {
-					if (isFillUUID) {
-						MColumn mColumn = MColumn.get(getCtx(), AD_Column_ID);
-						// COMMENT NEXT LINE ON RELEASE WORK
-						String msg = updateUUID(mColumn, null);
-						if (! Util.isEmpty(msg)) {
-							addBufferLog(0, null, null, msg, 0, 0);
+					MColumn column = MColumn.get(AD_Column_ID);
+					if (column.isActive()) {
+						if (isFillUUID) {
+							MColumn mColumn = MColumn.get(getCtx(), AD_Column_ID);
+							String msg = updateUUID(mColumn, null);
+							if (! Util.isEmpty(msg)) {
+								addBufferLog(0, null, null, msg, 0, 0);
+							}
+						}
+					} else {
+						if (isClearUUID) {
+							StringBuilder sqlclear = new StringBuilder("UPDATE ")
+									.append(cTableName)
+									.append(" SET ")
+									.append(columnName)
+									.append("=NULL WHERE ")
+									.append(columnName)
+									.append(" IS NOT NULL");
+							int cnt = DB.executeUpdateEx(sqlclear.toString(), get_TrxName());
+							if (cnt > 0) {
+								String msg = cnt + " UUID cleared from table " + cTableName;
+								addBufferLog(0, null, null, msg, 0, 0);
+							}
 						}
 					}
 				}
-				
-				/*
-				// RELEASE WORK CODE
-				// following code could be used potentially to fill empty values on UU columns if they are already created
-				int cnt = DB.getSQLValue(null, "SELECT COUNT(1) FROM " + cTableName + " WHERE " + columnName + " IS NULL");
-				if (cnt > 0) {
-					addLog (0, null, null, cTableName);						
-					//update db
-					updateAllUUID(MColumn.get(getCtx(), AD_Column_ID));
-				}
-				// END RELEASE WORK CODE
-				*/
-
 			}
 		} finally {
 			DB.close(rs,stmt);
@@ -164,6 +173,12 @@ public class UUIDGenerator extends SvrProcess {
 		return msgreturn.toString();
 	}
 
+	/**
+	 * Fill column with new uuid value (if it is null)
+	 * @param column
+	 * @param trxName
+	 * @return message
+	 */
 	public static String updateUUID(MColumn column, String trxName) {
 		MTable table = (MTable) column.getAD_Table();
 		if (table.getTableName().startsWith("T_")) {
@@ -264,11 +279,15 @@ public class UUIDGenerator extends SvrProcess {
 		return msg;
 	}
 
+	/**
+	 * sync column with DB
+	 * @param column
+	 */
 	private void syncColumn(MColumn column) {
 		//	Find Column in Database
 		Connection conn = null;
 		try {
-			conn = DB.getConnectionRO();
+			conn = DB.getConnection();
 			DatabaseMetaData md = conn.getMetaData();
 			String catalog = DB.getDatabase().getCatalog();
 			String schema = DB.getDatabase().getSchema();
@@ -350,68 +369,5 @@ public class UUIDGenerator extends SvrProcess {
 			}
 		}
 	}
-
-	/*
-	// RELEASE WORK CODE
-	public static void updateAllUUID(MColumn column) {
-		MTable table = (MTable) column.getAD_Table();
-		int AD_Column_ID = DB.getSQLValue(null, "SELECT AD_Column_ID FROM AD_Column WHERE AD_Table_ID=? AND ColumnName=?", table.getAD_Table_ID(), table.getTableName()+"_ID");
-		StringBuilder sql = new StringBuilder("SELECT ");
-		String keyColumn = null;
-		
-		// second script - just generate for tables with _ID primary key
-		//if (AD_Column_ID > 0)
-		//	return;
-		
-		if (AD_Column_ID > 0) {
-			keyColumn = table.getTableName()+"_ID";
-		} else if (DB.isOracle()) {
-			keyColumn = "rowid";
-		} else if (DB.isPostgreSQL()) {
-			keyColumn = "ctid";
-		}
-		// keyColumn = "*";
-		sql.append(keyColumn).append(",").append(table.getTableName()).append(".* FROM ").append(table.getTableName());
-		sql.append(" WHERE ").append(column.getColumnName()).append(" IS NULL ");
-		String updateSQL = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		Trx trx = null;
-		try {
-			trx = Trx.get(Trx.createTrxName("UUIDGen"), true);
-			trx.start();
-			stmt = DB.prepareStatement(sql.toString(), trx.getTrxName());
-			stmt.setFetchSize(100);
-			rs = stmt.executeQuery();
-			while (rs.next()) {
-				if (AD_Column_ID > 0) {
-					int recordId = rs.getInt(1);
-					UUID uuid = UUID.randomUUID();
-					updateSQL = "UPDATE "+table.getTableName()+" SET "+column.getColumnName()+"='" + uuid.toString() + "' WHERE "+keyColumn+"="+recordId;
-					DB.executeUpdateEx(updateSQL,null);
-				} else {
-					UUID uuid = UUID.randomUUID();
-					// String rowId = rs.getString(1);
-					// DB.executeUpdateEx(updateSQL+"'"+rowId+"'",new Object[]{uuid.toString()},null);
-					PO po = table.getPO(rs, null);
-					if (po.get_KeyColumns().length > 0) {
-						po.set_ValueOfColumn(column.getColumnName(), uuid.toString());
-						po.saveEx();
-					}
-				}
-			}
-			trx.commit();
-		} catch (SQLException e) {
-			if (trx != null)
-				trx.rollback();
-			throw new DBException(e);
-		} finally {
-			DB.close(rs, stmt);
-			if (trx != null)
-				trx.close();
-		}
-	}
-	// END RELEASE WORK CODE
-	*/
 
 }

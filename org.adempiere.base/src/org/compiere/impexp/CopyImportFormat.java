@@ -19,16 +19,17 @@ package org.compiere.impexp;
 import java.math.BigDecimal;
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 
-
 /**
- *	Copy Import Format (lines)
+ *	Process to Copy Import Format (lines)
  *	
  *  @author Jorg Janke
  *  @version $Id: CopyImportFormat.java,v 1.2 2006/07/30 00:51:05 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class CopyImportFormat extends SvrProcess
 {
 	private int from_AD_ImpFormat_ID = 0;
@@ -37,6 +38,7 @@ public class CopyImportFormat extends SvrProcess
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
+	@Override
 	protected void prepare()
 	{
 		ProcessInfoParameter[] para = getParameter();
@@ -48,17 +50,17 @@ public class CopyImportFormat extends SvrProcess
 			else if (name.equals("AD_ImpFormat_ID"))
 				from_AD_ImpFormat_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		to_AD_ImpFormat_ID = getRecord_ID();
 	}	//	prepare
-
 	
 	/**
 	 * 	Process Copy
 	 *	@return info
 	 *	@throws Exception
 	 */
+	@Override
 	protected String doIt () throws Exception
 	{
 		if (log.isLoggable(Level.INFO)) log.info("doIt = From=" + from_AD_ImpFormat_ID + " To=" + to_AD_ImpFormat_ID);

@@ -25,18 +25,20 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 
 /**
- * 	Issue Project (and Asset Link)
+ * 	Issue Project (and Asset Link).<br/>
+ *  Note: Not fully implemented and have been marked as inactive in Application Dictionary.
  *	
  *  @author Jorg Janke
  *  @version $Id: MIssueProject.java,v 1.2 2006/07/30 00:58:18 jjanke Exp $
+ *  @deprecated
  */
+@Deprecated
 public class MIssueProject extends X_R_IssueProject
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -9115162283984109370L;
-
 
 	/**
 	 * 	Get/Set Project
@@ -91,9 +93,18 @@ public class MIssueProject extends X_R_IssueProject
 	
 	/**	Logger	*/
 	private static CLogger s_log = CLogger.getCLogger (MIssueProject.class);
-	
-	
-	/**************************************************************************
+		
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param R_IssueProject_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MIssueProject(Properties ctx, String R_IssueProject_UU, String trxName) {
+        super(ctx, R_IssueProject_UU, trxName);
+    }
+
+	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
 	 *	@param R_IssueProject_ID id
@@ -122,17 +133,6 @@ public class MIssueProject extends X_R_IssueProject
 	public void setA_Asset_ID (MIssue issue)
 	{
 		int A_Asset_ID = 0;
-		/*String sql = "SELECT * FROM A_Asset a "
-			+ "WHERE EXISTS (SELECT * FROM A_Asset_Group ag "	//	Tracking Assets
-				+ "WHERE a.A_Asset_Group_ID=ag.A_Asset_Group_ID AND ag.IsTrackIssues='Y')"
-			+ " AND EXISTS (SELECT * FROM AD_User u "
-				+ "WHERE (a.C_BPartner_ID=u.C_BPartner_ID OR a.C_BPartnerSR_ID=u.C_BPartner_ID)"
-				+ " AND u.EMail=?)"					//	#1 EMail
-			+ " AND (SerNo IS NULL OR SerNo=?)";	//	#2 Name*/
-		
-		
-		
-		
 		super.setA_Asset_ID (A_Asset_ID);
 	}	//	setA_Asset_ID
 	
@@ -140,6 +140,7 @@ public class MIssueProject extends X_R_IssueProject
 	 * 	String Representation
 	 *	@return info
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder ("MIssueProject[");

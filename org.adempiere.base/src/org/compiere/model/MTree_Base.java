@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutableIntPOCache;
 import org.idempiere.cache.ImmutablePOSupport;
 
@@ -243,6 +244,18 @@ public class MTree_Base extends X_AD_Tree implements ImmutablePOSupport
 	private static ImmutableIntPOCache<Integer,MTree_Base> s_cache = new ImmutableIntPOCache<Integer,MTree_Base>(Table_Name, 10);
 	
 	
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_Tree_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MTree_Base(Properties ctx, String AD_Tree_UU, String trxName) {
+        super(ctx, AD_Tree_UU, trxName);
+		if (Util.isEmpty(AD_Tree_UU))
+			setInitialDefaults();
+    }
+
 	/**************************************************************************
 	 * 	Standard Constructor
 	 *	@param ctx context
@@ -253,13 +266,16 @@ public class MTree_Base extends X_AD_Tree implements ImmutablePOSupport
 	{
 		super(ctx, AD_Tree_ID, trxName);
 		if (AD_Tree_ID == 0)
-		{
-		//	setName (null);
-		//	setTreeType (null);
-			setIsAllNodes (true);	//	complete tree
-			setIsDefault(false);
-		}
+			setInitialDefaults();
 	}	//	MTree_Base
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setIsAllNodes (true);	//	complete tree
+		setIsDefault(false);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -406,12 +422,12 @@ public class MTree_Base extends X_AD_Tree implements ImmutablePOSupport
 		
 		String tableName = getSourceTableName(true);
 		MTable table = MTable.get(getCtx(), tableName);
-		if (table.getColumnIndex("IsSummary") < 0) {
+		if (! table.columnExistsInDB("IsSummary")) {
 			// IsSummary is mandatory column to have a tree
 			log.saveError("Error", "IsSummary column required for tree tables"); 
 			return false;
 		}
-		if (table.getColumnIndex("Value") < 0) {
+		if (! table.columnExistsInDB("Value")) {
 			if (isTreeDrivenByValue()) {
 				// Value is mandatory column to have a tree driven by Value
 				setIsTreeDrivenByValue(false);

@@ -22,21 +22,67 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for AD_PInstance
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_PInstance")
+public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_PInstance (Properties ctx, int AD_PInstance_ID, String trxName)
     {
       super (ctx, AD_PInstance_ID, trxName);
       /** if (AD_PInstance_ID == 0)
+        {
+			setAD_PInstance_ID (0);
+			setAD_Process_ID (0);
+			setIsProcessing (false);
+			setIsRunAsJob (false);
+// N
+			setRecord_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_PInstance (Properties ctx, int AD_PInstance_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_PInstance_ID, trxName, virtualColumns);
+      /** if (AD_PInstance_ID == 0)
+        {
+			setAD_PInstance_ID (0);
+			setAD_Process_ID (0);
+			setIsProcessing (false);
+			setIsRunAsJob (false);
+// N
+			setRecord_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_PInstance (Properties ctx, String AD_PInstance_UU, String trxName)
+    {
+      super (ctx, AD_PInstance_UU, trxName);
+      /** if (AD_PInstance_UU == null)
+        {
+			setAD_PInstance_ID (0);
+			setAD_Process_ID (0);
+			setIsProcessing (false);
+			setIsRunAsJob (false);
+// N
+			setRecord_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_PInstance (Properties ctx, String AD_PInstance_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_PInstance_UU, trxName, virtualColumns);
+      /** if (AD_PInstance_UU == null)
         {
 			setAD_PInstance_ID (0);
 			setAD_Process_ID (0);
@@ -54,7 +100,7 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -76,23 +122,25 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
     }
 
 	public org.compiere.model.I_AD_Language getAD_Language() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_Language)MTable.get(getCtx(), org.compiere.model.I_AD_Language.Table_Name)
-			.getPO(getAD_Language_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_Language)MTable.get(getCtx(), org.compiere.model.I_AD_Language.Table_ID)
+			.getPO(getAD_Language_ID(), get_TrxName());
+	}
 
 	/** Set Language ID.
-		@param AD_Language_ID Language ID	  */
+		@param AD_Language_ID Language ID
+	*/
 	public void setAD_Language_ID (int AD_Language_ID)
 	{
-		if (AD_Language_ID < 1) 
+		if (AD_Language_ID < 1)
 			set_Value (COLUMNNAME_AD_Language_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_Language_ID, Integer.valueOf(AD_Language_ID));
 	}
 
 	/** Get Language ID.
 		@return Language ID	  */
-	public int getAD_Language_ID () 
+	public int getAD_Language_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Language_ID);
 		if (ii == null)
@@ -101,21 +149,20 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 	}
 
 	/** Set Process Instance.
-		@param AD_PInstance_ID 
-		Instance of the process
-	  */
+		@param AD_PInstance_ID Instance of the process
+	*/
 	public void setAD_PInstance_ID (int AD_PInstance_ID)
 	{
-		if (AD_PInstance_ID < 1) 
+		if (AD_PInstance_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_PInstance_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_PInstance_ID, Integer.valueOf(AD_PInstance_ID));
 	}
 
 	/** Get Process Instance.
 		@return Instance of the process
 	  */
-	public int getAD_PInstance_ID () 
+	public int getAD_PInstance_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_PInstance_ID);
 		if (ii == null)
@@ -126,13 +173,14 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), String.valueOf(getAD_PInstance_ID()));
     }
 
 	/** Set AD_PInstance_UU.
-		@param AD_PInstance_UU AD_PInstance_UU	  */
+		@param AD_PInstance_UU AD_PInstance_UU
+	*/
 	public void setAD_PInstance_UU (String AD_PInstance_UU)
 	{
 		set_Value (COLUMNNAME_AD_PInstance_UU, AD_PInstance_UU);
@@ -140,32 +188,32 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 
 	/** Get AD_PInstance_UU.
 		@return AD_PInstance_UU	  */
-	public String getAD_PInstance_UU () 
+	public String getAD_PInstance_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_PInstance_UU);
 	}
 
 	public org.compiere.model.I_AD_PrintFormat getAD_PrintFormat() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_PrintFormat)MTable.get(getCtx(), org.compiere.model.I_AD_PrintFormat.Table_Name)
-			.getPO(getAD_PrintFormat_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_PrintFormat)MTable.get(getCtx(), org.compiere.model.I_AD_PrintFormat.Table_ID)
+			.getPO(getAD_PrintFormat_ID(), get_TrxName());
+	}
 
 	/** Set Print Format.
-		@param AD_PrintFormat_ID 
-		Data Print Format
-	  */
+		@param AD_PrintFormat_ID Data Print Format
+	*/
 	public void setAD_PrintFormat_ID (int AD_PrintFormat_ID)
 	{
-		if (AD_PrintFormat_ID < 1) 
+		if (AD_PrintFormat_ID < 1)
 			set_Value (COLUMNNAME_AD_PrintFormat_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_PrintFormat_ID, Integer.valueOf(AD_PrintFormat_ID));
 	}
 
 	/** Get Print Format.
 		@return Data Print Format
 	  */
-	public int getAD_PrintFormat_ID () 
+	public int getAD_PrintFormat_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_PrintFormat_ID);
 		if (ii == null)
@@ -174,26 +222,26 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 	}
 
 	public org.compiere.model.I_AD_Process getAD_Process() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_Process)MTable.get(getCtx(), org.compiere.model.I_AD_Process.Table_Name)
-			.getPO(getAD_Process_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_Process)MTable.get(getCtx(), org.compiere.model.I_AD_Process.Table_ID)
+			.getPO(getAD_Process_ID(), get_TrxName());
+	}
 
 	/** Set Process.
-		@param AD_Process_ID 
-		Process or Report
-	  */
+		@param AD_Process_ID Process or Report
+	*/
 	public void setAD_Process_ID (int AD_Process_ID)
 	{
-		if (AD_Process_ID < 1) 
+		if (AD_Process_ID < 1)
 			set_Value (COLUMNNAME_AD_Process_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_Process_ID, Integer.valueOf(AD_Process_ID));
 	}
 
 	/** Get Process.
 		@return Process or Report
 	  */
-	public int getAD_Process_ID () 
+	public int getAD_Process_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Process_ID);
 		if (ii == null)
@@ -201,27 +249,83 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 		return ii.intValue();
 	}
 
+	public org.compiere.model.I_AD_Session getAD_Session() throws RuntimeException
+	{
+		return (org.compiere.model.I_AD_Session)MTable.get(getCtx(), org.compiere.model.I_AD_Session.Table_ID)
+			.getPO(getAD_Session_ID(), get_TrxName());
+	}
+
+	/** Set Session.
+		@param AD_Session_ID User Session Online or Web
+	*/
+	public void setAD_Session_ID (int AD_Session_ID)
+	{
+		if (AD_Session_ID < 1)
+			set_ValueNoCheck (COLUMNNAME_AD_Session_ID, null);
+		else
+			set_ValueNoCheck (COLUMNNAME_AD_Session_ID, Integer.valueOf(AD_Session_ID));
+	}
+
+	/** Get Session.
+		@return User Session Online or Web
+	  */
+	public int getAD_Session_ID()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Session_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	public org.compiere.model.I_AD_Table getAD_Table() throws RuntimeException
+	{
+		return (org.compiere.model.I_AD_Table)MTable.get(getCtx(), org.compiere.model.I_AD_Table.Table_ID)
+			.getPO(getAD_Table_ID(), get_TrxName());
+	}
+
+	/** Set Table.
+		@param AD_Table_ID Database Table information
+	*/
+	public void setAD_Table_ID (int AD_Table_ID)
+	{
+		if (AD_Table_ID < 1)
+			set_ValueNoCheck (COLUMNNAME_AD_Table_ID, null);
+		else
+			set_ValueNoCheck (COLUMNNAME_AD_Table_ID, Integer.valueOf(AD_Table_ID));
+	}
+
+	/** Get Table.
+		@return Database Table information
+	  */
+	public int getAD_Table_ID()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Table_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
 	public org.compiere.model.I_AD_User getAD_User() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_Name)
-			.getPO(getAD_User_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_ID)
+			.getPO(getAD_User_ID(), get_TrxName());
+	}
 
 	/** Set User/Contact.
-		@param AD_User_ID 
-		User within the system - Internal or Business Partner Contact
-	  */
+		@param AD_User_ID User within the system - Internal or Business Partner Contact
+	*/
 	public void setAD_User_ID (int AD_User_ID)
 	{
-		if (AD_User_ID < 1) 
+		if (AD_User_ID < 1)
 			set_Value (COLUMNNAME_AD_User_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_AD_User_ID, Integer.valueOf(AD_User_ID));
 	}
 
 	/** Get User/Contact.
 		@return User within the system - Internal or Business Partner Contact
 	  */
-	public int getAD_User_ID () 
+	public int getAD_User_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_User_ID);
 		if (ii == null)
@@ -230,7 +334,8 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 	}
 
 	/** Set Error Msg.
-		@param ErrorMsg Error Msg	  */
+		@param ErrorMsg Error Msg
+	*/
 	public void setErrorMsg (String ErrorMsg)
 	{
 		set_Value (COLUMNNAME_ErrorMsg, ErrorMsg);
@@ -238,13 +343,14 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 
 	/** Get Error Msg.
 		@return Error Msg	  */
-	public String getErrorMsg () 
+	public String getErrorMsg()
 	{
 		return (String)get_Value(COLUMNNAME_ErrorMsg);
 	}
 
 	/** Set Processing.
-		@param IsProcessing Processing	  */
+		@param IsProcessing Processing
+	*/
 	public void setIsProcessing (boolean IsProcessing)
 	{
 		set_Value (COLUMNNAME_IsProcessing, Boolean.valueOf(IsProcessing));
@@ -252,20 +358,21 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 
 	/** Get Processing.
 		@return Processing	  */
-	public boolean isProcessing () 
+	public boolean isProcessing()
 	{
 		Object oo = get_Value(COLUMNNAME_IsProcessing);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Run as Job.
-		@param IsRunAsJob Run as Job	  */
+		@param IsRunAsJob Run as Job
+	*/
 	public void setIsRunAsJob (boolean IsRunAsJob)
 	{
 		set_Value (COLUMNNAME_IsRunAsJob, Boolean.valueOf(IsRunAsJob));
@@ -273,22 +380,21 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 
 	/** Get Run as Job.
 		@return Run as Job	  */
-	public boolean isRunAsJob () 
+	public boolean isRunAsJob()
 	{
 		Object oo = get_Value(COLUMNNAME_IsRunAsJob);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Summary Level.
-		@param IsSummary 
-		This is a summary entity
-	  */
+		@param IsSummary This is a summary entity
+	*/
 	public void setIsSummary (boolean IsSummary)
 	{
 		set_Value (COLUMNNAME_IsSummary, Boolean.valueOf(IsSummary));
@@ -297,22 +403,21 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 	/** Get Summary Level.
 		@return This is a summary entity
 	  */
-	public boolean isSummary () 
+	public boolean isSummary()
 	{
 		Object oo = get_Value(COLUMNNAME_IsSummary);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -321,25 +426,24 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
 
 	/** NotificationType AD_Reference_ID=344 */
 	public static final int NOTIFICATIONTYPE_AD_Reference_ID=344;
+	/** EMail+Notice = B */
+	public static final String NOTIFICATIONTYPE_EMailPlusNotice = "B";
 	/** EMail = E */
 	public static final String NOTIFICATIONTYPE_EMail = "E";
 	/** Notice = N */
 	public static final String NOTIFICATIONTYPE_Notice = "N";
 	/** None = X */
 	public static final String NOTIFICATIONTYPE_None = "X";
-	/** EMail+Notice = B */
-	public static final String NOTIFICATIONTYPE_EMailPlusNotice = "B";
 	/** Set Notification Type.
-		@param NotificationType 
-		Type of Notifications
-	  */
+		@param NotificationType Type of Notifications
+	*/
 	public void setNotificationType (String NotificationType)
 	{
 
@@ -349,27 +453,26 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 	/** Get Notification Type.
 		@return Type of Notifications
 	  */
-	public String getNotificationType () 
+	public String getNotificationType()
 	{
 		return (String)get_Value(COLUMNNAME_NotificationType);
 	}
 
 	/** Set Record ID.
-		@param Record_ID 
-		Direct internal record ID
-	  */
+		@param Record_ID Direct internal record ID
+	*/
 	public void setRecord_ID (int Record_ID)
 	{
-		if (Record_ID < 0) 
+		if (Record_ID < 0)
 			set_ValueNoCheck (COLUMNNAME_Record_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_Record_ID, Integer.valueOf(Record_ID));
 	}
 
 	/** Get Record ID.
 		@return Direct internal record ID
 	  */
-	public int getRecord_ID () 
+	public int getRecord_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Record_ID);
 		if (ii == null)
@@ -377,8 +480,24 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 		return ii.intValue();
 	}
 
+	/** Set Record UUID.
+		@param Record_UU Record UUID
+	*/
+	public void setRecord_UU (String Record_UU)
+	{
+		set_ValueNoCheck (COLUMNNAME_Record_UU, Record_UU);
+	}
+
+	/** Get Record UUID.
+		@return Record UUID	  */
+	public String getRecord_UU()
+	{
+		return (String)get_Value(COLUMNNAME_Record_UU);
+	}
+
 	/** Set Report Type.
-		@param ReportType Report Type	  */
+		@param ReportType Report Type
+	*/
 	public void setReportType (String ReportType)
 	{
 		set_Value (COLUMNNAME_ReportType, ReportType);
@@ -386,15 +505,14 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 
 	/** Get Report Type.
 		@return Report Type	  */
-	public String getReportType () 
+	public String getReportType()
 	{
 		return (String)get_Value(COLUMNNAME_ReportType);
 	}
 
 	/** Set Result.
-		@param Result 
-		Result of the action taken
-	  */
+		@param Result Result of the action taken
+	*/
 	public void setResult (int Result)
 	{
 		set_Value (COLUMNNAME_Result, Integer.valueOf(Result));
@@ -403,7 +521,7 @@ public class X_AD_PInstance extends PO implements I_AD_PInstance, I_Persistent
 	/** Get Result.
 		@return Result of the action taken
 	  */
-	public int getResult () 
+	public int getResult()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Result);
 		if (ii == null)

@@ -21,21 +21,55 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for M_PartType
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_PartType extends PO implements I_M_PartType, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_PartType")
+public class X_M_PartType extends PO implements I_M_PartType, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_PartType (Properties ctx, int M_PartType_ID, String trxName)
     {
       super (ctx, M_PartType_ID, trxName);
       /** if (M_PartType_ID == 0)
+        {
+			setM_PartType_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_PartType (Properties ctx, int M_PartType_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_PartType_ID, trxName, virtualColumns);
+      /** if (M_PartType_ID == 0)
+        {
+			setM_PartType_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_PartType (Properties ctx, String M_PartType_UU, String trxName)
+    {
+      super (ctx, M_PartType_UU, trxName);
+      /** if (M_PartType_UU == null)
+        {
+			setM_PartType_ID (0);
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_PartType (Properties ctx, String M_PartType_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_PartType_UU, trxName, virtualColumns);
+      /** if (M_PartType_UU == null)
         {
 			setM_PartType_ID (0);
 			setName (null);
@@ -49,7 +83,7 @@ public class X_M_PartType extends PO implements I_M_PartType, I_Persistent
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -71,9 +105,8 @@ public class X_M_PartType extends PO implements I_M_PartType, I_Persistent
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -82,24 +115,25 @@ public class X_M_PartType extends PO implements I_M_PartType, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Part Type.
-		@param M_PartType_ID Part Type	  */
+		@param M_PartType_ID Part Type
+	*/
 	public void setM_PartType_ID (int M_PartType_ID)
 	{
-		if (M_PartType_ID < 1) 
+		if (M_PartType_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_PartType_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_PartType_ID, Integer.valueOf(M_PartType_ID));
 	}
 
 	/** Get Part Type.
 		@return Part Type	  */
-	public int getM_PartType_ID () 
+	public int getM_PartType_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_PartType_ID);
 		if (ii == null)
@@ -108,7 +142,8 @@ public class X_M_PartType extends PO implements I_M_PartType, I_Persistent
 	}
 
 	/** Set M_PartType_UU.
-		@param M_PartType_UU M_PartType_UU	  */
+		@param M_PartType_UU M_PartType_UU
+	*/
 	public void setM_PartType_UU (String M_PartType_UU)
 	{
 		set_Value (COLUMNNAME_M_PartType_UU, M_PartType_UU);
@@ -116,15 +151,14 @@ public class X_M_PartType extends PO implements I_M_PartType, I_Persistent
 
 	/** Get M_PartType_UU.
 		@return M_PartType_UU	  */
-	public String getM_PartType_UU () 
+	public String getM_PartType_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_PartType_UU);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -133,7 +167,7 @@ public class X_M_PartType extends PO implements I_M_PartType, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}

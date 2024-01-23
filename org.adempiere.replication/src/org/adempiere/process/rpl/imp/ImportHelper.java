@@ -69,12 +69,12 @@ import org.w3c.dom.NodeList;
  * @author Trifon N. Trifonov
  * @author Antonio Cañaveral, e-Evolution
  * 				<li>[ 2195016 ] Implementation delete records messages
- * 				<li>http://sourceforge.net/tracker/index.php?func=detail&aid=2195016&group_id=176962&atid=879332
+ * 				<li>https://sourceforge.net/p/adempiere/bugs/1556/
  * @author	victor.perez@e-evolution.com, e-Evolution
  * 				<li>[ 2195090 ] Stabilization of replication
- * 				<li>https://sourceforge.net/tracker/?func=detail&atid=879332&aid=2936561&group_id=176962
+ * 				<li>https://sourceforge.net/p/adempiere/bugs/2294/
  *				<li>BF [2947622] The replication ID (Primary Key) is not working
- *				<li>https://sourceforge.net/tracker/?func=detail&aid=2947622&group_id=176962&atid=879332
+ *				<li>https://sourceforge.net/p/adempiere/bugs/2308/
  *
  */
 public class ImportHelper {
@@ -96,7 +96,6 @@ public class ImportHelper {
 	}
 	
 	/**
-	 * @param ctx
 	 * @param result
 	 * @param documentToBeImported
 	 * @param trxName
@@ -172,7 +171,7 @@ public class ImportHelper {
 		
 		if(po != null)
 		{
-			 Env.setContext(po.getCtx(), "#AD_Client_ID", po.getAD_Client_ID());
+			 Env.setContext(po.getCtx(), Env.AD_CLIENT_ID, po.getAD_Client_ID());
 			 
 		    	if(MReplicationStrategy.REPLICATION_TABLE==ReplicationMode)
 		    	{    
@@ -297,7 +296,7 @@ public class ImportHelper {
 		//  and set value of column!
 		for (MEXPFormatLine formatLine : formatLines) 
 		{
-			log.info("=================== Beginnig of Format Line ===============================");
+			log.info("=================== Beginning of Format Line ==============================");
 			if (log.isLoggable(Level.INFO)) log.info("formatLine: [" + formatLine.toString() + "]");			
 			//Get the value
 			Object value = getValueFromFormat(formatLine,po,rootElement,result,ReplicationType);
@@ -344,7 +343,7 @@ public class ImportHelper {
 			String xPath = null;
 			xPath = "" + line.getValue() + ""; 
 			
-			if (log.isLoggable(Level.INFO)) log.info("Seach for XML Element = " + xPath);
+			if (log.isLoggable(Level.INFO)) log.info("Search for XML Element = " + xPath);
 			Element referencedNode = XMLHelper.getElement(xPath, rootElement);
 			
 			if (log.isLoggable(Level.INFO)) log.info("referencedNode = " + referencedNode);

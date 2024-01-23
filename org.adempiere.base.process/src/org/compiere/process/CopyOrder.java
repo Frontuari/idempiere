@@ -22,6 +22,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MDocType;
 import org.compiere.model.MOrder;
+import org.compiere.model.MProcessPara;
 
 /**
  *	Copy Order and optionally close
@@ -29,6 +30,7 @@ import org.compiere.model.MOrder;
  *  @author Jorg Janke
  *  @version $Id: CopyOrder.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class CopyOrder extends SvrProcess
 {
 	/** Order to Copy				*/
@@ -60,7 +62,7 @@ public class CopyOrder extends SvrProcess
 			else if (name.equals("IsCloseDocument"))
 				p_IsCloseDocument = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 
@@ -111,8 +113,6 @@ public class CopyOrder extends SvrProcess
 			original.saveEx();
 		}
 		//
-	//	Env.setSOTrx(getCtx(), newOrder.isSOTrx());
-	//	return "@C_Order_ID@ " + newOrder.getDocumentNo();
 		StringBuilder msgreturn = new StringBuilder().append(dt.getName()).append(": ").append(newOrder.getDocumentNo());
 		addLog(0, null, null, msgreturn.toString(), newOrder.get_Table_ID(), newOrder.getC_Order_ID());
 		return "@C_Order_ID@ @Created@";

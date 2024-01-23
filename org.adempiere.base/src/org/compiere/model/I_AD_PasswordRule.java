@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for AD_PasswordRule
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_AD_PasswordRule 
 {
@@ -44,8 +44,8 @@ public interface I_AD_PasswordRule
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +53,12 @@ public interface I_AD_PasswordRule
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -97,12 +97,12 @@ public interface I_AD_PasswordRule
     public static final String COLUMNNAME_AlphabeticalSequence = "AlphabeticalSequence";
 
 	/** Set Alphabetical Sequence.
-	  * Lenght of alphabetical sequence to validate
+	  * Length of alphabetical sequence to validate
 	  */
 	public void setAlphabeticalSequence (int AlphabeticalSequence);
 
 	/** Get Alphabetical Sequence.
-	  * Lenght of alphabetical sequence to validate
+	  * Length of alphabetical sequence to validate
 	  */
 	public int getAlphabeticalSequence();
 
@@ -126,12 +126,12 @@ public interface I_AD_PasswordRule
     public static final String COLUMNNAME_Days_Reuse_Password = "Days_Reuse_Password";
 
 	/** Set Days Reuse Password.
-	  * Define number of day can reuser password
+	  * Define number of day can reuse password
 	  */
 	public void setDays_Reuse_Password (int Days_Reuse_Password);
 
 	/** Get Days Reuse Password.
-	  * Define number of day can reuser password
+	  * Define number of day can reuse password
 	  */
 	public int getDays_Reuse_Password();
 
@@ -178,12 +178,14 @@ public interface I_AD_PasswordRule
     public static final String COLUMNNAME_IsUserNameRule = "IsUserNameRule";
 
 	/** Set User Name Rule.
-	  * Validate the password doesn't contain user name (ignore case and match backwards)
+	  * Validate the password doesn&#039;
+t contain user name (ignore case and match backwards)
 	  */
 	public void setIsUserNameRule (boolean IsUserNameRule);
 
 	/** Get User Name Rule.
-	  * Validate the password doesn't contain user name (ignore case and match backwards)
+	  * Validate the password doesn&#039;
+t contain user name (ignore case and match backwards)
 	  */
 	public boolean isUserNameRule();
 
@@ -296,12 +298,12 @@ public interface I_AD_PasswordRule
     public static final String COLUMNNAME_QWERTYSequence = "QWERTYSequence";
 
 	/** Set QWERTY Sequence.
-	  * Lenght of QWERTY sequences to validate
+	  * Length of QWERTY sequences to validate
 	  */
 	public void setQWERTYSequence (int QWERTYSequence);
 
 	/** Get QWERTY Sequence.
-	  * Lenght of QWERTY sequences to validate
+	  * Length of QWERTY sequences to validate
 	  */
 	public int getQWERTYSequence();
 

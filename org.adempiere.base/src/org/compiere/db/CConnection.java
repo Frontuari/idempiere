@@ -26,24 +26,23 @@ import javax.naming.InitialContext;
 import javax.sql.DataSource;
 import javax.swing.JOptionPane;
 
-import org.adempiere.base.Service;
-import org.compiere.interfaces.Server;
+import org.compiere.model.MSystem;
 import org.compiere.util.CLogger;
 import org.compiere.util.Ini;
 
 /**
- *  Adempiere Connection Descriptor
+ *  Adempiere DB Connection Descriptor
  *
  *  @author     Jorg Janke
- *  @author     Marek Mosiewicz<marek.mosiewicz@jotel.com.pl> - support for RMI over HTTP
+ *  @author     Marek Mosiewicz&lt;marek.mosiewicz@jotel.com.pl&gt; - support for RMI over HTTP
  *  @version    $Id: CConnection.java,v 1.5 2006/07/30 00:55:13 jjanke Exp $
  */
 public class CConnection implements Serializable, Cloneable
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = -858558852550858165L;
+	private static final long serialVersionUID = -1823868178123935209L;
 
 	/** Connection      */
 	private volatile static CConnection	s_cc = null;
@@ -61,6 +60,13 @@ public class CConnection implements Serializable, Cloneable
 			String attributes = Ini.getProperty (Ini.P_CONNECTION);
 			s_cc = new CConnection (null);
 			s_cc.setAttributes (attributes);
+			if (! attributes.contains("PWD=") && MSystem.isSecureProps())
+			{
+				// get the password from secret properties
+				String dbPwd = Ini.getVar("ADEMPIERE_DB_PASSWORD");
+				if (dbPwd != null)
+					s_cc.setDbPwd(dbPwd);
+			}
 			if (log.isLoggable(Level.FINE)) log.fine(s_cc.toString());
 		}
 
@@ -119,10 +125,7 @@ public class CConnection implements Serializable, Cloneable
 		return cc;
 	}	//  get
 
-
-
-	/**************************************************************************
-	 *  Adempiere Connection
+	/**
 	 *  @param	host optional application/db host
 	 */
 	public CConnection (String host)
@@ -186,7 +189,7 @@ public class CConnection implements Serializable, Cloneable
 	private int m_webPort;
 	private int m_sslPort;
 
-	/*************************************************************************
+	/**
 	 *  Get Name
 	 *  @return connection name
 	 */
@@ -212,8 +215,7 @@ public class CConnection implements Serializable, Cloneable
 		m_name = toString ();
 	} 	//  setName
 
-
-	/*************
+	/**
 	 *  Get Application Host
 	 *  @return apps host
 	 */
@@ -303,16 +305,6 @@ public class CConnection implements Serializable, Cloneable
 			log.severe(e.toString ());
 		}
 	}
-
-	/**
-	 * 	Get Server
-	 * 	@return Server
-	 */
-	public Server getServer()
-	{
-		return Service.locator().locate(Server.class).getService();
-	}	//	getServer
-
 
 	/**
 	 *  Get Apps Server Version
@@ -519,8 +511,8 @@ public class CConnection implements Serializable, Cloneable
 	}
 
 	/**
-	 * Method getFwHost
-	 * @return String
+	 * Get fire wall host
+	 * @return fire wall host
 	 */
 	public String getFwHost ()
 	{
@@ -528,7 +520,7 @@ public class CConnection implements Serializable, Cloneable
 	}
 
 	/**
-	 * Method setFwHost
+	 * Set fire wall host
 	 * @param fw_host String
 	 */
 	public void setFwHost (String fw_host)
@@ -644,14 +636,12 @@ public class CConnection implements Serializable, Cloneable
 			setViaFirewall (false);
 		}
 
-        // begin vpj-cd e-evolution 09 ene 2006
 		//  PostgreSQL
 		if (isPostgreSQL ())
 		{
 			if (getDbPort () != Database.DB_POSTGRESQL_DEFAULT_PORT)
 				setDbPort (Database.DB_POSTGRESQL_DEFAULT_PORT);
 		}
-		//end vpj-cd e-evolution 09 ene 2006
 	} 	//  setType
 
 	/**
@@ -662,7 +652,6 @@ public class CConnection implements Serializable, Cloneable
 	{
 		return m_db.supportsBLOB ();
 	} //  supportsBLOB
-
 
 	/**
 	 *  Is Oracle DB
@@ -691,25 +680,23 @@ public class CConnection implements Serializable, Cloneable
 		return m_okDB;
 	} 	//  isDatabaseOK
 
-	/**************************************************************************
-	 *  Create DB Connection
+	/**
+	 * Create DB data source
 	 * @return data source != null
 	 */
 	public boolean setDataSource()
 	{
-	//	System.out.println ("CConnection.setDataSource - " + m_ds + " - Client=" + Ini.isClient());
 		if (m_ds == null && Ini.isClient())
 		{
 			AdempiereDatabase getDB = getDatabase(); 
 			if (getDB != null)	//	no db selected
 				m_ds = getDB.getDataSource(this);
-		//	System.out.println ("CConnection.setDataSource - " + m_ds);
 		}
 		return m_ds != null;
 	} 	//	setDataSource
 
 	/**
-	 * 	Set Data Source
+	 * 	Set DB Data Source
 	 *	@param ds data source
 	 *	@return data source != null
 	 */
@@ -722,7 +709,7 @@ public class CConnection implements Serializable, Cloneable
 	} 	//	setDataSource
 
 	/**
-	 *  Get Server Connection
+	 *  Get DB data source
 	 *  @return DataSource
 	 */
 	public DataSource getDataSource ()
@@ -731,7 +718,7 @@ public class CConnection implements Serializable, Cloneable
 	} 	//	getDataSource
 
 	/**
-	 *  Has Server Connection
+	 *  Has DB data source
 	 *  @return true if DataSource exists
 	 */
 	public boolean isDataSource ()
@@ -739,15 +726,16 @@ public class CConnection implements Serializable, Cloneable
 		return m_ds != null;
 	} 	//	isDataSource
 
-
-	/**************************************************************************
+	/**
 	 *  Test Database Connection.
+	 *  <pre>
 	 *  -- Example --
 	 *  Database: PostgreSQL - 7.1.3
 	 *  Driver:   PostgreSQL Native Driver - PostgreSQL 7.2 JDBC2
 	 *  -- Example --
 	 *  Database: Oracle - Oracle8i Enterprise Edition Release 8.1.7.0.0 - Production With the Partitioning option JServer Release 8.1.7.0.0 - Production
 	 *  Driver:   Oracle JDBC driver - 9.0.1.1.0
+	 *  </pre>
 	 *  @param retest
 	 *  @return Exception or null
 	 */
@@ -779,6 +767,11 @@ public class CConnection implements Serializable, Cloneable
 		return m_dbException; //  from opening
 	} 	//  testDatabase
 
+	/**
+	 * Read DB info from connection
+	 * @param conn
+	 * @throws SQLException
+	 */
 	public void readInfo(Connection conn) throws SQLException {
 		DatabaseMetaData dbmd = conn.getMetaData ();
 		m_info[0] = "Database=" + dbmd.getDatabaseProductName ()
@@ -792,7 +785,7 @@ public class CConnection implements Serializable, Cloneable
 		if (log.isLoggable(Level.CONFIG)) log.config(m_info[0] + " - " + m_info[1]);
 	}
 
-	/*************************************************************************
+	/**
 	 *  Short String representation
 	 *  @return appsHost{dbHost-dbName-uid}
 	 */
@@ -874,14 +867,25 @@ public class CConnection implements Serializable, Cloneable
 		return sb.toString();
 	} 	//  toStringDetail
 
-
 	/**
 	 *  String representation.
-	 *  Used also for Instanciation
+	 *  Used also for Instantiation
 	 *  @return string representation
 	 *	@see #setAttributes(String) setAttributes
 	 */
 	public String toStringLong ()
+	{
+		return toStringLong(true);
+	}
+
+	/**
+	 *  String representation.
+	 *  Used also for Instantiation
+	 *  @param includePass flag to include the password in the String
+	 *  @return string representation
+	 *	@see #setAttributes(String) setAttributes
+	 */
+	public String toStringLong (boolean includePass)
 	{
 		StringBuilder sb = new StringBuilder ("CConnection[");
 		sb.append ("name=").append (escape(m_name))
@@ -897,12 +901,19 @@ public class CConnection implements Serializable, Cloneable
 		  .append (",FWhost=").append (escape(m_fw_host))
 		  .append (",FWport=").append (m_fw_port)
 		  .append (",UID=").append (escape(m_db_uid))
-		  .append (",PWD=").append (escape(m_db_pwd))
-		  .append("]");
 		  ;		//	the format is read by setAttributes
+		if (includePass) {
+		  sb.append (",PWD=").append (escape(m_db_pwd));
+		}
+		sb.append("]");
 		return sb.toString ();
 	}	//  toStringLong
 
+	/**
+	 * Use html like escape sequence to escape = and ,
+	 * @param value
+	 * @return escape value
+	 */
 	private String escape(String value) {
 		if (value == null)
 			return null;
@@ -914,7 +925,7 @@ public class CConnection implements Serializable, Cloneable
 	}
 
 	/**
-	 *  Set Attributes from String (pares toStringLong())
+	 *  Set Attributes from String (parse {@link #toStringLong()})
 	 *  @param attributes attributes
 	 */
 	private void setAttributes (String attributes)
@@ -992,6 +1003,11 @@ public class CConnection implements Serializable, Cloneable
 		}
 	}	//  setAttributes
 
+	/**
+	 * @param value
+	 * @return un-escape value
+	 * @see CConnection#escape(String)
+	 */
 	private String unescape(String value) {
 		value = value.replace("&eq;", "=");
 		value = value.replace("&comma;", ",");
@@ -1003,6 +1019,7 @@ public class CConnection implements Serializable, Cloneable
 	 *  @param o object
 	 *  @return true if o equals this
 	 */
+	@Override
 	public boolean equals (Object o)
 	{
 		if (o instanceof CConnection)
@@ -1021,7 +1038,7 @@ public class CConnection implements Serializable, Cloneable
 	}	//  equals
 
 	/**
-	 *  Get Info.
+	 *  Get Info.<br/>
 	 *  - Database, Driver, Status Info
 	 *  @return info
 	 */
@@ -1036,19 +1053,19 @@ public class CConnection implements Serializable, Cloneable
 		return sb.toString ();
 	}	//  getInfo
 
-
-	/*************************************************************************
+	/**
 	 *  Hashcode
 	 *  @return hashcode of name
 	 */
+	@Override
 	public int hashCode ()
 	{
 		return m_name.hashCode ();
 	} 	//  hashCode
 
 	/**
-	 *  Get Database
-	 *  @return database
+	 *  Get Database Adapter
+	 *  @return database adapter instance
 	 */
 	public AdempiereDatabase getDatabase ()
 	{
@@ -1087,8 +1104,8 @@ public class CConnection implements Serializable, Cloneable
 	} 	//  getDatabase
 
 	/**
-	 *  Get Connection String
-	 *  @return connection string
+	 *  Get Connection URL
+	 *  @return connection URL
 	 */
 	public String getConnectionURL ()
 	{
@@ -1100,13 +1117,12 @@ public class CConnection implements Serializable, Cloneable
 	} 	//  getConnectionURL
 
 	/**
-	 *  Create Connection - no not close.
-	 * 	Sets m_dbException
+	 *  Get Connection.
+	 * 	Sets {@link #m_dbException}.
 	 *  @param autoCommit true if autocommit connection
-	 *  @param transactionIsolation Connection transaction level
+	 *  @param transactionIsolation transaction isolation level
 	 *  @return Connection
 	 */
-	@SuppressWarnings("unused")
 	public Connection getConnection (boolean autoCommit, int transactionIsolation)
 	{
 		Connection conn = null;
@@ -1123,18 +1139,7 @@ public class CConnection implements Serializable, Cloneable
 
 		try
 		{
-		//	if (!Ini.isClient()			//	Server
-		//		&& trxLevel != Connection.TRANSACTION_READ_COMMITTED)		// PO_LOB.save()
-		//	{
-			//Exception ee = null;
-			try
-			{
-				conn = m_db.getCachedConnection(this, autoCommit, transactionIsolation);
-			}
-			catch (Exception e)
-			{
-				//ee = e;
-			}
+			conn = m_db.getCachedConnection(this, autoCommit, transactionIsolation);
 			//	Verify Connection
 			if (conn != null)
 			{
@@ -1150,19 +1155,13 @@ public class CConnection implements Serializable, Cloneable
 			String msg = ule.getLocalizedMessage()
 				+ " -> Did you set the LD_LIBRARY_PATH ? - " + getConnectionURL();
 			m_dbException = new Exception(msg);
-			log.severe(msg);
+			System.err.println(msg);
 		}
 		catch (SQLException ex)
 		{
 			m_dbException = ex;
 			if (conn == null)
 			{
-				//log might cause infinite loop since it will try to acquire database connection again
-				/*
-				log.log(Level.SEVERE, getConnectionURL ()
-					+ ", (1) AutoCommit=" + autoCommit + ",TrxIso=" + getTransactionIsolationInfo(transactionIsolation)
-					+ " - " + ex.getMessage());
-				*/
 				System.err.println(getConnectionURL ()
 						+ ", (1) AutoCommit=" + autoCommit + ",TrxIso=" + getTransactionIsolationInfo(transactionIsolation)
 						+ " - " + ex.getMessage());
@@ -1171,29 +1170,24 @@ public class CConnection implements Serializable, Cloneable
 			{
 				try
 				{
-					log.severe(getConnectionURL ()
+					System.err.println(getConnectionURL ()
 						+ ", (2) AutoCommit=" + conn.getAutoCommit() + "->" + autoCommit
 						+ ", TrxIso=" + getTransactionIsolationInfo(conn.getTransactionIsolation()) + "->" + getTransactionIsolationInfo(transactionIsolation)
-					//	+ " (" + getDbUid() + "/" + getDbPwd() + ")"
 						+ " - " + ex.getMessage());
 				}
 				catch (Exception ee)
 				{
-					log.severe(getConnectionURL ()
-						+ ", (3) AutoCommit=" + autoCommit + ", TrxIso=" + getTransactionIsolationInfo(transactionIsolation)
-					//	+ " (" + getDbUid() + "/" + getDbPwd() + ")"
-						+ " - " + ex.getMessage());
+					System.err.println(getConnectionURL ()
+							+ ", (1) AutoCommit=" + autoCommit + ",TrxIso=" + getTransactionIsolationInfo(transactionIsolation)
+							+ " - " + ex.getMessage());
 				}
 			}
 		}
 		catch (Exception ex)
 		{
 			m_dbException = ex;
-			//log might cause infinite loop since it will try to acquire database connection again
-			//log.log(Level.SEVERE, getConnectionURL(), ex);
 			System.err.println(getConnectionURL() + " - " + ex.getLocalizedMessage());
 		}
-	//	System.err.println ("CConnection.getConnection - " + conn);
 		return conn;
 	}	//  getConnection
 
@@ -1204,7 +1198,7 @@ public class CConnection implements Serializable, Cloneable
 	public Exception getDatabaseException ()
 	{
 		return m_dbException;
-	} 	//  getConnectionException
+	}
 
 	/*************************************************************************/
 
@@ -1212,7 +1206,9 @@ public class CConnection implements Serializable, Cloneable
 	 *  Get Application Server Initial Context
 	 *  @param useCache if true, use existing cache
 	 *  @return Initial Context or null
+	 *  @deprecated
 	 */
+	@Deprecated(forRemoval = true, since = "11")
 	public InitialContext getInitialContext (boolean useCache)
 	{
 		return null;
@@ -1220,7 +1216,7 @@ public class CConnection implements Serializable, Cloneable
 
 	/**
 	 *  Convert Statement
-	 *  @param origStatement original statement (Oracle notation)
+	 *  @param origStatement original statement (Oracle syntax)
 	 *  @return converted Statement
 	 *  @throws Exception
 	 */
@@ -1255,7 +1251,7 @@ public class CConnection implements Serializable, Cloneable
 	/**
 	 * 	Get Transaction Isolation Info
 	 *	@param transactionIsolation trx iso
-	 *	@return clear test
+	 *	@return transaction isolation level
 	 */
 	public static String getTransactionIsolationInfo(int transactionIsolation)
 	{

@@ -33,11 +33,12 @@ import java.util.logging.Level;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutableIntPOCache;
 import org.idempiere.cache.ImmutablePOSupport;
 
 /**
- *	Location Country Model (Value Object)
+ *	Location Country Model
  *
  *  @author 	Jorg Janke
  *  @version 	$Id: MCountry.java,v 1.3 2006/07/30 00:58:18 jjanke Exp $
@@ -49,7 +50,7 @@ public class MCountry extends X_C_Country
 	implements Comparator<Object>, Serializable, ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 6102749517340832365L;
 
@@ -71,6 +72,8 @@ public class MCountry extends X_C_Country
 	 */
 	public static MCountry get (Properties ctx, int C_Country_ID)
 	{
+		if(C_Country_ID <= 0)
+			return null;
 		loadAllCountriesIfNeeded();
 		MCountry c = s_countries.get(ctx, C_Country_ID, e -> new MCountry(ctx, e));
 		if (c != null)
@@ -90,6 +93,7 @@ public class MCountry extends X_C_Country
 	 *	@return Country
 	 *  @deprecated
 	 */
+	@Deprecated
 	public static MCountry getDefault (Properties ctx)
 	{
 		return getDefault();
@@ -117,6 +121,7 @@ public class MCountry extends X_C_Country
 	 *  @return MCountry Array
 	 *  @deprecated
 	 */
+	@Deprecated
 	public static MCountry[] getCountries(Properties ctx)
 	{
 		return getCountries();
@@ -142,7 +147,7 @@ public class MCountry extends X_C_Country
 	
 	/**
 	 * 	Load Countries.
-	 * 	Set Default Language to Client Language
+	 * 	Set Default Country via country code of Client Language (AD_Language.CountryCode).
 	 */
 	private static synchronized void loadAllCountries ()
 	{
@@ -165,7 +170,7 @@ public class MCountry extends X_C_Country
 	}	//	loadAllCountries
 
 	/**
-	 * Load Default Country for actual client on context
+	 * Load Default Country for login client
 	 */
 	private static void loadDefaultCountry() {
 		loadAllCountriesIfNeeded();
@@ -202,6 +207,7 @@ public class MCountry extends X_C_Country
 	 *	@param AD_Language language or null
 	 *  @deprecated - not used at all, you can delete references to this method
 	 */
+	@Deprecated(forRemoval = true, since = "11")
 	public static void setDisplayLanguage (String AD_Language)
 	{
 		s_AD_Language = AD_Language;
@@ -221,10 +227,20 @@ public class MCountry extends X_C_Country
 	private static CLogger		s_log = CLogger.getCLogger (MCountry.class);
 	//	Default DisplaySequence	*/
 	private static String		DISPLAYSEQUENCE = "@C@, @P@";
-
 	
-	/*************************************************************************
-	 *	Create empty Country
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_Country_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MCountry(Properties ctx, String C_Country_UU, String trxName) {
+        super(ctx, C_Country_UU, trxName);
+		if (Util.isEmpty(C_Country_UU))
+			setInitialDefaults();
+    }
+
+	/**
 	 * 	@param ctx context
 	 * 	@param C_Country_ID ID
 	 *	@param trxName transaction
@@ -233,19 +249,22 @@ public class MCountry extends X_C_Country
 	{
 		super (ctx, C_Country_ID, trxName);
 		if (C_Country_ID == 0)
-		{
-		//	setName (null);
-		//	setCountryCode (null);
-			setDisplaySequence(DISPLAYSEQUENCE);
-			setHasRegion(false);
-			setHasPostal_Add(false);
-			setIsAddressLinesLocalReverse (false);
-			setIsAddressLinesReverse (false);
-		}
+			setInitialDefaults();
 	}   //  MCountry
 
 	/**
-	 *	Create Country from current row in ResultSet
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setDisplaySequence(DISPLAYSEQUENCE);
+		setHasRegion(false);
+		setHasPostal_Add(false);
+		setIsAddressLinesLocalReverse (false);
+		setIsAddressLinesReverse (false);
+	}
+
+	/**
+	 *	Load Country from current row in ResultSet
 	 * 	@param ctx context
 	 *  @param rs ResultSet
 	 *	@param trxName transaction
@@ -256,7 +275,7 @@ public class MCountry extends X_C_Country
 	}	//	MCountry
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MCountry(MCountry copy) 
@@ -265,7 +284,7 @@ public class MCountry extends X_C_Country
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -275,7 +294,7 @@ public class MCountry extends X_C_Country
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -290,6 +309,7 @@ public class MCountry extends X_C_Country
 	 *	Return Name - translated if DisplayLanguage is set.
 	 *  @return Name
 	 */
+	@Override
 	public String toString()
 	{
 		return getTrlName();
@@ -313,12 +333,12 @@ public class MCountry extends X_C_Country
 	{
 		return get_Translation(COLUMNNAME_Name, language);
 	}	//	getTrlName
-	
-	
+		
 	/**
-	 * 	Get Display Sequence
+	 * 	Get Display Sequence for city (C), region (R), postal code (P) and additional postal code (A). 
 	 *	@return display sequence
 	 */
+	@Override
 	public String getDisplaySequence ()
 	{
 		String ds = super.getDisplaySequence ();
@@ -328,10 +348,11 @@ public class MCountry extends X_C_Country
 	}	//	getDisplaySequence
 
 	/**
-	 * 	Get Local Display Sequence.
-	 * 	If not defined get Display Sequence
-	 *	@return local display sequence
+	 * 	Get Local Display Sequence for city (C), region (R), postal code (P) and additional postal code (A).
+	 * 	If not defined get Display Sequence.
+	 *	@return display sequence
 	 */
+	@Override
 	public String getDisplaySequenceLocal ()
 	{
 		String ds = super.getDisplaySequenceLocal();
@@ -346,6 +367,7 @@ public class MCountry extends X_C_Country
 	 *  @param o2 object 2
 	 *  @return -1,0, 1
 	 */
+	@Override
 	public int compare(Object o1, Object o2)
 	{
 		String s1 = o1.toString();
@@ -359,7 +381,7 @@ public class MCountry extends X_C_Country
 	}	//	compare
 
 	/**
-	 * 	Is the region valid in the country
+	 * 	Is the region valid in this country
 	 *	@param C_Region_ID region
 	 *	@return true if valid
 	 */
@@ -386,63 +408,5 @@ public class MCountry extends X_C_Country
 		makeImmutable();
 		return this;
 	}
-
-	/**************************************************************************
-	 * 	Insert Countries
-	 * 	@param args none
-	 */
-	public static void main (String[] args)
-	{
-		/**	Migration before
-		UPDATE C_Country SET AD_Client_ID=0, AD_Org_ID=0 WHERE AD_Client_ID<>0 OR AD_Org_ID<>0;
-		UPDATE C_Region SET AD_Client_ID=0, AD_Org_ID=0 WHERE AD_Client_ID<>0 OR AD_Org_ID<>0;
-		IDs migration for C_Location, C_City, C_Tax (C_Country, C_Region)
-		**
-		//	from http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1-semic.txt
-		String countries = "AFGHANISTAN;AF, ALBANIA;AL, ALGERIA;DZ, AMERICAN SAMOA;AS, ANDORRA;AD, ANGOLA;AO, ANGUILLA;AI, ANTARCTICA;AQ, ANTIGUA AND BARBUDA;AG, ARGENTINA;AR,"
-			+ "ARMENIA;AM, ARUBA;AW, AUSTRALIA;AU, AUSTRIA;AT, AZERBAIJAN;AZ, BAHAMAS;BS, BAHRAIN;BH, BANGLADESH;BD, BARBADOS;BB, BELARUS;BY, BELGIUM;BE, BELIZE;BZ,"
-			+ "BENIN;BJ, BERMUDA;BM, BHUTAN;BT, BOLIVIA;BO, BOSNIA AND HERZEGOVINA;BA, BOTSWANA;BW, BOUVET ISLAND;BV, BRAZIL;BR, BRITISH INDIAN OCEAN TERRITORY;IO, BRUNEI DARUSSALAM;BN,"
-			+ "BULGARIA;BG, BURKINA FASO;BF, BURUNDI;BI, CAMBODIA;KH, CAMEROON;CM, CANADA;CA, CAPE VERDE;CV, CAYMAN ISLANDS;KY, CENTRAL AFRICAN REPUBLIC;CF, CHAD;TD, CHILE;CL,"
-			+ "CHINA;CN, CHRISTMAS ISLAND;CX, COCOS (KEELING) ISLANDS;CC, COLOMBIA;CO, COMOROS;KM, CONGO;CG, CONGO THE DEMOCRATIC REPUBLIC OF THE;CD, COOK ISLANDS;CK,"
-			+ "COSTA RICA;CR, COTE D'IVOIRE;CI, CROATIA;HR, CUBA;CU, CYPRUS;CY, CZECH REPUBLIC;CZ, DENMARK;DK, DJIBOUTI;DJ, DOMINICA;DM, DOMINICAN REPUBLIC;DO, ECUADOR;EC,"
-			+ "EGYPT;EG, EL SALVADOR;SV, EQUATORIAL GUINEA;GQ, ERITREA;ER, ESTONIA;EE, ETHIOPIA;ET, FALKLAND ISLANDS (MALVINAS);FK, FAROE ISLANDS;FO, FIJI;FJ,"
-			+ "FINLAND;FI, FRANCE;FR, FRENCH GUIANA;GF, FRENCH POLYNESIA;PF, FRENCH SOUTHERN TERRITORIES;TF, GABON;GA, GAMBIA;GM, GEORGIA;GE, GERMANY;DE, GHANA;GH,"
-			+ "GIBRALTAR;GI, GREECE;GR, GREENLAND;GL, GRENADA;GD, GUADELOUPE;GP, GUAM;GU, GUATEMALA;GT, GUINEA;GN, GUINEA-BISSAU;GW, GUYANA;GY, HAITI;HT,"
-			+ "HEARD ISLAND AND MCDONALD ISLANDS;HM, HOLY SEE (VATICAN CITY STATE);VA, HONDURAS;HN, HONG KONG;HK, HUNGARY;HU, ICELAND;IS, INDIA;IN, INDONESIA;ID,"
-			+ "IRAN ISLAMIC REPUBLIC OF;IR, IRAQ;IQ, IRELAND;IE, ISRAEL;IL, ITALY;IT, JAMAICA;JM, JAPAN;JP, JORDAN;JO, KAZAKHSTAN;KZ, KENYA;KE, KIRIBATI;KI, KOREA DEMOCRATIC PEOPLE'S REPUBLIC OF;KP,"
-			+ "KOREA REPUBLIC OF;KR, KUWAIT;KW, KYRGYZSTAN;KG, LAO PEOPLE'S DEMOCRATIC REPUBLIC;LA, LATVIA;LV, LEBANON;LB, LESOTHO;LS, LIBERIA;LR, LIBYAN ARAB JAMAHIRIYA;LY,"
-			+ "LIECHTENSTEIN;LI, LITHUANIA;LT, LUXEMBOURG;LU, MACAO;MO, MACEDONIA FORMER YUGOSLAV REPUBLIC OF;MK, MADAGASCAR;MG, MALAWI;MW, MALAYSIA;MY, MALDIVES;MV, "
-			+ "MALI;ML, MALTA;MT, MARSHALL ISLANDS;MH, MARTINIQUE;MQ, MAURITANIA;MR, MAURITIUS;MU, MAYOTTE;YT, MEXICO;MX, MICRONESIA FEDERATED STATES OF;FM,"
-			+ "MOLDOVA REPUBLIC OF;MD, MONACO;MC, MONGOLIA;MN, MONTSERRAT;MS, MOROCCO;MA, MOZAMBIQUE;MZ, MYANMAR;MM, NAMIBIA;NA, NAURU;NR, NEPAL;NP,"
-			+ "NETHERLANDS;NL, NETHERLANDS ANTILLES;AN, NEW CALEDONIA;NC, NEW ZEALAND;NZ, NICARAGUA;NI, NIGER;NE, NIGERIA;NG, NIUE;NU, NORFOLK ISLAND;NF,"
-			+ "NORTHERN MARIANA ISLANDS;MP, NORWAY;NO, OMAN;OM, PAKISTAN;PK, PALAU;PW, PALESTINIAN TERRITORY OCCUPIED;PS, PANAMA;PA, PAPUA NEW GUINEA;PG,"
-			+ "PARAGUAY;PY, PERU;PE, PHILIPPINES;PH, PITCAIRN;PN, POLAND;PL, PORTUGAL;PT, PUERTO RICO;PR, QATAR;QA, REUNION;RE, ROMANIA;RO, RUSSIAN FEDERATION;RU,"
-			+ "RWANDA;RW, SAINT HELENA;SH, SAINT KITTS AND NEVIS;KN, SAINT LUCIA;LC, SAINT PIERRE AND MIQUELON;PM, SAINT VINCENT AND THE GRENADINES;VC,"
-			+ "SAMOA;WS, SAN MARINO;SM, SAO TOME AND PRINCIPE;ST, SAUDI ARABIA;SA, SENEGAL;SN, SEYCHELLES;SC, SIERRA LEONE;SL, SINGAPORE;SG, SLOVAKIA;SK,"
-			+ "SLOVENIA;SI, SOLOMON ISLANDS;SB, SOMALIA;SO, SOUTH AFRICA;ZA, SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS;GS, SPAIN;ES, SRI LANKA;LK,"
-			+ "SUDAN;SD, SURINAME;SR, SVALBARD AND JAN MAYEN;SJ, SWAZILAND;SZ, SWEDEN;SE, SWITZERLAND;CH, SYRIAN ARAB REPUBLIC;SY, TAIWAN;TW,"
-			+ "TAJIKISTAN;TJ, TANZANIA UNITED REPUBLIC OF;TZ, THAILAND;TH, TIMOR-LESTE;TL, TOGO;TG, TOKELAU;TK, TONGA;TO, TRINIDAD AND TOBAGO;TT,"
-			+ "TUNISIA;TN, TURKEY;TR, TURKMENISTAN;TM, TURKS AND CAICOS ISLANDS;TC, TUVALU;TV, UGANDA;UG, UKRAINE;UA, UNITED ARAB EMIRATES;AE, UNITED KINGDOM;GB,"
-			+ "UNITED STATES;US, UNITED STATES MINOR OUTLYING ISLANDS;UM, URUGUAY;UY, UZBEKISTAN;UZ, VANUATU;VU, VENEZUELA;VE, VIET NAM;VN, VIRGIN ISLANDS BRITISH;VG,"
-			+ "VIRGIN ISLANDS U.S.;VI, WALLIS AND FUTUNA;WF, WESTERN SAHARA;EH, YEMEN;YE, YUGOSLAVIA;YU, ZAMBIA;ZM, ZIMBABWE;ZW";
-		//
-		org.compiere.Adempiere.startupClient();
-		StringTokenizer st = new StringTokenizer(countries, ",", false);
-		while (st.hasMoreTokens())
-		{
-			String s = st.nextToken().trim();
-			int pos = s.indexOf(';');
-			String name = Util.initCap(s.substring(0,pos));
-			String cc = s.substring(pos+1);
-			System.out.println(cc + " - " + name);
-			//
-			MCountry mc = new MCountry(Env.getCtx(), 0);
-			mc.setCountryCode(cc);
-			mc.setName(name);
-			mc.setDescription(name);
-			mc.saveEx();
-		}
-		**/
-	}	//	main
 
 }	//	MCountry

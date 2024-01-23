@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 
 /**
  * 	Time + Expense Line Model
@@ -36,7 +37,19 @@ public class MTimeExpenseLine extends X_S_TimeExpenseLine
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -815975460880303779L;
+	private static final long serialVersionUID = 3580618153284679385L;
+
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param S_TimeExpenseLine_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MTimeExpenseLine(Properties ctx, String S_TimeExpenseLine_UU, String trxName) {
+        super(ctx, S_TimeExpenseLine_UU, trxName);
+		if (Util.isEmpty(S_TimeExpenseLine_UU))
+			setInitialDefaults();
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -48,26 +61,29 @@ public class MTimeExpenseLine extends X_S_TimeExpenseLine
 	{
 		super (ctx, S_TimeExpenseLine_ID, trxName);
 		if (S_TimeExpenseLine_ID == 0)
-		{
-		//	setS_TimeExpenseLine_ID (0);		//	PK
-		//	setS_TimeExpense_ID (0);			//	Parent
-			setQty(Env.ONE);
-			setQtyInvoiced(Env.ZERO);
-			setQtyReimbursed(Env.ZERO);
-			//
-			setExpenseAmt(Env.ZERO);
-			setConvertedAmt(Env.ZERO);
-			setPriceReimbursed(Env.ZERO);
-			setInvoicePrice(Env.ZERO);
-			setPriceInvoiced(Env.ZERO);
-			//
-			setDateExpense (new Timestamp(System.currentTimeMillis()));
-			setIsInvoiced (false);
-			setIsTimeReport (false);
-			setLine (10);
-			setProcessed(false);
-		}
+			setInitialDefaults();
 	}	//	MTimeExpenseLine
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setQty(Env.ONE);
+		setQtyInvoiced(Env.ZERO);
+		setQtyReimbursed(Env.ZERO);
+		//
+		setExpenseAmt(Env.ZERO);
+		setConvertedAmt(Env.ZERO);
+		setPriceReimbursed(Env.ZERO);
+		setInvoicePrice(Env.ZERO);
+		setPriceInvoiced(Env.ZERO);
+		//
+		setDateExpense (new Timestamp(System.currentTimeMillis()));
+		setIsInvoiced (false);
+		setIsTimeReport (false);
+		setLine (10);
+		setProcessed(false);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -190,10 +206,11 @@ public class MTimeExpenseLine extends X_S_TimeExpenseLine
 	 */
 	protected boolean beforeSave (boolean newRecord)
 	{
-		if (newRecord && getParent().isComplete()) {
-			log.saveError("ParentComplete", Msg.translate(getCtx(), "S_TimeExpenseLine"));
+		if (newRecord && getParent().isProcessed()) {
+			log.saveError("ParentComplete", Msg.translate(getCtx(), "S_TimeExpense_ID"));
 			return false;
 		}
+		
 		//	Calculate Converted Amount
 		if (newRecord || is_ValueChanged("ExpenseAmt") || is_ValueChanged("C_Currency_ID"))
 		{
@@ -206,10 +223,19 @@ public class MTimeExpenseLine extends X_S_TimeExpenseLine
 					getDateExpense(), 0, getAD_Client_ID(), getAD_Org_ID()) );
 			}
 		}
+		
+		// calculate Line Net Amount
+		if (newRecord || is_ValueChanged(COLUMNNAME_Qty) || is_ValueChanged(COLUMNNAME_ExpenseAmt))
+		{
+			BigDecimal lineNetAmt = getExpenseAmt().multiply(getQty());
+			setLineNetAmt(lineNetAmt);
+		}
+		
 		if (isTimeReport())
 		{
 			setExpenseAmt(Env.ZERO);
 			setConvertedAmt(Env.ZERO);
+			setLineNetAmt(Env.ZERO);
 		}
 		return true;
 	}	//	beforeSave

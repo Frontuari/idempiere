@@ -2,8 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: iDempiere Replication Server
 Bundle-SymbolicName: org.adempiere.replication.server;singleton:=true
-Bundle-Version: 8.1.0.qualifier
-Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=11))"
+Bundle-Version: 12.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=17))"
 Require-Bundle: org.adempiere.server;bundle-version="0.0.0",
  org.adempiere.replication;bundle-version="0.0.0",
  org.adempiere.base;bundle-version="0.0.0"

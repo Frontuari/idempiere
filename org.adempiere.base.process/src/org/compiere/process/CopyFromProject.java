@@ -19,6 +19,7 @@ package org.compiere.process;
 import java.math.BigDecimal;
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MProject;
 
 /**
@@ -27,6 +28,7 @@ import org.compiere.model.MProject;
  *	@author Jorg Janke
  *	@version $Id: CopyFromProject.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class CopyFromProject extends SvrProcess
 {
 	private int		m_C_Project_ID = 0;
@@ -45,7 +47,7 @@ public class CopyFromProject extends SvrProcess
 			else if (name.equals("C_Project_ID"))
 				m_C_Project_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

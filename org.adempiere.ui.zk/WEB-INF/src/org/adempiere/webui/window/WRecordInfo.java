@@ -1,5 +1,5 @@
 /******************************************************************************
-// * Product: Adempiere ERP & CRM Smart Business Solution                       *
+ * Product: Adempiere ERP & CRM Smart Business Solution                       *
  * Copyright (C) 1999-2006 ComPiere, Inc. All Rights Reserved.                *
  * This program is free software; you can redistribute it and/or modify it    *
  * under the terms version 2 of the GNU General Public License as published   *
@@ -33,6 +33,7 @@ import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.SimpleListModel;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.model.DataStatusEvent;
@@ -44,6 +45,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
 import org.compiere.model.PO;
@@ -59,7 +61,8 @@ import org.zkoss.zhtml.Text;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zul.A;
+import org.zkoss.zk.ui.util.Clients;
+import org.zkoss.zk.ui.util.Notification;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.Div;
@@ -71,6 +74,7 @@ import org.zkoss.zul.North;
 import org.zkoss.zul.Radio;
 import org.zkoss.zul.Radiogroup;
 import org.zkoss.zul.South;
+import org.zkoss.zul.Toolbarbutton;
 
 /**
  * Record Info (Who) With Change History
@@ -88,7 +92,7 @@ import org.zkoss.zul.South;
 public class WRecordInfo extends Window implements EventListener<Event>
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -7436682051825360216L;
 
@@ -133,19 +137,24 @@ public class WRecordInfo extends Window implements EventListener<Event>
 		AEnv.showCenterScreen(this);
 	}	//	RecordInfo
 
-
+	/** listbox for change logs */
 	private Listbox table = new Listbox();
+	/** timeline view */
 	private RecordTimeLinePanel timeLinePanel = new RecordTimeLinePanel();
 	private ConfirmPanel confirmPanel = new ConfirmPanel (false);
 
 	/**	Logger			*/
 	private static final CLogger	log = CLogger.getCLogger(WRecordInfo.class);
-	/** The Data		*/
+	/** Change Log Data		*/
 	private Vector<Vector<String>>	m_data = new Vector<Vector<String>>();
 	/** Info			*/
 	private StringBuffer	m_info = new StringBuffer();
 	/** Permalink			*/
-	private A				m_permalink = new A();
+	private Toolbarbutton m_permalink = new Toolbarbutton();
+	/** Copy Select			*/
+	private Toolbarbutton m_copySelect = new Toolbarbutton();
+	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
+	private boolean isUseEscForTabClosing = MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
 
 	/** Date Time Format		*/
 	private SimpleDateFormat	m_dateTimeFormat = DisplayType.getDateFormat
@@ -164,12 +173,12 @@ public class WRecordInfo extends Window implements EventListener<Event>
 		(DisplayType.Integer, Env.getLanguage(Env.getCtx()));
 
 	/**
-	 * 	Static Layout
+	 * 	Layout dialog
+	 *  @param showTable
 	 *	@throws Exception
 	 */
 	private void init (boolean showTable) throws Exception
 	{
-
 		Div div = new Div();
 		div.setStyle("width: 100%; height: 100%");
 		Pre pre = new Pre();
@@ -241,24 +250,26 @@ public class WRecordInfo extends Window implements EventListener<Event>
 		south.setSclass("dialog-footer");
 		south.setParent(layout);
 		//
-		m_permalink.setTarget("_blank");
 		m_permalink.setLabel(Msg.getMsg(Env.getCtx(), "Permalink"));
 		m_permalink.setTooltiptext(Msg.getMsg(Env.getCtx(), "Permalink_tooltip"));
+		m_copySelect.setLabel(Msg.getMsg(Env.getCtx(), "CopySelect"));
+		m_copySelect.setTooltiptext(Msg.getMsg(Env.getCtx(), "CopySelect_tooltip"));
 		Hbox hbox = new Hbox();
 		hbox.setWidth("100%");
 		south.appendChild(hbox);
-		ZKUpdateUtil.setHflex(m_permalink, "true");
 		hbox.appendChild(m_permalink);
+		hbox.appendChild(m_copySelect);
 		ZKUpdateUtil.setHflex(confirmPanel, "true");
 		hbox.appendChild(confirmPanel);
 		
 		confirmPanel.addActionListener(Events.ON_CLICK, this);
-	}	//	jbInit
+		addEventListener(Events.ON_CANCEL, e -> onCancel());
+	}	//	init
 	
 	
 	/**
-	 * 	Dynamic Init
-	 * @param gridTab 
+	 * 	Load change logs
+	 *  @param gridTab 
 	 *	@param dse data status event
 	 *	@param title title
 	 *	@return true if table initialized
@@ -311,8 +322,7 @@ public class WRecordInfo extends Window implements EventListener<Event>
 		int Record_ID = -1;
 		if (dse.Record_ID instanceof Integer)
 			Record_ID = ((Integer)dse.Record_ID).intValue();
-		else
-			log.info("dynInit - Invalid Record_ID=" + dse.Record_ID);
+		String Record_UU = null;
 
 		MTable dbtable = null;
 		if (dse.AD_Table_ID != 0)
@@ -323,25 +333,42 @@ public class WRecordInfo extends Window implements EventListener<Event>
 			PO po = gridTable.getPO(dse.getCurrentRow());
 			if (po != null) {
 				String uuidcol = po.getUUIDColumnName();
-				String uuid = null;
-				if (po.is_new()) {
-					if (Record_ID == 0 && MTable.isZeroIDTable(dbtable.getTableName())) {
-						StringBuilder sql = new StringBuilder("SELECT ")
-								.append(uuidcol)
-								.append(" FROM ")
-								.append(dbtable.getTableName())
-								.append(" WHERE ")
-								.append(dbtable.getTableName())
-								.append("_ID=0");
-						uuid = DB.getSQLValueString(null, sql.toString());
-					}
-				} else {
-					uuid = po.get_ValueAsString(uuidcol);
+				Record_UU = po.get_UUID();
+				if (!Util.isEmpty(Record_UU)) {
+					StringBuilder uuinfo = new StringBuilder(uuidcol).append("=").append(Record_UU);
+					if (! m_info.toString().contains(uuinfo))
+						m_info.append("\n ").append(uuinfo);
 				}
-				if (!Util.isEmpty(uuid))
-					m_info.append("\n ").append(uuidcol).append("=").append(uuid);
-				m_permalink.setHref(AEnv.getZoomUrlTableID(po));
+				if (po.get_KeyColumns().length == 1) {
+					String ticketURL;
+					if (Record_ID <= 0)
+						ticketURL = AEnv.getZoomUrlTableUU(po);
+					else
+						ticketURL = AEnv.getZoomUrlTableID(po);
+					m_permalink.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+						public void onEvent(Event event) throws Exception {
+							StringBuffer sb = new StringBuffer("navigator.clipboard.writeText(\"")
+								.append(ticketURL)
+								.append("\");");
+							Clients.evalJavaScript(sb.toString());
+							Notification.show(Msg.getMsg(Env.getCtx(), "Copied"), Notification.TYPE_INFO, m_permalink, "end_before", 1000);
+						}
+					});
+				}
 				m_permalink.setVisible(po.get_KeyColumns().length == 1);
+				final String whereClause = po.get_WhereClause(true, Record_UU);
+				m_copySelect.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+					public void onEvent(Event event) throws Exception {
+						StringBuffer query = new StringBuffer("navigator.clipboard.writeText(\"SELECT * FROM ")
+							.append(po.get_TableName())
+							.append(" WHERE ")
+							.append(whereClause);
+						query.append("\");");
+						Clients.evalJavaScript(query.toString());
+						Notification.show(Msg.getMsg(Env.getCtx(), "Copied"), Notification.TYPE_INFO, m_copySelect, "end_before", 1000);
+					}
+				});
+				m_copySelect.setVisible(true);
 			}
 		}
 		if (gridTab != null)
@@ -360,13 +387,13 @@ public class WRecordInfo extends Window implements EventListener<Event>
 		if (!MRole.PREFERENCETYPE_Client.equals(MRole.getDefault().getPreferenceType()))
 			return false;
 		
-		if (Record_ID <= 0)
+		if (Record_ID <= 0 && Util.isEmpty(Record_UU))
 			return false;
 		
 		//	Data
 		String sql = "SELECT AD_Column_ID, Updated, UpdatedBy, OldValue, NewValue "
 			+ "FROM AD_ChangeLog "
-			+ "WHERE AD_Table_ID=? AND Record_ID=? "
+			+ "WHERE AD_Table_ID=? AND (Record_ID=? OR Record_UU=?) "
 			+ "ORDER BY Updated DESC";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -375,6 +402,7 @@ public class WRecordInfo extends Window implements EventListener<Event>
 			pstmt = DB.prepareStatement (sql, null);
 			pstmt.setInt (1, dse.AD_Table_ID);
 			pstmt.setInt (2, Record_ID);
+			pstmt.setString (3, Record_UU);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{
@@ -420,7 +448,7 @@ public class WRecordInfo extends Window implements EventListener<Event>
 	}	//	dynInit
 	
 	/**
-	 * 	Add Line
+	 * 	Add change log line to {@link #m_data}
 	 *	@param AD_Column_ID column
 	 *	@param Updated updated
 	 *	@param UpdatedBy user
@@ -539,8 +567,19 @@ public class WRecordInfo extends Window implements EventListener<Event>
 		m_data.add(line);
 	}	//	addLine
 	
-	
+	@Override
 	public void onEvent(Event event) throws Exception {
+		onCancel();
+	}
+
+	/**
+	 * Handle onCancel event
+	 */
+	private void onCancel() {
+		// do not allow to close tab for Events.ON_CTRL_KEY event
+		if(isUseEscForTabClosing)
+			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
+
 		this.detach();
 	}
 

@@ -19,6 +19,7 @@ package org.compiere.process;
 import java.math.BigDecimal;
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.report.MReportColumn;
 import org.compiere.report.MReportColumnSet;
 
@@ -28,6 +29,7 @@ import org.compiere.report.MReportColumnSet;
  *  @author Jorg Janke
  *  @version $Id: ReportColumnSet_Copy.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class ReportColumnSet_Copy extends SvrProcess
 {
 	/**
@@ -55,7 +57,7 @@ public class ReportColumnSet_Copy extends SvrProcess
 			else if (name.equals("PA_ReportColumnSet_ID"))
 				m_PA_ReportColumnSet_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

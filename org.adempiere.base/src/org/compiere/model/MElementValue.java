@@ -22,6 +22,7 @@ import java.util.Properties;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutablePOSupport;
 
 /**
@@ -37,9 +38,21 @@ import org.idempiere.cache.ImmutablePOSupport;
 public class MElementValue extends X_C_ElementValue implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 6352667759697380460L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_ElementValue_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MElementValue(Properties ctx, String C_ElementValue_UU, String trxName) {
+        super(ctx, C_ElementValue_UU, trxName);
+		if (Util.isEmpty(C_ElementValue_UU))
+			setInitialDefaults();
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -51,23 +64,25 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	{
 		super(ctx, C_ElementValue_ID, trxName);
 		if (C_ElementValue_ID == 0)
-		{
-		//	setC_Element_ID (0);	//	Parent
-		//	setName (null);
-		//	setValue (null);
-			setIsSummary (false);
-			setAccountSign (ACCOUNTSIGN_Natural);
-			setAccountType (ACCOUNTTYPE_Expense);
-			setIsDocControlled(false);
-			setIsForeignCurrency(false);
-			setIsBankAccount(false);
-			//
-			setPostActual (true);
-			setPostBudget (true);
-			setPostEncumbrance (true);
-			setPostStatistical (true);
-		}
+			setInitialDefaults();
 	}	//	MElementValue
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setIsSummary (false);
+		setAccountSign (ACCOUNTSIGN_Natural);
+		setAccountType (ACCOUNTTYPE_Expense);
+		setIsDocControlled(false);
+		setIsForeignCurrency(false);
+		setIsBankAccount(false);
+		//
+		setPostActual (true);
+		setPostBudget (true);
+		setPostEncumbrance (true);
+		setPostStatistical (true);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -81,7 +96,6 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	}	//	MElementValue
 
 	/**
-	 * 	Full Constructor
 	 *	@param ctx context
 	 *	@param Value value
 	 *	@param Name name
@@ -118,7 +132,7 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	}	//	MElementValue
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param copy
 	 */
 	public MElementValue(MElementValue copy)
@@ -127,7 +141,7 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	}
 	
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -137,7 +151,7 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	}
 
 	/**
-	 * 
+	 * Copy constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -149,7 +163,7 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	}
 	
 	/**
-	 * 	Set/Update Settings from import
+	 * 	Set/Update values from import
 	 *	@param imp import
 	 */
 	public void set (X_I_ElementValue imp)
@@ -167,20 +181,13 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 		setPostBudget(imp.isPostBudget());
 		setPostEncumbrance(imp.isPostEncumbrance());
 		setPostStatistical(imp.isPostStatistical());
-		//
-	//	setC_BankAccount_ID(imp.getC_BankAccount_ID());
-	//	setIsForeignCurrency(imp.isForeignCurrency());
-	//	setC_Currency_ID(imp.getC_Currency_ID());
-	//	setIsBankAccount(imp.isIsBankAccount());
-	//	setValidFrom(null);
-	//	setValidTo(null);
 	}	//	set
 	
 	
 	
 	/**
 	 * Is this a Balance Sheet Account
-	 * @return boolean
+	 * @return true if this is a balance sheet account (i.e asset, liability or owner equity)
 	 */
 	public boolean isBalanceSheet()
 	{
@@ -191,8 +198,8 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	}	//	isBalanceSheet
 
 	/**
-	 * Is this an Activa Account
-	 * @return boolean
+	 * Is this an asset Account
+	 * @return true if this is an asset account
 	 */
 	public boolean isActiva()
 	{
@@ -200,8 +207,8 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	}	//	isActive
 
 	/**
-	 * Is this a Passiva Account
-	 * @return boolean
+	 * Is this a Liability Account
+	 * @return true this is liability or owners equity account
 	 */
 	public boolean isPassiva()
 	{
@@ -214,6 +221,7 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 	 * 	User String Representation
 	 *	@return info value - name
 	 */
+	@Override
 	public String toString ()
 	{
 		StringBuilder sb = new StringBuilder();
@@ -232,9 +240,7 @@ public class MElementValue extends X_C_ElementValue implements ImmutablePOSuppor
 			.append ("]");
 		return sb.toString ();
 	}	//	toStringX
-	
-	
-	
+			
 	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{

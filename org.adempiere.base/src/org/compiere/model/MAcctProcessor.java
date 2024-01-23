@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import org.compiere.util.DB;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 
 
 /**
@@ -31,14 +32,14 @@ import org.compiere.util.Msg;
  *	
  *  @author Jorg Janke
  *  @author     victor.perez@e-evolution.com, www.e-evolution.com
- *    			<li>RF [ 2214883 ] Remove SQL code and Replace for Query http://sourceforge.net/tracker/index.php?func=detail&aid=2214883&group_id=176962&atid=879335 
+ *    			<li>RF [ 2214883 ] Remove SQL code and Replace for Query https://sourceforge.net/p/adempiere/feature-requests/557/
  *  @version $Id: MAcctProcessor.java,v 1.3 2006/07/30 00:51:02 jjanke Exp $
  */
 public class MAcctProcessor extends X_C_AcctProcessor
 	implements AdempiereProcessor, AdempiereProcessor2
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -4760475718973777369L;
 
@@ -55,6 +56,18 @@ public class MAcctProcessor extends X_C_AcctProcessor
 		return list.toArray(new MAcctProcessor[list.size()]);		
 	}	//	getActive
 	
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_AcctProcessor_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MAcctProcessor(Properties ctx, String C_AcctProcessor_UU, String trxName) {
+        super(ctx, C_AcctProcessor_UU, trxName);
+		if (Util.isEmpty(C_AcctProcessor_UU))
+			setInitialDefaults();
+    }
+
 	/**
 	 * 	Standard Construvtor
 	 *	@param ctx context
@@ -65,14 +78,15 @@ public class MAcctProcessor extends X_C_AcctProcessor
 	{
 		super (ctx, C_AcctProcessor_ID, trxName);
 		if (C_AcctProcessor_ID == 0)
-		{
-		//	setName (null);
-		//	setSupervisor_ID (0);
-		//	setFrequencyType (FREQUENCYTYPE_Hour);
-		//	setFrequency (1);
-			setKeepLogDays (7);	// 7
-		}	
+			setInitialDefaults();
 	}	//	MAcctProcessor
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setKeepLogDays (7);	// 7
+	}
 
 	/**
 	 * 	Load Constructor
@@ -109,7 +123,21 @@ public class MAcctProcessor extends X_C_AcctProcessor
 	protected boolean beforeSave(boolean newRecord)
 	{
 		if (newRecord || is_ValueChanged("AD_Schedule_ID")) {
-			long nextWork = MSchedule.getNextRunMS(System.currentTimeMillis(), getScheduleType(), getFrequencyType(), getFrequency(), getCronPattern());
+			String timeZoneId = null;
+			if((getAD_Client_ID() == 0 && getAD_Org_ID() == 0) || getAD_Org_ID() > 0) {
+				MOrgInfo orgInfo = MOrgInfo.get(getAD_Org_ID());
+				timeZoneId = orgInfo.getTimeZone();
+			}
+			
+			if(Util.isEmpty(timeZoneId, true)) {
+				MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
+				if (clientInfo == null)
+					clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID(), get_TrxName());
+				timeZoneId = clientInfo.getTimeZone();
+			}
+			
+			long nextWork = MSchedule.getNextRunMS(System.currentTimeMillis(), getScheduleType(), getFrequencyType(),
+					getFrequency(), getCronPattern(), timeZoneId);
 			if (nextWork > 0)
 				setDateNextRun(new Timestamp(nextWork));
 		}
@@ -121,6 +149,7 @@ public class MAcctProcessor extends X_C_AcctProcessor
 	 * 	Get Server ID
 	 *	@return id
 	 */
+	@Override
 	public String getServerID ()
 	{
 		StringBuilder msgreturn = new StringBuilder("AcctProcessor").append(get_ID());
@@ -132,6 +161,7 @@ public class MAcctProcessor extends X_C_AcctProcessor
 	 *	@param requery requery
 	 *	@return date next run
 	 */
+	@Override
 	public Timestamp getDateNextRun (boolean requery)
 	{
 		if (requery)
@@ -143,6 +173,7 @@ public class MAcctProcessor extends X_C_AcctProcessor
 	 * 	Get Logs
 	 *	@return logs
 	 */
+	@Override
 	public AdempiereProcessorLog[] getLogs ()
 	{
 		String whereClause = "C_AcctProcessor_ID=? ";

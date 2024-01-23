@@ -39,6 +39,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.zkoss.zhtml.A;
 import org.zkoss.zhtml.Br;
 import org.zkoss.zhtml.Table;
@@ -65,7 +66,7 @@ import org.zkoss.zul.Toolbar;
  */
 public class WGraph extends Div implements IdSpace {
 	/**
-	 *
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -975989183542113080L;
 
@@ -91,7 +92,7 @@ public class WGraph extends Div implements IdSpace {
 	/**
 	 * Load Performance Data
 	 */
-	ArrayList<GraphColumn> list = new ArrayList<GraphColumn>();
+	protected ArrayList<GraphColumn> list = new ArrayList<GraphColumn>();
 
 	private boolean m_chartSelection;
 
@@ -103,7 +104,7 @@ public class WGraph extends Div implements IdSpace {
 
 	private String m_yAxisLabel;
 	
-	public DecimalFormat format = DisplayType.getNumberFormat(DisplayType.Amount);
+	protected DecimalFormat format = DisplayType.getNumberFormat(DisplayType.Amount);
 
 	/**
 	 * Constructor
@@ -127,10 +128,10 @@ public class WGraph extends Div implements IdSpace {
 	 * 
 	 * @param goal
 	 * @param zoom
-	 * @param userSelection
+	 * @param chartSelection
 	 * @param hideTitle
-	 * @param showTable
-	 * @param showChart
+	 * @param renderTable
+	 * @param renderChart
 	 */
 	public WGraph(MGoal goal, int zoom, boolean chartSelection,
 			boolean hideTitle, boolean renderTable, boolean renderChart) {
@@ -218,6 +219,9 @@ public class WGraph extends Div implements IdSpace {
 		}
 	}
 	
+	/**
+	 * Load MMeasure data for {@link #m_goal}.
+	 */
 	private void loadData() {
 		//	Calculated
 		MMeasure measure = m_goal.getMeasure();
@@ -255,6 +259,10 @@ public class WGraph extends Div implements IdSpace {
 		}
 	} // loadData
 
+	/**
+	 * Render chart to {@link #panel}.
+	 * @param type optional chart type. if null, fallback to m_goal.getChartType
+	 */
 	private void renderChart(String type) {
 		int width = 560;
 		int height = 400;
@@ -397,6 +405,10 @@ public class WGraph extends Div implements IdSpace {
 		return array;
 	}
 
+	/**
+	 * Render {@link #m_goal} data in html table.
+	 * @param parent
+	 */
 	private void renderTable(Component parent) {
 		Div div = new Div();
 		appendChild(div);
@@ -506,12 +518,14 @@ public class WGraph extends Div implements IdSpace {
 	}
 
 	private String stripHtml(String htmlString, boolean all) {
-		htmlString = htmlString.replace("<html>", "").replace("</html>", "")
-				.replace("<body>", "").replace("</body>", "").replace("<head>",
-						"").replace("</head>", "");
-
-		if (all)
-			htmlString = htmlString.replace(">", "&gt;").replace("<", "&lt;");
+		if (!Util.isEmpty(htmlString, true)) {
+			htmlString = htmlString.replace("<html>", "").replace("</html>", "")
+					.replace("<body>", "").replace("</body>", "").replace("<head>",
+							"").replace("</head>", "");
+	
+			if (all)
+				htmlString = htmlString.replace(">", "&gt;").replace("<", "&lt;");
+		}
 		return htmlString;
 	}
 } // BarGraph

@@ -21,15 +21,16 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 /** Generated Model for AD_Style
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_AD_Style extends PO implements I_AD_Style, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="AD_Style")
+public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_AD_Style (Properties ctx, int AD_Style_ID, String trxName)
@@ -40,7 +41,57 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
 			setAD_Style_ID (0);
 			setAD_Style_UU (null);
 			setEntityType (null);
-// @SQL=select get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) from dual
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setIsWrapWithSpan (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Style (Properties ctx, int AD_Style_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_Style_ID, trxName, virtualColumns);
+      /** if (AD_Style_ID == 0)
+        {
+			setAD_Style_ID (0);
+			setAD_Style_UU (null);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setIsWrapWithSpan (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Style (Properties ctx, String AD_Style_UU, String trxName)
+    {
+      super (ctx, AD_Style_UU, trxName);
+      /** if (AD_Style_UU == null)
+        {
+			setAD_Style_ID (0);
+			setAD_Style_UU (null);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setIsWrapWithSpan (false);
+// N
+			setName (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_AD_Style (Properties ctx, String AD_Style_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, AD_Style_UU, trxName, virtualColumns);
+      /** if (AD_Style_UU == null)
+        {
+			setAD_Style_ID (0);
+			setAD_Style_UU (null);
+			setEntityType (null);
+// @SQL=SELECT CASE WHEN '@P|AdempiereSys:N@'='Y' THEN 'D' ELSE get_sysconfig('DEFAULT_ENTITYTYPE','U',0,0) END FROM Dual
+			setIsWrapWithSpan (false);
+// N
 			setName (null);
         } */
     }
@@ -52,7 +103,7 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -74,21 +125,20 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
     }
 
 	/** Set Style.
-		@param AD_Style_ID 
-		CSS style for field and label
-	  */
+		@param AD_Style_ID CSS style for field and label
+	*/
 	public void setAD_Style_ID (int AD_Style_ID)
 	{
-		if (AD_Style_ID < 1) 
+		if (AD_Style_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_AD_Style_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_AD_Style_ID, Integer.valueOf(AD_Style_ID));
 	}
 
 	/** Get Style.
 		@return CSS style for field and label
 	  */
-	public int getAD_Style_ID () 
+	public int getAD_Style_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_AD_Style_ID);
 		if (ii == null)
@@ -97,9 +147,8 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
 	}
 
 	/** Set Style.
-		@param AD_Style_UU 
-		CSS Style for field and label
-	  */
+		@param AD_Style_UU CSS Style for field and label
+	*/
 	public void setAD_Style_UU (String AD_Style_UU)
 	{
 		set_ValueNoCheck (COLUMNNAME_AD_Style_UU, AD_Style_UU);
@@ -108,15 +157,14 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
 	/** Get Style.
 		@return CSS Style for field and label
 	  */
-	public String getAD_Style_UU () 
+	public String getAD_Style_UU()
 	{
 		return (String)get_Value(COLUMNNAME_AD_Style_UU);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -125,7 +173,7 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
@@ -133,9 +181,8 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
 	/** EntityType AD_Reference_ID=389 */
 	public static final int ENTITYTYPE_AD_Reference_ID=389;
 	/** Set Entity Type.
-		@param EntityType 
-		Dictionary Entity Type; Determines ownership and synchronization
-	  */
+		@param EntityType Dictionary Entity Type; Determines ownership and synchronization
+	*/
 	public void setEntityType (String EntityType)
 	{
 
@@ -145,15 +192,37 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
 	/** Get Entity Type.
 		@return Dictionary Entity Type; Determines ownership and synchronization
 	  */
-	public String getEntityType () 
+	public String getEntityType()
 	{
 		return (String)get_Value(COLUMNNAME_EntityType);
 	}
 
-	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
+	/** Set Wrap With Span.
+		@param IsWrapWithSpan Wrap content in Span and apply the Style to it.
+	*/
+	public void setIsWrapWithSpan (boolean IsWrapWithSpan)
+	{
+		set_Value (COLUMNNAME_IsWrapWithSpan, Boolean.valueOf(IsWrapWithSpan));
+	}
+
+	/** Get Wrap With Span.
+		@return Wrap content in Span and apply the Style to it.
 	  */
+	public boolean isWrapWithSpan()
+	{
+		Object oo = get_Value(COLUMNNAME_IsWrapWithSpan);
+		if (oo != null)
+		{
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
+			return "Y".equals(oo);
+		}
+		return false;
+	}
+
+	/** Set Name.
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -162,7 +231,7 @@ public class X_AD_Style extends PO implements I_AD_Style, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}

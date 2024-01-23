@@ -37,6 +37,7 @@ import org.compiere.model.MSystem;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.ServerStateChangeEvent;
 import org.compiere.model.ServerStateChangeListener;
+import org.compiere.model.SystemProperties;
 import org.compiere.util.CLogFile;
 import org.compiere.util.CLogMgt;
 import org.compiere.util.CLogger;
@@ -53,22 +54,21 @@ import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.Bundle;
 
 /**
- *  Adempiere Control Class
+ *  Static methods for iDempiere startup, system info and global thread pool.
  *
  *  @author Jorg Janke
- *  @version $Id: Adempiere.java,v 1.8 2006/08/11 02:58:14 jjanke Exp $
- *
  */
 public final class Adempiere
 {
 	/** Timestamp                   */
+	@Deprecated
 	static public final String	ID				= "$Id: Adempiere.java,v 1.8 2006/08/11 02:58:14 jjanke Exp $";
 	/** Main Version String         */
-	static public String	MAIN_VERSION	= "Release 8.1";
+	static public String	MAIN_VERSION	= "Release 12";
 	/** Detail Version as date      Used for Client/Server		*/
-	static public String	DATE_VERSION	= "2020-11-03";
+	static public String	DATE_VERSION	= "2023-12-24";
 	/** Database Version as date    Compared with AD_System		*/
-	static public String	DB_VERSION		= "2020-11-03";
+	static public String	DB_VERSION		= "2023-12-24";
 
 	/** Product Name            */
 	static public final String	NAME 			= "iDempiere\u00AE";
@@ -83,13 +83,15 @@ public final class Adempiere
 	/** 48*15 Product Image.   	*/
 	static private final String	s_file48x15		= "images/iDempiere.png";
 	static private final String	s_file48x15HR	= "images/iDempiereHR.png";
+	/** Header Logo				*/
+	static private final String	s_fileHeaderLogo= "images/header-logo.png";
 	/** Support Email           */
 	static private String		s_supportEmail	= "";
 
 	/** Subtitle                */
 	static public final String	SUB_TITLE		= "Smart Suite ERP, CRM and SCM";
 	static public final String	ADEMPIERE_R		= "iDempiere\u00AE";
-	static public final String	COPYRIGHT		= "\u00A9 1999-2021 iDempiere\u00AE";
+	static public final String	COPYRIGHT		= "\u00A9 1999-2024 iDempiere\u00AE";
 
 	static private String		s_ImplementationVersion = null;
 	static private String		s_ImplementationVendor = null;
@@ -99,6 +101,7 @@ public final class Adempiere
 	static private Image 		s_imageLogo;
 	static private ImageIcon 	s_imageIcon32;
 	static private ImageIcon 	s_imageIconLogo;
+	static private Image		s_headerLogo;
 
 	static private final String ONLINE_HELP_URL = "http://wiki.idempiere.org";
 
@@ -106,7 +109,10 @@ public final class Adempiere
 	private static CLogger		log = null;
 	
 	/** Thread pool **/
-	private static ScheduledThreadPoolExecutor threadPoolExecutor = null;
+	private final static ScheduledThreadPoolExecutor threadPoolExecutor = createThreadPool();
+	static {
+		Trx.startTrxMonitor();
+	}
 	
 	 /** A list of event listeners for this component.	*/
     private static EventListenerList m_listenerList = new EventListenerList();
@@ -170,45 +176,65 @@ public final class Adempiere
 		return "Unknown";
 	}   //  getVersion
 
+	/**
+	 * @return true if application version should be shown to user
+	 */
 	public static boolean isVersionShown(){ 
 		return MSysConfig.getBooleanValue(MSysConfig.APPLICATION_MAIN_VERSION_SHOWN, true);
 	}
 
+	/**
+	 * @return true if iDempiere AD version should be shown to user
+	 */
 	public static boolean isDBVersionShown(){
 		boolean defaultVal = MSystem.get(Env.getCtx()).getSystemStatus().equalsIgnoreCase("P") ? false : true;
 		return MSysConfig.getBooleanValue(MSysConfig.APPLICATION_DATABASE_VERSION_SHOWN, defaultVal);
 	}
 
+	/**
+	 * @return true if implementation vendor name should be shown to user
+	 */
 	public static boolean isVendorShown(){
 		return MSysConfig.getBooleanValue(MSysConfig.APPLICATION_IMPLEMENTATION_VENDOR_SHOWN, true);
 	}
 
+	/**
+	 * @return true if JVM info should be shown to user
+	 */
 	public static boolean isJVMShown(){
 		boolean defaultVal = MSystem.get(Env.getCtx()).getSystemStatus().equalsIgnoreCase("P") ? false : true;
 		return MSysConfig.getBooleanValue(MSysConfig.APPLICATION_JVM_VERSION_SHOWN, defaultVal);
 	}
 
+	/**
+	 * @return true if OS information should be shown to user
+	 */
 	public static boolean isOSShown(){
 		boolean defaultVal = MSystem.get(Env.getCtx()).getSystemStatus().equalsIgnoreCase("P") ? false : true;
 		return MSysConfig.getBooleanValue(MSysConfig.APPLICATION_OS_INFO_SHOWN, defaultVal);
 	}
 
+	/**
+	 * @return true if application host should be shown to user
+	 */
 	public static boolean isHostShown() 
 	{
 		boolean defaultVal = MSystem.get(Env.getCtx()).getSystemStatus().equalsIgnoreCase("P") ? false : true;
 		return MSysConfig.getBooleanValue(MSysConfig.APPLICATION_HOST_SHOWN, defaultVal);
 	}
 
+	/**
+	 * @return version of iDempiere AD
+	 */
 	public static String getDatabaseVersion() 
 	{
-//		return DB.getSQLValueString(null, "select lastmigrationscriptapplied from ad_system");
 		return MSysConfig.getValue(MSysConfig.APPLICATION_DATABASE_VERSION,
 				DB.getSQLValueString(null, "select lastmigrationscriptapplied from ad_system"));
 	}
 	
 	/**
-	 *	Short Summary (Windows)
-	 *  @return summary
+	 *	Short Summary
+	 *  @return short summary (name + main_version + sub_title)
 	 */
 	public static String getSum()
 	{
@@ -218,9 +244,9 @@ public final class Adempiere
 	}	//	getSum
 
 	/**
-	 *	Summary (Windows).
-	 * 	iDempiere(tm) Release 1.0c_2013-06-27 -Smart Suite ERP, CRM and SCM- Copyright (c) 1999-2021 iDempiere; Implementation: 2.5.1a 20040417-0243 - (C) 1999-2005 Jorg Janke, iDempiere Inc. USA
-	 *  @return Summary in Windows character set
+	 *	Summary
+	 *  @return Summary (name + main_version + date_version + sub_title+copyright
+	 *  + implementation_version + implementation_vendor)
 	 */
 	public static String getSummary()
 	{
@@ -235,14 +261,14 @@ public final class Adempiere
 	}	//	getSummary
 
 	/**
-	 * 	Set Package Info
+	 * Initialize implementation version and vendor text from Package Info.
 	 */
 	private static void setPackageInfo()
 	{
 		if (s_ImplementationVendor != null)
 			return;
 
-		Package adempierePackage = Package.getPackage("org.compiere");
+		Package adempierePackage = Adempiere.class.getClassLoader().getDefinedPackage("org.compiere");
 		s_ImplementationVendor = adempierePackage.getImplementationVendor();
 		s_ImplementationVersion = adempierePackage.getImplementationVersion();
 		if (s_ImplementationVendor == null)
@@ -253,7 +279,7 @@ public final class Adempiere
 	}	//	setPackageInfo
 
 	/**
-	 * 	Get Jar Implementation Version
+	 * 	Get Implementation Version
 	 * 	@return Implementation-Version
 	 */
 	public static String getImplementationVersion()
@@ -264,7 +290,7 @@ public final class Adempiere
 	}	//	getImplementationVersion
 
 	/**
-	 * 	Get Jar Implementation Vendor
+	 * 	Get Implementation Vendor
 	 * 	@return Implementation-Vendor
 	 */
 	public static String getImplementationVendor()
@@ -329,8 +355,8 @@ public final class Adempiere
 	}	//	getJavaInfo
 
 	/**
-	 *  Get full URL
-	 *  @return URL
+	 *  Get URL of product
+	 *  @return URL or product
 	 */
 	public static String getURL()
 	{
@@ -338,7 +364,7 @@ public final class Adempiere
 	}   //  getURL
 
 	/**
-	 * @return URL
+	 * @return online help URL
 	 */
 	public static String getOnlineHelpURL()
 	{
@@ -347,7 +373,7 @@ public final class Adempiere
 
 	/**
 	 *  Get Sub Title
-	 *  @return Subtitle
+	 *  @return Product Subtitle
 	 */
 	public static String getSubtitle()
 	{
@@ -392,6 +418,20 @@ public final class Adempiere
 		}
 		return s_image48x15;
 	}   //  getImageLogoSmall
+
+	/**
+	 * Get Header logo
+	 * @return Image
+	 */
+	public static Image getHeaderLogo() {
+		if (s_headerLogo == null) {
+			Toolkit tk = Toolkit.getDefaultToolkit();
+			URL url = Core.getResourceFinder().getResource(s_fileHeaderLogo);
+			if (url != null)
+				s_headerLogo = tk.getImage(url);
+		}
+		return s_headerLogo;
+	}
 
 	/**
 	 *  Get Logo Image.
@@ -443,7 +483,7 @@ public final class Adempiere
 	}   //  getImageIconLogo
 
 	/**
-	 *  Get default (Home) directory
+	 *  Get instance home directory
 	 *  @return Home directory
 	 */
 	public static String getAdempiereHome()
@@ -473,19 +513,23 @@ public final class Adempiere
 		s_supportEmail = email;
 	}   //  setSupportEMail
 
+	/**
+	 * @return true if started
+	 */
 	public static synchronized boolean isStarted()
 	{
 		return (log != null);
 	}
 
-	/*************************************************************************
-	 *  Startup Client/Server.
+	/**
+	 *  Startup Client/Server.<br/>
+	 *  <pre>
 	 *  - Print greeting,
 	 *  - Check Java version and
 	 *  - load ini parameters
-	 *  If it is a client, load/set PLAF and exit if error.
-	 *  If Client, you need to call startupEnvironment explicitly!
-	 * 	For testing call method startupEnvironment
+	 *  </pre>
+	 *  If it is a client, load/set PLAF and exit if error.<br/>
+	 *  If client, you need to call startupEnvironment explicitly!
 	 *	@param isClient true for client
 	 *  @return successful startup
 	 */
@@ -507,10 +551,6 @@ public final class Adempiere
 		log = CLogger.getCLogger(Adempiere.class);
 		//	Greeting
 		if (log.isLoggable(Level.INFO)) log.info(getSummaryAscii());
-	//	log.info(getAdempiereHome() + " - " + getJavaInfo() + " - " + getOSInfo());
-
-		//  Load System environment
-	//	EnvLoader.load(Ini.ENV_PREFIX);
 
 		//  System properties
 		Ini.loadProperties (false);
@@ -543,6 +583,8 @@ public final class Adempiere
 				log.log(Level.FINEST, System.getProperties().toString());
 		}
 
+		loadDBProvider();
+		
 		//  Set Default Database Connection from Ini
 		DB.setDBTarget(CConnection.get());
 
@@ -556,7 +598,24 @@ public final class Adempiere
 		return startupEnvironment(isClient);
 	}   //  startup
 
-	private static void createThreadPool() {
+	private static void loadDBProvider() {
+		try {
+			Adempiere.class.getClassLoader().loadClass("org.adempiere.db.oracle.config.ConfigOracle");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			Adempiere.class.getClassLoader().loadClass("org.adempiere.db.postgresql.config.ConfigPostgreSQL");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Create thread pool
+	 * @return ScheduledThreadPoolExecutor
+	 */
+	private static ScheduledThreadPoolExecutor createThreadPool() {
 		int max = Runtime.getRuntime().availableProcessors() * 20;
 		int defaultMax = max;
 		Properties properties = Ini.getProperties();
@@ -571,15 +630,12 @@ public final class Adempiere
 		}
 		
 		// start thread pool
-		threadPoolExecutor = new ScheduledThreadPoolExecutor(max);		
-		
-		Trx.startTrxMonitor();
+		return new ScheduledThreadPoolExecutor(max);								
 	}
 
 	/**
-	 * 	Startup Adempiere Environment.
-	 * 	Automatically called for Server connections
-	 * 	For testing call this method.
+	 * 	Startup Adempiere Environment.<br/>
+	 * 	Automatically called for Server connections. <br/>
 	 *	@param isClient true if client connection
 	 *  @return successful startup
 	 */
@@ -612,7 +668,7 @@ public final class Adempiere
 			String className = system.getEncryptionKey();
 			if (className == null || className.length() == 0)
 			{
-				className = System.getProperty(SecureInterface.ADEMPIERE_SECURE);
+				className = SystemProperties.getAdempiereSecure();
 				if (className != null && className.length() > 0
 					&& !className.equals(SecureInterface.ADEMPIERE_SECURE_DEFAULT))
 				{
@@ -655,17 +711,25 @@ public final class Adempiere
 		return true;
 	}	//	startupEnvironment
 
+	/**
+	 * @param name
+	 * @return URL for named resource
+	 */
 	public static URL getResource(String name) {
 		return Core.getResourceFinder().getResource(name);
 	}
 	
+	/**
+	 * Stop instance
+	 */
 	public static synchronized void stop() {
-		if (threadPoolExecutor != null) {
-			threadPoolExecutor.shutdown();
-		}
+		threadPoolExecutor.shutdown();
 		log = null;
 	}
 	
+	/**
+	 * @return {@link ScheduledThreadPoolExecutor}
+	 */
 	public static ScheduledThreadPoolExecutor getThreadPoolExecutor() {
 		return threadPoolExecutor;
 	}
@@ -677,6 +741,7 @@ public final class Adempiere
 	{
 		m_listenerList.remove(ServerStateChangeListener.class, l);
 	}
+	
 	/**
 	 *  @param l listener
 	 */
@@ -685,6 +750,10 @@ public final class Adempiere
 		m_listenerList.add(ServerStateChangeListener.class, l);
 	}
 	
+	/**
+	 * Fire event
+	 * @param e
+	 */
 	private static synchronized void fireServerStateChanged(ServerStateChangeEvent e)
 	{
 		ServerStateChangeListener[] listeners = m_listenerList.getListeners(ServerStateChangeListener.class);

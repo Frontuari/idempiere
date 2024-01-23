@@ -69,6 +69,7 @@ public class Doc_Order extends Doc
 	 *  Load Specific Document Details
 	 *  @return error message or null
 	 */
+	@Override
 	protected String loadDocumentDetails ()
 	{
 		MOrder order = (MOrder)getPO();
@@ -82,13 +83,12 @@ public class Doc_Order extends Doc
 		//	Contained Objects
 		m_taxes = loadTaxes();
 		p_lines = loadLines(order);
-	//	log.fine( "Lines=" + p_lines.length + ", Taxes=" + m_taxes.length);
 		return null;
 	}   //  loadDocumentDetails
 
 
 	/**
-	 *	Load Invoice Line
+	 *	Load order lines
 	 *	@param order order
 	 *  @return DocLine Array
 	 */
@@ -145,7 +145,6 @@ public class Doc_Order extends Doc
 		list.toArray(dl);
 		return dl;
 	}	//	loadLines
-
 
 	/**
 	 * 	Load Requisitions
@@ -214,7 +213,6 @@ public class Doc_Order extends Doc
 		return dls;
 	}	// loadRequisitions
 
-
 	/**
 	 * 	Get Currency Precision
 	 *	@return precision
@@ -227,7 +225,7 @@ public class Doc_Order extends Doc
 	}	//	getPrecision
 
 	/**
-	 *	Load Invoice Taxes
+	 *	Load Order Taxes
 	 *  @return DocTax Array
 	 */
 	private DocTax[] loadTaxes()
@@ -273,11 +271,11 @@ public class Doc_Order extends Doc
 		return tl;
 	}	//	loadTaxes
 
-
-	/**************************************************************************
+	/**
 	 *  Get Source Currency Balance - subtracts line and tax amounts from total - no rounding
 	 *  @return positive amount, if total invoice is bigger than lines
 	 */
+	@Override
 	public BigDecimal getBalance()
 	{
 		BigDecimal retValue = Env.ZERO;
@@ -319,8 +317,7 @@ public class Doc_Order extends Doc
 		return retValue;
 	}   //  getBalance
 
-
-	/*************************************************************************
+	/**
 	 *  Create Facts (the accounting logic) for
 	 *  SOO, POO.
 	 *  <pre>
@@ -335,6 +332,7 @@ public class Doc_Order extends Doc
 	 *  @param as accounting schema
 	 *  @return Fact
 	 */
+	@Override
 	public ArrayList<Fact> createFacts (MAcctSchema as)
 	{
 		ArrayList<Fact> facts = new ArrayList<Fact>();
@@ -342,8 +340,6 @@ public class Doc_Order extends Doc
 		if (getDocumentType().equals(DOCTYPE_POrder))
 		{
 			updateProductPO(as);
-
-			//BigDecimal grossAmt = getAmount(Doc.AMTTYPE_Gross);
 
 			//  Commitment
 			@SuppressWarnings("unused")
@@ -451,7 +447,6 @@ public class Doc_Order extends Doc
 		return facts;
 	}   //  createFact
 
-
 	/**
 	 * 	Update ProductPO PriceLastPO
 	 *	@param as accounting schema
@@ -468,7 +463,6 @@ public class Doc_Order extends Doc
 			.append("FROM C_Order o, C_OrderLine ol ")
 			.append("WHERE o.C_Order_ID=ol.C_Order_ID")
 			.append(" AND po.M_Product_ID=ol.M_Product_ID AND po.C_BPartner_ID=o.C_BPartner_ID ");
-			//jz + " AND ROWNUM=1 AND o.C_Order_ID=").append(get_ID()).append(") ")
 			if (DB.isOracle()) //jz
 			{
 				sql.append(" AND ROWNUM=1 ");
@@ -488,7 +482,6 @@ public class Doc_Order extends Doc
 		int no = DB.executeUpdate(sql.toString(), getTrxName());
 		if (log.isLoggable(Level.FINE)) log.fine("Updated=" + no);
 	}	//	updateProductPO
-
 
 	/**
 	 * 	Get Commitments
@@ -584,8 +577,8 @@ public class Doc_Order extends Doc
 	}	//	getCommitments
 
 	/**
-	 * 	Get Commitment Release.
-	 * 	Called from MatchInv for accrual and Allocation for Cash Based
+	 * 	Get Commitment Release.<br/>
+	 * 	Called from MatchInv for accrual and Allocation for cash based accounting
 	 *	@param as accounting schema
 	 *	@param doc doc
 	 *	@param Qty qty invoiced/matched
@@ -640,7 +633,7 @@ public class Doc_Order extends Doc
 	 * 	Get Commitments Sales
 	 * 	@param doc document
 	 * 	@param maxQty Qty invoiced/matched
-	 * 	@param C_OrderLine_ID invoice line
+	 * 	@param M_InOutLine_ID invoice line
 	 *	@return commitments (order lines)
 	 */
 	protected static DocLine[] getCommitmentsSales(Doc doc, BigDecimal maxQty, int M_InOutLine_ID)
@@ -730,7 +723,7 @@ public class Doc_Order extends Doc
 	 *	@param as accounting schema
 	 *	@param doc doc
 	 *	@param Qty qty invoiced/matched
-	 *	@param C_OrderLine_ID line
+	 *	@param M_InOutLine_ID line
 	 *	@param multiplier 1 for accrual
 	 *	@return Fact
 	 */

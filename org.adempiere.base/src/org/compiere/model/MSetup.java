@@ -87,7 +87,6 @@ public final class MSetup
 	private StringBuffer    m_info;
 	//
 	private String          m_clientName;
-//	private String          m_orgName;
 	//
 	private String          m_stdColumns = "AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy";
 	private String          m_stdValues;
@@ -113,13 +112,22 @@ public final class MSetup
 	private boolean         m_hasActivity = false;
 
 	private boolean 		m_dryRun = false;
+	
 	/**
-	 *  Create Client Info.
+	 *  Create Client Info. <br/>
 	 *  - Client, Trees, Org, Role, User, User_Role
 	 *  @param clientName client name
+	 *  @param orgValue org Value
 	 *  @param orgName org name
-	 *  @param userClient user id client
-	 *  @param userOrg user id org
+	 *  @param userClient client user name
+	 *  @param userOrg org user name
+	 *  @param phone
+	 *  @param phone2
+	 *  @param fax
+	 *  @param eMail
+	 *  @param taxID
+	 *  @param adminEmail
+	 *  @param userEmail
 	 *  @param isSetInitialPassword 
 	 *  @return true if created
 	 */
@@ -147,10 +155,12 @@ public final class MSetup
 		m_clientName = name;
 		m_client = new MClient(m_ctx, 0, true, m_trx.getTrxName());
 		m_client.setValue(m_clientName);
+		if (MSystem.isUseLoginPrefix())
+			m_client.setLoginPrefix(m_clientName);
 		m_client.setName(m_clientName);
 		if (!m_client.save())
 		{
-			String err = "Client NOT created";
+			String err = "Tenant NOT created";
 			log.log(Level.SEVERE, err);
 			m_info.append(err);
 			m_trx.rollback();
@@ -159,7 +169,7 @@ public final class MSetup
 		}
 		int AD_Client_ID = m_client.getAD_Client_ID();
 		Env.setContext(m_ctx, m_WindowNo, "AD_Client_ID", AD_Client_ID);
-		Env.setContext(m_ctx, "#AD_Client_ID", AD_Client_ID);
+		Env.setContext(m_ctx, Env.AD_CLIENT_ID, AD_Client_ID);
 
 		//	Standard Values
 		m_stdValues = String.valueOf(AD_Client_ID) + ",0,'Y',getDate(),0,getDate(),0";
@@ -180,7 +190,7 @@ public final class MSetup
 		//  Trees and Client Info
 		if (!m_client.setupClientInfo(m_lang))
 		{
-			String err = "Client Info NOT created";
+			String err = "Tenant Info NOT created";
 			log.log(Level.SEVERE, err);
 			m_info.append(err);
 			m_trx.rollback();
@@ -208,7 +218,7 @@ public final class MSetup
 			return false;
 		}
 		Env.setContext(m_ctx, m_WindowNo, "AD_Org_ID", getAD_Org_ID());
-		Env.setContext(m_ctx, "#AD_Org_ID", getAD_Org_ID());
+		Env.setContext(m_ctx, Env.AD_ORG_ID, getAD_Org_ID());
 		m_stdValuesOrg = AD_Client_ID + "," + getAD_Org_ID() + ",'Y',getDate(),0,getDate(),0";
 		//  Info
 		m_info.append(Msg.translate(m_lang, "AD_Org_ID")).append("=").append(name).append("\n");
@@ -245,6 +255,7 @@ public final class MSetup
 		admin.setPreferenceType(MRole.PREFERENCETYPE_Client);
 		admin.setIsShowAcct(true);
 		admin.setIsAccessAdvanced(true);
+		admin.setIsClientAdministrator(true);
 		if (!admin.save())
 		{
 			String err = "Admin Role A NOT inserted";
@@ -272,6 +283,7 @@ public final class MSetup
 		user.setClientOrg(m_client);
 		user.setName(name);
 		user.setIsAccessAdvanced(false);
+		user.setIsClientAdministrator(false);
 		if (!user.save())
 		{
 			String err = "User Role A NOT inserted";
@@ -393,7 +405,19 @@ public final class MSetup
 		return true;
 	}   //  createClient
 
-	// preserving backward compatibility with swing client
+	/** 
+	 * preserving backward compatibility with swing client
+	 * @param currency
+	 * @param hasProduct
+	 * @param hasBPartner
+	 * @param hasProject
+	 * @param hasMCampaign
+	 * @param hasSRegion
+	 * @param AccountingFile
+	 * @return true if created
+	 * @deprecated
+	 */
+	@Deprecated
 	public boolean createAccounting(KeyNamePair currency,
 			boolean hasProduct, boolean hasBPartner, boolean hasProject,
 			boolean hasMCampaign, boolean hasSRegion,
@@ -404,14 +428,15 @@ public final class MSetup
 				false, AccountingFile, false, false);
 	}
 
-	/**************************************************************************
+	/**
+	 *  <pre>
 	 *  Create Accounting elements.
 	 *  - Calendar
 	 *  - Account Trees
 	 *  - Account Values
 	 *  - Accounting Schema
 	 *  - Default Accounts
-	 *
+	 *  </pre>
 	 *  @param currency currency
 	 *  @param hasProduct has product segment
 	 *  @param hasBPartner has bp segment
@@ -419,9 +444,9 @@ public final class MSetup
 	 *  @param hasMCampaign has campaign segment
 	 *  @param hasSRegion has sales region segment
 	 *  @param hasActivity has activity segment
-	 *  @param AccountingFile file name of accounting file
-	 *  @param inactivateDefaults inactivate the default accounts after created
+	 *  @param AccountingFile accounting file
 	 *  @param useDefaultCoA use the Default CoA (load and group summary account)
+	 *  @param inactivateDefaults inactivate the default accounts after created
 	 *  @return true if created
 	 */
 	public boolean createAccounting(KeyNamePair currency,
@@ -653,7 +678,6 @@ public final class MSetup
 		}
 		//  Create AcctSchema
 
-
 		//  Create Defaults Accounts
 		try {
 			createAccountingRecord(X_C_AcctSchema_GL.Table_Name);
@@ -841,10 +865,15 @@ public final class MSetup
 			return false;
 		}
 		//
-		log.info("fini");
+		if (log.isLoggable(Level.INFO)) log.info("fini");
 		return true;
 	}   //  createAccounting
 	
+	/**
+	 * Create new record for accounting table (M_Product_Acct, M_Product_Category_Acct, etc)
+	 * @param tableName
+	 * @throws Exception
+	 */
 	private void createAccountingRecord(String tableName) throws Exception
 	{
 		MTable table = MTable.get(m_ctx, tableName);
@@ -874,16 +903,15 @@ public final class MSetup
 		}
 	}
 
-
 	/**
-	 * Get Account ID for key
-	 * @param key key
+	 * Create new valid combination for predefine account column
+	 * @param key column name
 	 * @return C_ValidCombination_ID
 	 * @throws AdempiereUserError 
 	 */
 	private Integer getAcct (String key) throws AdempiereUserError
 	{
-		log.fine(key);
+		if (log.isLoggable(Level.FINE)) log.fine(key);
 		//  Element
 		int C_ElementValue_ID = m_nap.getC_ElementValue_ID(key.toUpperCase());
 		if (C_ElementValue_ID == 0)
@@ -910,7 +938,7 @@ public final class MSetup
 	 *  Create GL Category
 	 *  @param Name name
 	 *  @param CategoryType category type MGLCategory.CATEGORYTYPE_*
-	 *  @param isDefault is default value
+	 *  @param isDefault is default flag
 	 *  @return GL_Category_ID
 	 */
 	private int createGLCategory (String Name, String CategoryType, boolean isDefault)
@@ -996,18 +1024,21 @@ public final class MSetup
 		//
 		return dt.getC_DocType_ID();
 	}   //  createDocType
-
 	
-	/**************************************************************************
-	 *  Create Default main entities.
-	 *  - Dimensions & BPGroup, Prod Category)
+	/**
+	 *  <pre>
+	 *  Create default main entities.
+	 *  - Dimensions, BPGroup and Product Category
 	 *  - Location, Locator, Warehouse
 	 *  - PriceList
 	 *  - Cashbook, PaymentTerm
+	 *  </pre>
 	 *  @param C_Country_ID country
 	 *  @param City city
 	 *  @param C_Region_ID region
 	 *  @param C_Currency_ID currency
+	 *  @param postal
+	 *  @param address1
 	 *  @return true if created
 	 */
 	public boolean createEntities (int C_Country_ID, String City, int C_Region_ID, int C_Currency_ID, String postal, String address1)
@@ -1285,10 +1316,6 @@ public final class MSetup
 		sqlCmd = new StringBuilder ("UPDATE AD_ClientInfo SET ");
 		sqlCmd.append("C_BPartnerCashTrx_ID=").append(bp.getC_BPartner_ID());
 		sqlCmd.append(",M_ProductFreight_ID=").append(product.getM_Product_ID());
-//		sqlCmd.append("C_UOM_Volume_ID=");
-//		sqlCmd.append(",C_UOM_Weight_ID=");
-//		sqlCmd.append(",C_UOM_Length_ID=");
-//		sqlCmd.append(",C_UOM_Time_ID=");
 		sqlCmd.append(" WHERE AD_Client_ID=").append(getAD_Client_ID());
 		no = DB.executeUpdateEx(sqlCmd.toString(), m_trx.getTrxName());
 		if (no != 1)
@@ -1460,14 +1487,14 @@ public final class MSetup
 		
 		boolean success = m_trx.commit();
 		m_trx.close();
-		log.info("finish");
+		if (log.isLoggable(Level.INFO)) log.info("finish");
 		return success;
 	}   //  createEntities
 
 	/**
 	 *  Create Preference
-	 *  @param Attribute attribute
-	 *  @param Value value
+	 *  @param Attribute attribute name
+	 *  @param Value attribute value
 	 *  @param AD_Window_ID window
 	 */
 	private void createPreference (String Attribute, String Value, int AD_Window_ID)
@@ -1486,9 +1513,8 @@ public final class MSetup
 		if (no != 1)
 			log.log(Level.SEVERE, "Preference NOT inserted - " + Attribute);
 	}   //  createPreference
-
 	
-	/**************************************************************************
+	/**
 	 * 	Get Next ID
 	 * 	@param AD_Client_ID client
 	 * 	@param TableName table name
@@ -1508,6 +1534,7 @@ public final class MSetup
 	{
 		return m_client.getAD_Client_ID();
 	}
+	
 	/**
 	 * 	Get AD_Org_ID
 	 *	@return AD_Org_ID
@@ -1516,6 +1543,7 @@ public final class MSetup
 	{
 		return m_org.getAD_Org_ID();
 	}
+	
 	/**
 	 * 	Get AD_User_ID
 	 *	@return AD_User_ID
@@ -1524,6 +1552,7 @@ public final class MSetup
 	{
 		return AD_User_ID;
 	}
+	
 	/**
 	 * 	Get Info
 	 *	@return Info

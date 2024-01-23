@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for T_BOMLine
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 @SuppressWarnings("all")
 public interface I_T_BOMLine 
@@ -46,8 +46,8 @@ public interface I_T_BOMLine
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -55,12 +55,12 @@ public interface I_T_BOMLine
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -197,12 +197,16 @@ public interface I_T_BOMLine
     public static final String COLUMNNAME_Implosion = "Implosion";
 
 	/** Set Implosion.
-	  * Implosion of a Bill of Materials refers to finding all the BOM''s in which a component is used.
+	  * Implosion of a Bill of Materials refers to finding all the BOM&#039;
+&#039;
+s in which a component is used.
 	  */
 	public void setImplosion (boolean Implosion);
 
 	/** Get Implosion.
-	  * Implosion of a Bill of Materials refers to finding all the BOM''s in which a component is used.
+	  * Implosion of a Bill of Materials refers to finding all the BOM&#039;
+&#039;
+s in which a component is used.
 	  */
 	public boolean isImplosion();
 
@@ -298,13 +302,17 @@ public interface I_T_BOMLine
     /** Column name PP_Product_BOM_ID */
     public static final String COLUMNNAME_PP_Product_BOM_ID = "PP_Product_BOM_ID";
 
-	/** Set BOM & Formula.
-	  * BOM & Formula
+	/** Set BOM &amp;
+ Formula.
+	  * BOM &amp;
+ Formula
 	  */
 	public void setPP_Product_BOM_ID (int PP_Product_BOM_ID);
 
-	/** Get BOM & Formula.
-	  * BOM & Formula
+	/** Get BOM &amp;
+ Formula.
+	  * BOM &amp;
+ Formula
 	  */
 	public int getPP_Product_BOM_ID();
 
@@ -329,12 +337,12 @@ public interface I_T_BOMLine
     public static final String COLUMNNAME_QtyBOM = "QtyBOM";
 
 	/** Set Quantity.
-	  * Indicate the Quantity  use in this BOM
+	  * Indicate the Quantity use in this BOM
 	  */
 	public void setQtyBOM (BigDecimal QtyBOM);
 
 	/** Get Quantity.
-	  * Indicate the Quantity  use in this BOM
+	  * Indicate the Quantity use in this BOM
 	  */
 	public BigDecimal getQtyBOM();
 

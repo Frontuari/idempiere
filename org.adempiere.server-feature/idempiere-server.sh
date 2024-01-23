@@ -23,19 +23,20 @@ echo ===================================
 
 # if don't set from service get default value
 TELNET_PORT=${TELNET_PORT:-12612}
+HOST=${HOST:-localhost}
 
 
 VMOPTS="-Dorg.osgi.framework.bootdelegation=sun.security.ssl
 -Dosgi.compatibility.bootdelegation=true
 -Djetty.home=$BASE/jettyhome
 -Djetty.base=$BASE/jettyhome
--Djetty.etc.config.urls=etc/jetty.xml,etc/jetty-deployer.xml,etc/jetty-ssl.xml,etc/jetty-ssl-context.xml,etc/jetty-http.xml,etc/jetty-https.xml,etc/jetty-threadpool.xml
--Dosgi.console=localhost:$TELNET_PORT
+-Djetty.etc.config.urls=etc/jetty.xml,etc/jetty-deployer.xml,etc/jetty-ssl.xml,etc/jetty-ssl-context.xml,etc/jetty-http.xml,etc/jetty-https.xml,etc/jetty-threadpool.xml,etc/jetty-http-forwarded.xml
+-Dorg.apache.cxf.osgi.http.transport.disable=true
+-Dosgi.console=$HOST:$TELNET_PORT
 -Dmail.mime.encodefilename=true
 -Dmail.mime.decodefilename=true
 -Dmail.mime.encodeparameters=true
 -Dmail.mime.decodeparameters=true
--Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF
 --add-exports java.desktop/sun.awt=ALL-UNNAMED
 --add-exports java.sql.rowset/com.sun.rowset=ALL-UNNAMED
 --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED
@@ -51,4 +52,4 @@ VMOPTS="-Dorg.osgi.framework.bootdelegation=sun.security.ssl
 --add-exports java.sql.rowset/com.sun.rowset=ALL-UNNAMED
 --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
 
-$JAVA ${DEBUG} $IDEMPIERE_JAVA_OPTIONS $VMOPTS -jar "$BASE"/plugins/org.eclipse.equinox.launcher_1.*.jar -application org.adempiere.server.application
+"$JAVA" ${DEBUG} $IDEMPIERE_JAVA_OPTIONS $VMOPTS -jar "$BASE"/plugins/org.eclipse.equinox.launcher_1.*.jar -application org.adempiere.server.application

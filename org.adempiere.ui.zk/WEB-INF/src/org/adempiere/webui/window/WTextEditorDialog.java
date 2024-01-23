@@ -15,6 +15,7 @@ package org.adempiere.webui.window;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.adempiere.util.Callback;
 import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Label;
@@ -25,9 +26,13 @@ import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
+import org.compiere.model.MSysConfig;
+import org.compiere.util.Env;
 import org.compiere.util.Language;
+import org.compiere.util.Msg;
 import org.owasp.html.PolicyFactory;
 import org.owasp.html.Sanitizers;
 import org.zkforge.ckez.CKeditor;
@@ -42,13 +47,13 @@ import org.zkoss.zul.Separator;
 import org.zkoss.zul.Vlayout;
 
 /**
- * 
+ * Text editor dialog with plain text and HTML editor tab
  * @author Low Heng Sin
  *
  */
 public class WTextEditorDialog extends Window implements EventListener<Event>{
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -1857623453350849161L;
 
@@ -61,36 +66,65 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 	private CKeditor editor;
 	private Label status;
 	private Tab htmlTab;
+	private boolean isShowHTMLTab = true;
+	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
+	private boolean isUseEscForTabClosing = MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
 
 	/**
-	 * 
 	 * @param title
 	 * @param text
 	 * @param editable
 	 * @param maxSize
-	 * @param isHtml - select the html tab at start
+	 * @param IsHtml - select the html tab at start
 	 */
 	public WTextEditorDialog(String title, String text, boolean editable, int maxSize, boolean IsHtml) {
+		this(title, text, editable, maxSize, IsHtml, true);
+	}
+	
+	/**
+	 * @param title
+	 * @param text
+	 * @param editable
+	 * @param maxSize
+	 * @param IsHtml - select the html tab at start
+	 * @param IsShowHTMLTab - true to shown HTML tab
+	 */
+	public WTextEditorDialog(String title, String text, boolean editable, int maxSize,boolean IsHtml, boolean IsShowHTMLTab) {
 		super();
 		setTitle(title);
 		this.editable = editable;
 		this.maxSize = maxSize;
 		this.text = text;
+		this.isShowHTMLTab = IsShowHTMLTab;
 		
 		init();
-		if (IsHtml)
+		if (IsHtml && IsShowHTMLTab)
 			tabbox.setSelectedTab(htmlTab);
 	}
 
+	/**
+	 * @param title
+	 * @param text
+	 * @param editable
+	 * @param maxSize
+	 */
 	public WTextEditorDialog(String title, String text, boolean editable, int maxSize) {
 		this(title, text, editable, maxSize, false);
 	}
 
+	/**
+	 * Layout dialog
+	 */
 	private void init() {
 		setBorder("normal");
-		if (ThemeManager.isUseCSSForWindowSize()) {
+		if (!ThemeManager.isUseCSSForWindowSize()) {
 			ZKUpdateUtil.setWindowHeightX(this, 450);
 			ZKUpdateUtil.setWindowWidthX(this, 800);
+		} else {
+			addCallback(AFTER_PAGE_ATTACHED, t -> {
+				ZKUpdateUtil.setCSSHeight(this);
+				ZKUpdateUtil.setCSSWidth(this);
+			});
 		}
 		setStyle("position: absolute;");
 		setSizable(false);
@@ -111,7 +145,7 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 		ZKUpdateUtil.setVflex(tabbox, "1");
 		ZKUpdateUtil.setHflex(tabbox, "1");
 		
-		Tab tab = new Tab("Text");
+		Tab tab = new Tab(Msg.getMsg(Env.getCtx(), "Text"));
 		tabs.appendChild(tab);
 		
 		Tabpanel tabPanel = new Tabpanel();
@@ -125,22 +159,24 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 		ZKUpdateUtil.setVflex(textBox, "1");
 		tabPanel.appendChild(textBox);
 		
-		htmlTab = new Tab("HTML");
-		tabs.appendChild(htmlTab);
-		
-		tabPanel = new Tabpanel();
-		tabPanels.appendChild(tabPanel);
-		if (editable) {
-			createEditor(tabPanel);
-		} else {
-			Div div = new Div();
+		if (isShowHTMLTab) {
+			htmlTab = new Tab("HTML");
+			tabs.appendChild(htmlTab);
+
+			tabPanel = new Tabpanel();
+			tabPanels.appendChild(tabPanel);
+			if (editable) {
+				createEditor(tabPanel);
+			} else {
+				Div div = new Div();
 			ZKUpdateUtil.setHeight(div, "100%");
 			ZKUpdateUtil.setWidth(div, "100%");
-			div.setStyle("overflow: auto; border: 1px solid");
-			tabPanel.appendChild(div);
-			Html html = new Html();
-			div.appendChild(html);
-			html.setContent(text);
+				div.setStyle("overflow: auto; border: 1px solid");
+				tabPanel.appendChild(div);
+				Html html = new Html();
+				div.appendChild(html);
+				html.setContent(text);
+			}
 		}
 		
 		vbox.appendChild(new Separator());
@@ -160,7 +196,7 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 			
 			status.setStyle("margin-top:10px;");
 			textBox.addEventListener(Events.ON_CHANGE, this);
-			if (editor != null)
+			if (isShowHTMLTab && editor != null)
 				editor.addEventListener(Events.ON_CHANGE, this);
 		}		
 		
@@ -169,8 +205,15 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 		setClosable(true);
 		setSizable(true);
 		setMaximizable(true);
+		addEventListener(Events.ON_CANCEL, e -> onCancel());
+		addEventListener(Events.ON_SIZE, e -> onSize());
+		addEventListener(Events.ON_MAXIMIZE, e -> onSize());
 	}
 
+	/**
+	 * Create html editor (ckeditor) and add it to tabPanel
+	 * @param tabPanel
+	 */
 	private void createEditor(org.zkoss.zul.Tabpanel tabPanel) {		
 		editor = new CKeditor();
 		if (ClientInfo.isMobile())
@@ -187,6 +230,10 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 		editor.setValue(text);
 	}
 
+	/**
+	 * Call back event for Ok button (from html editor)
+	 * @param event
+	 */
 	public void onEditorCallback(Event event) {
 		text = sanitize((String) event.getData());
 		detach();
@@ -197,24 +244,45 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 	 */
 	public void onEvent(Event event) throws Exception {
 		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL)) {
-			cancelled = true;
-			detach();
+			onCancel();
 		} else if (event.getTarget().getId().equals(ConfirmPanel.A_OK)) {
 			if (editable) {
+				if (maxSize > 0) {
+					int currentSize = 0;
+					if (tabbox.getSelectedIndex() == 0)
+						currentSize = textBox.getText().length();
+					else
+						currentSize = editor.getValue().length();
+
+					if (currentSize > maxSize) {
+						Dialog.error(0, "Error", Msg.getMsg(Env.getCtx(), "TextEditorDialogCurrentSizeExceedMaxSize", new Object[] {currentSize, maxSize}));
+						return;
+					}
+				}
+
 				if (tabbox.getSelectedIndex() == 0) {
 					text = textBox.getText();
 					detach();
 				} else {
-					String script = "var w=zk('#"+editor.getUuid()+"').$();var d=w.getEditor().getData();var t=zk('#" +
-							this.getUuid()+"').$();var e=new zk.Event(t,'onEditorCallback',d,{toServer:true});zAu.send(e);";
+					String script = "(function(){let w=zk('#"+editor.getUuid()+"').$();let d=w.getEditor().getData();let t=zk('#" +
+							this.getUuid()+"').$();let e=new zk.Event(t,'onEditorCallback',d,{toServer:true});zAu.send(e);})()";
 					Clients.response(new AuScript(script));
 				}
 					
 			}			
 		} else if (event.getTarget().getId().equals(ConfirmPanel.A_RESET)) {
-			textBox.setText(text);
-			if (editor != null)
-				editor.setValue(text);
+
+			Dialog.ask(0, "TextEditorDialogResetConfirmation", new Callback<Boolean>() {
+
+				@Override
+				public void onCallback(Boolean result) {
+					if (result) {
+						textBox.setText(text);
+						if (editor != null)
+							editor.setValue(text);
+					}
+				}
+			});
 		} else if (event.getName().equals(Events.ON_SELECT)) {
 			if (editable) {
 				if (tabbox.getSelectedIndex() == 0) {
@@ -233,7 +301,31 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 			}
 		}
 	}
+
+	/**
+	 * Handle onCancel event
+	 */
+	private void onCancel() {
+		// do not allow to close tab for Events.ON_CTRL_KEY event
+		if(isUseEscForTabClosing)
+			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
+
+		cancelled = true;
+		detach();
+	}
 	
+	/**
+	 * Handle onSize event
+	 */
+	private void onSize() {
+		if(editor != null)
+			editor.invalidate();
+	}
+	
+	/**
+	 * Update status text (for text length)
+	 * @param newLength
+	 */
 	private void updateStatus(int newLength) {
 		if (status != null && maxSize > 0) {
 			StringBuilder msg = new StringBuilder();
@@ -251,21 +343,23 @@ public class WTextEditorDialog extends Window implements EventListener<Event>{
 	}
 	
 	/**
-	 * 
-	 * @return boolean
+	 * @return true if dialog is cancel by user
 	 */
 	public boolean isCancelled() {
 		return cancelled;
 	}
 	
 	/**
-	 * 
 	 * @return text
 	 */
 	public String getText() {
 		return text;
 	}
 
+	/**
+	 * @param untrustedHTML
+	 * @return sanitized html content
+	 */
 	public static String sanitize(String untrustedHTML) {
 		final PolicyFactory policy = Sanitizers.BLOCKS
 				.and(Sanitizers.FORMATTING)

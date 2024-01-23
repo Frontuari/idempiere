@@ -36,7 +36,9 @@ import org.compiere.util.Env;
  *
  *  @author Jorg Janke, Victor Perez (JPA variation)
  *  @version $Id$
+ *  @deprecated
  */
+@Deprecated(forRemoval = true, since = "11")
 public class GenerateModelJPA
 {
 	/**
@@ -162,12 +164,6 @@ public class GenerateModelJPA
 			+ "/** if (").append(keyColumn).append(" == 0)"
 			+ "{").append(mandatory).append("} */\n"
 			+ "}"	//	Constructor End
-			//	Short Constructor
-//			+ "/** Short Constructor */\n"
-//			+ "public ").append(className).append(" (Properties ctx, int ").append(keyColumn).append(")"
-//			+ "{"
-//			+ "this (ctx, ").append(keyColumn).append(", null);"
-//			+ "}"	//	Constructor End
 			
 			//	Load Constructor
 			+ "/** Load Constructor \n@param ctx context\n@param rs result set \n@param trxName transaction\n*/\n"
@@ -732,7 +728,6 @@ public class GenerateModelJPA
 	{
 		org.compiere.Adempiere.startupEnvironment(true);
 		CLogMgt.setLevel(Level.FINE);
-	//	CLogMgt.setLevel(Level.ALL);
 		log.info("Generate Model   $Revision: 1.5 $");
 		log.info("----------------------------------");
 		//	first parameter

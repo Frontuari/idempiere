@@ -18,6 +18,7 @@ package org.compiere.process;
 
 import java.util.logging.Level;
 
+import org.compiere.model.MProcessPara;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
 
@@ -28,6 +29,7 @@ import org.compiere.util.DB;
  *  @author Jorg Janke
  *  @version $Id: TransactionXRef.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class TransactionXRef extends SvrProcess
 {
 	private int		p_Search_InOut_ID = 0;
@@ -52,7 +54,7 @@ public class TransactionXRef extends SvrProcess
 			else if (name.equals("Search_Invoice_ID"))
 				p_Search_Invoice_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

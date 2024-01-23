@@ -14,9 +14,8 @@
 package org.adempiere.base.event;
 
 /**
- *
+ * Event topic constants
  * @author hengsin
- *
  */
 public interface IEventTopics {
 
@@ -91,12 +90,15 @@ public interface IEventTopics {
 
 	public static final String PREF_AFTER_LOAD = "adempiere/pref/afterLoad";
 	
-	/** Called after next document actions are set */
+	/** Called during discovery of available and valid document actions */
 	public static final String DOCACTION = "adempiere/docAction";
 
 	public static final String BROADCAST_MESSAGE = "idempiere/broadcastMsg";
 	
 	public static final String REQUEST_SEND_EMAIL = "idempiere/requestSendEMail";
+
+	/** Called from dialog to send an email, to prefill dialog variables */
+	public static final String REPORT_SEND_EMAIL = "idempiere/reportSendEMail";
 
 	/** Called before starting a process, after prepared */
 	public static final String BEFORE_PROCESS = "idempiere/beforeProcess";

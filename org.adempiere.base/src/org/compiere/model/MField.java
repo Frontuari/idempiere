@@ -20,9 +20,10 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.cache.ImmutableIntPOCache;
 import org.idempiere.cache.ImmutablePOSupport;
-
+import org.idempiere.expression.logic.LogicEvaluator;
 
 /**
  *	Field Model
@@ -33,7 +34,7 @@ import org.idempiere.cache.ImmutablePOSupport;
 public class MField extends X_AD_Field implements ImmutablePOSupport
 {
 	/**
-	 * 
+	 * generated serial id 
 	 */
 	private static final long serialVersionUID = -7382459987895129752L;
 	
@@ -41,7 +42,7 @@ public class MField extends X_AD_Field implements ImmutablePOSupport
 	private static ImmutableIntPOCache<Integer,MField> s_cache = new ImmutableIntPOCache<Integer,MField>(Table_Name, 20);
 	
 	/**
-	 * 
+	 * Get MField from cache
 	 * @param AD_Field_ID
 	 * @return MField (immutable)
 	 */
@@ -70,6 +71,18 @@ public class MField extends X_AD_Field implements ImmutablePOSupport
 		return null;
 	}
 	
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_Field_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MField(Properties ctx, String AD_Field_UU, String trxName) {
+        super(ctx, AD_Field_UU, trxName);
+		if (Util.isEmpty(AD_Field_UU))
+			setInitialDefaults();
+    }
+
 	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
@@ -80,22 +93,23 @@ public class MField extends X_AD_Field implements ImmutablePOSupport
 	{
 		super (ctx, AD_Field_ID, trxName);
 		if (AD_Field_ID == 0)
-		{
-		//	setAD_Tab_ID (0);	//	parent
-		//	setAD_Column_ID (0);
-		//	setName (null);
-			setEntityType (ENTITYTYPE_UserMaintained);	// U
-			setIsCentrallyMaintained (true);	// Y
-			setIsDisplayed (true);	// Y
-			setIsDisplayedGrid (true);	// Y
-			setIsEncrypted (false);
-			setIsFieldOnly (false);
-			setIsHeading (false);
-			setIsReadOnly (false);
-			setIsSameLine (false);
-		//	setObscureType(OBSCURETYPE_ObscureDigitsButLast4);
-		}	
+			setInitialDefaults();
 	}	//	MField
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setEntityType (ENTITYTYPE_UserMaintained);	// U
+		setIsCentrallyMaintained (true);	// Y
+		setIsDisplayed (true);	// Y
+		setIsDisplayedGrid (true);	// Y
+		setIsEncrypted (false);
+		setIsFieldOnly (false);
+		setIsHeading (false);
+		setIsReadOnly (false);
+		setIsSameLine (false);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -134,7 +148,7 @@ public class MField extends X_AD_Field implements ImmutablePOSupport
 	}	//	M_Field
 	
 	/**
-	 * 
+	 * Copy Constructor
 	 * @param copy
 	 */
 	public MField(MField copy) 
@@ -143,7 +157,7 @@ public class MField extends X_AD_Field implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy Constructor
 	 * @param ctx
 	 * @param copy
 	 */
@@ -153,7 +167,7 @@ public class MField extends X_AD_Field implements ImmutablePOSupport
 	}
 
 	/**
-	 * 
+	 * Copy Constructor
 	 * @param ctx
 	 * @param copy
 	 * @param trxName
@@ -212,18 +226,31 @@ public class MField extends X_AD_Field implements ImmutablePOSupport
 				setIsAllowCopy("Y");
 		}
 		if (getAD_Reference_ID() <= 0) {
-			setAD_Reference_Value_ID(0);
-			setAD_Val_Rule_ID(0);
-			setIsToolbarButton(null);
+			if (getAD_Reference_Value_ID()!=0)
+				setAD_Reference_Value_ID(0);
+			if (getAD_Val_Rule_ID()!=0)
+				setAD_Val_Rule_ID(0);
+			if (getIsToolbarButton() != null)
+				setIsToolbarButton(null);
 		}
-		if (isDisplayed()) {
-			MColumn column = (MColumn) getAD_Column();
-			if (column.isVirtualSearchColumn()) {
-				setIsDisplayed(false);
-				setIsDisplayedGrid(false);
+		
+		//validate logic expression
+		if (newRecord || is_ValueChanged(COLUMNNAME_ReadOnlyLogic)) {
+			if (isActive() && !Util.isEmpty(getReadOnlyLogic(), true) && !getReadOnlyLogic().startsWith("@SQL=")) {
+				LogicEvaluator.validate(getReadOnlyLogic());
 			}
 		}
-
+		if (newRecord || is_ValueChanged(COLUMNNAME_DisplayLogic)) {
+			if (isActive() && !Util.isEmpty(getDisplayLogic(), true) && !getDisplayLogic().startsWith("@SQL=")) {
+				LogicEvaluator.validate(getDisplayLogic());
+			}
+		}
+		if (newRecord || is_ValueChanged(COLUMNNAME_MandatoryLogic)) {
+			if (isActive() && !Util.isEmpty(getMandatoryLogic(), true) && !getMandatoryLogic().startsWith("@SQL=")) {
+				LogicEvaluator.validate(getMandatoryLogic());
+			}
+		}
+		
 		return true;
 	}	//	beforeSave
 	

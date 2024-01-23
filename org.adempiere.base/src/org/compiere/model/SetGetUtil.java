@@ -47,7 +47,7 @@ public class SetGetUtil
 	/**
 	 * Update columns from the result of the given query.
 	 * <p> If the query returns more than one row, only the first row will be used.
-	 * <p> This is a simplified version of {@link #updateColumns(SetGetModel[], String[], String, String)}
+	 * <p> This is a simplified version of {@link #updateColumns(SetGetModel[], String[], String, Object[], String)}
 	 * which calls:
 	 * <pre>updateColumns(new SetGetModel[]{model}, columnNames, query, trxName);</pre>
 	 * 
@@ -59,7 +59,7 @@ public class SetGetUtil
 	 * @param params sql parameters
 	 * @param trxName
 	 * 
-	 * @see #updateColumns(SetGetModel[], String[], String, String)
+	 * @see #updateColumns(SetGetModel[], String[], String, Object[], String)
 	 */
 	public static void updateColumns(SetGetModel model, String[] columnNames, String sql, Object[] params, String trxName)
 	{
@@ -136,7 +136,7 @@ public class SetGetUtil
 					boolean ok = false;
 					obj = rs.getObject(columnName);
 					//
-					// Date Columns are retuned as Date -> convert to java.sql.Timestamp
+					// Date Columns are returned as Date -> convert to java.sql.Timestamp
 					if (obj instanceof java.sql.Date)
 					{
 						obj = new java.sql.Timestamp(((java.sql.Date)obj).getTime());
@@ -237,8 +237,6 @@ public class SetGetUtil
 		if (s_log.isLoggable(Level.FINEST)) 
 		{
 			s_log.finest("Entering: From=" + from+ " - To=" + to);
-//			s_log.finest("includeFields=" + ARHIPAC.toString(includeFields));
-//			s_log.finest("excludeFields=" + ARHIPAC.toString(excludeFields));
 		}
 		//
 		if (to == null || from == null)
@@ -503,7 +501,7 @@ public class SetGetUtil
 	/**
 	 * Check if given object was produced by used entry (i.e. created from a window)
 	 * @param o object
-	 * @return If object is instanceof PO then {@link PO#is_UserEntry()} will be checked.
+	 * @return If object is instanceof PO then ...
 	 * 			If object is null then false will be returned.
 	 * 			Else true will be returned.
 	 */
@@ -515,7 +513,6 @@ public class SetGetUtil
 		}
 		else if (o instanceof PO)
 		{
-//			return ((PO)o).is_UserEntry();
 			return false; // TODO
 		}
 		else
@@ -717,7 +714,7 @@ public class SetGetUtil
 	
 	/**
 	 * Get Info for given table and ID.
-	 * This method calls {@link MLookupFactory#getLookup_TableDirEmbed(Language, String, String, String) to
+	 * This method calls {@link MLookupFactory#getLookup_TableDirEmbed(Language, String, String, String)} to
 	 * generate the info string.
 	 * @param ctx context
 	 * @param tableName tablename
@@ -787,7 +784,6 @@ public class SetGetUtil
 			String errmsg = tab.setValue(name, value);
 			if (errmsg != null && errmsg.length() > 0)
 			{
-				//~ log.saveError("Error", errmsg);
 				return false;
 			}
 			return true;

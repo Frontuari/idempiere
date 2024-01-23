@@ -29,19 +29,19 @@ import org.compiere.model.MBankStatementLine;
 import org.compiere.util.Env;
 
 /**
- *  Post Invoice Documents.
+ *  Post {@link MBankStatement} Documents.
  *  <pre>
  *  Table:              C_BankStatement (392)
  *  Document Types:     CMB
  *  </pre>
  *  @author Jorg Janke
  *  @version  $Id: Doc_Bank.java,v 1.3 2006/07/30 00:53:33 jjanke Exp $
- *
- *  FR [ 1840016 ] Avoid usage of clearing accounts - subject to C_AcctSchema.IsPostIfClearingEqual
- *  Avoid posting if both accounts BankAsset and BankInTransit are equal
+ *  <p>
+ *  FR [ 1840016 ] Avoid usage of clearing accounts - subject to C_AcctSchema.IsPostIfClearingEqual.<br/>
+ *  Avoid posting if both accounts BankAsset and BankInTransit are equal.
  *  @author victor.perez@e-evolution.com, e-Evolution http://www.e-evolution.com
  * 				<li>FR [ 2520591 ] Support multiples calendar for Org
- * 				@see http://sourceforge.net/tracker2/?func=detail&atid=879335&aid=2520591&group_id=176962
+ * 				@see https://sourceforge.net/p/adempiere/feature-requests/631/
  *
  */
 public class Doc_BankStatement extends Doc
@@ -54,7 +54,7 @@ public class Doc_BankStatement extends Doc
 	 */
 	public Doc_BankStatement (MAcctSchema as, ResultSet rs, String trxName)
 	{
-		super (as, MBankStatement.class, rs, DOCTYPE_BankStatement, trxName);
+		super (as, MBankStatement.class, rs, null, trxName);
 	}	//	Doc_Bank
 
 	/** Bank Account			*/
@@ -64,6 +64,7 @@ public class Doc_BankStatement extends Doc
 	 *  Load Specific Document Details
 	 *  @return error message or null
 	 */
+	@Override
 	protected String loadDocumentDetails ()
 	{
 		MBankStatement bs = (MBankStatement)getPO();
@@ -85,13 +86,15 @@ public class Doc_BankStatement extends Doc
 	}   //  loadDocumentDetails
 
 	/**
-	 *	Load Invoice Line.
+	 *	Load bank statement lines.
 	 *	@param bs bank statement
+	 *  <pre>
 	 *  4 amounts
 	 *  AMTTYPE_Payment
 	 *  AMTTYPE_Statement2
 	 *  AMTTYPE_Charge
 	 *  AMTTYPE_Interest
+	 *  </pre>
 	 *  @return DocLine Array
 	 */
 	protected DocLine[] loadLines(MBankStatement bs)
@@ -114,11 +117,11 @@ public class Doc_BankStatement extends Doc
 		return dls;
 	}	//	loadLines
 
-
-	/**************************************************************************
+	/**
 	 *  Get Source Currency Balance - subtracts line amounts from total - no rounding
 	 *  @return positive amount, if total invoice is bigger than lines
 	 */
+	@Override
 	public BigDecimal getBalance()
 	{
 		BigDecimal retValue = Env.ZERO;
@@ -144,13 +147,14 @@ public class Doc_BankStatement extends Doc
 	 *  CMB.
 	 *  <pre>
 	 *      BankAsset       DR      CR  (Statement)
-	 *      BankInTransit   DR      CR              (Payment)
+	 *      BankInTransit   DR      CR  (Payment)
 	 *      Charge          DR          (Charge)
 	 *      Interest        DR      CR  (Interest)
 	 *  </pre>
 	 *  @param as accounting schema
 	 *  @return Fact
 	 */
+	@Override
 	public ArrayList<Fact> createFacts (MAcctSchema as)
 	{
 		//  create Fact Header
@@ -174,7 +178,6 @@ public class Doc_BankStatement extends Doc
 			MAccount acct_bank_asset =  getAccount(Doc.ACCTTYPE_BankAsset, as);
 			MAccount acct_bank_in_transit = getAccount(Doc.ACCTTYPE_BankInTransit, as);
 
-			// if ((!as.isPostIfClearingEqual()) && acct_bank_asset.equals(acct_bank_in_transit) && (!isInterOrg)) {
 			// don't validate interorg on banks for this - normally banks are balanced by orgs
 			if ((!as.isPostIfClearingEqual()) && acct_bank_asset.equals(acct_bank_in_transit)) {
 				// Not using clearing accounts
@@ -248,41 +251,13 @@ public class Doc_BankStatement extends Doc
 					line.getC_Currency_ID(), line.getInterestAmt().negate());
 			if (fl != null && C_BPartner_ID != 0)
 				fl.setC_BPartner_ID(C_BPartner_ID);
-			//
-		//	fact.createTaxCorrection();
+
 		}
 		//
 		ArrayList<Fact> facts = new ArrayList<Fact>();
 		facts.add(fact);
 		return facts;
 	}   //  createFact
-
-	/** Verify if the posting involves two or more organizations
-	@return true if there are more than one org involved on the posting
-	private boolean isInterOrg(MAcctSchema as) {
-		MAcctSchemaElement elementorg = as.getAcctSchemaElement(MAcctSchemaElement.ELEMENTTYPE_Organization);
-		if (elementorg == null || !elementorg.isBalanced()) {
-			// no org element or not need to be balanced
-			return false;
-		}
-
-		if (p_lines.length <= 0) {
-			// no lines
-			return false;
-		}
-
-		int startorg = getBank_Org_ID();
-		if (startorg == 0)
-			startorg = p_lines[0].getAD_Org_ID();
-		// validate if the allocation involves more than one org
-		for (int i = 0; i < p_lines.length; i++) {
-			if (p_lines[i].getAD_Org_ID() != startorg)
-				return true;
-		}
-
-		return false;
-	}
-	 */
 
 	/**
 	 * 	Get AD_Org_ID from Bank Account

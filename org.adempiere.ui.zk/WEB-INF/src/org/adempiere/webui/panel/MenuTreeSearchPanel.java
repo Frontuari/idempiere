@@ -42,7 +42,7 @@ import org.zkoss.zul.Treeitem;
  */
 public class MenuTreeSearchPanel extends TreeSearchPanel {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 3127547233019932429L;
 
@@ -50,14 +50,27 @@ public class MenuTreeSearchPanel extends TreeSearchPanel {
 	protected Toolbarbutton openBtn;
 	protected boolean isNew = false;
 
+	/**
+	 * @param tree
+	 * @param event
+	 * @param windowno
+	 * @param tabno
+	 */
 	public MenuTreeSearchPanel(Tree tree, String event, int windowno, int tabno) {
 		super(tree, event, windowno, tabno);
 	}
 
+	/**
+	 * @param tree
+	 * @param event
+	 */
 	public MenuTreeSearchPanel(Tree tree, String event) {
 		super(tree, event);
 	}
 
+	/**
+	 * @param tree
+	 */
 	public MenuTreeSearchPanel(Tree tree) {
 		super(tree);
 	}
@@ -81,9 +94,15 @@ public class MenuTreeSearchPanel extends TreeSearchPanel {
 		layout.insertBefore(hlayout, layout.getFirstChild());
 	}
 
+	/**
+	 * Create toolbar button to launch a menu item 
+	 */
 	protected void createOpenButton() {
 		openBtn = new Toolbarbutton();
-		openBtn.setImage(ThemeManager.getThemeResource("images/Open16.png"));
+		if (ThemeManager.isUseFontIconForImage())
+			openBtn.setIconSclass("z-icon-Open");
+		else
+			openBtn.setImage(ThemeManager.getThemeResource("images/Open16.png"));
 		openBtn.setSclass("menu-search-toggle-on");
 		openBtn.setDisabled(true);
 		openBtn.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
@@ -100,9 +119,15 @@ public class MenuTreeSearchPanel extends TreeSearchPanel {
 		openBtn.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Open")));
 	}
 
+	/**
+	 * Create toolbar button to create new record for a menu item
+	 */
 	protected void createNewButton() {
 		newBtn = new Toolbarbutton();
-		newBtn.setImage(ThemeManager.getThemeResource("images/New16.png"));
+		if (ThemeManager.isUseFontIconForImage())
+			newBtn.setIconSclass("z-icon-New");
+		else
+			newBtn.setImage(ThemeManager.getThemeResource("images/New16.png"));
 		newBtn.setSclass("menu-search-toggle-off");
 		newBtn.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
 			@Override
@@ -139,6 +164,9 @@ public class MenuTreeSearchPanel extends TreeSearchPanel {
 		refreshAutoComplete();
 	}
 
+	/**
+	 * Refresh auto complete items for {@link #cmbSearch}
+	 */
 	protected void refreshAutoComplete() {
 		List<String> valueList = new ArrayList<String>();
 		List<String> descriptionList = new ArrayList<String>();
@@ -154,14 +182,14 @@ public class MenuTreeSearchPanel extends TreeSearchPanel {
         			continue;
         		
         		if (isNew) {
-        			if (!"window".equals(treeItem.getAttribute("menu.type"))) {
+        			if (!"window".equals(treeItem.getAttribute(AbstractMenuPanel.MENU_TYPE_ATTRIBUTE))) {
         				continue;
         			}
         		}
         		
         		valueList.add(getLabel(treeItem));
         		descriptionList.add(treeItem.getTooltiptext());
-        		typeList.add(String.valueOf(treeItem.getAttribute("menu.type")));
+        		typeList.add(String.valueOf(treeItem.getAttribute(AbstractMenuPanel.MENU_TYPE_ATTRIBUTE)));
         		String image = getImage(treeItem);
         		if (image == null || image.length() == 0)
         		{
@@ -222,6 +250,9 @@ public class MenuTreeSearchPanel extends TreeSearchPanel {
     	Events.echoEvent(ON_POST_FIRE_TREE_EVENT, this, null);
     }
 
+	/**
+	 * Sort the values, descriptions and images list for menu items
+	 */
 	protected void orderArrays()
 	{
 		String aux;

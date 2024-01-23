@@ -20,11 +20,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MPeriod;
 import org.compiere.model.MPeriodControl;
+import org.compiere.model.MProcessPara;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.CacheMgt;
 import org.compiere.util.DB;
+import org.compiere.util.Msg;
+import org.compiere.util.Util;
 
 /**
  *	Open/Close all Period (Control)
@@ -32,14 +37,18 @@ import org.compiere.util.DB;
  *  @author Jorg Janke
  *  @version $Id: PeriodStatus.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class PeriodStatus extends SvrProcess
 {
 	/** Periods						*/
-	private List<Integer> p_C_Period_IDs;
+	private List<Integer> p_C_Period_IDs = null;
+	/** Period Controls				*/
+	private List<Integer> p_C_PeriodControl_IDs = null;
 	/** Action						*/
 	private String		p_PeriodAction = null;
-	
-	
+	/** Document Base Type Group		*/
+	private int		p_C_DocBaseGroup_ID = 0;
+
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
@@ -53,15 +62,28 @@ public class PeriodStatus extends SvrProcess
 				;
 			else if (name.equals("PeriodAction"))
 				p_PeriodAction = (String)para[i].getParameter();
+			else if (name.equals("C_DocBaseGroup_ID"))
+				p_C_DocBaseGroup_ID = para[i].getParameterAsInt();
 			else if (name.equals("*RecordIDs*"))
 				;
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		p_C_Period_IDs = getRecord_IDs();
 		if (p_C_Period_IDs == null || p_C_Period_IDs.size() == 0) {
-			p_C_Period_IDs = new ArrayList<Integer>();
-			p_C_Period_IDs.add(getRecord_ID());
+			if (getRecord_ID() == 0) {
+				// IDEMPIERE-2901 - list of period control IDs on t_selection
+				int[] ids = DB.getIDsEx(get_TrxName(), "SELECT T_Selection_ID FROM T_Selection WHERE AD_PInstance_ID=?", getAD_PInstance_ID());
+				if (ids.length > 0) {
+					p_C_PeriodControl_IDs = new ArrayList<Integer>();
+					for (int id: ids) {
+						p_C_PeriodControl_IDs.add(id);
+					}
+				}
+			} else {
+				p_C_Period_IDs = new ArrayList<Integer>();
+				p_C_Period_IDs.add(getRecord_ID());
+			}
 		}
 	}	//	prepare
 
@@ -72,40 +94,85 @@ public class PeriodStatus extends SvrProcess
 	 */
 	protected String doIt() throws Exception
 	{
-	  int no = 0;
-	  if (log.isLoggable(Level.INFO)) log.info ("C_Period_ID=" + p_C_Period_IDs + ", PeriodAction=" + p_PeriodAction);
-	  for (int p_C_Period_ID : p_C_Period_IDs) {
-		MPeriod period = new MPeriod (getCtx(), p_C_Period_ID, get_TrxName());
-		if (period.get_ID() == 0)
-			throw new AdempiereUserError("@NotFound@  @C_Period_ID@=" + p_C_Period_ID);
-
-		StringBuilder sql = new StringBuilder ("UPDATE C_PeriodControl ");
-		sql.append("SET PeriodStatus='");
-		//	Open
-		if (MPeriodControl.PERIODACTION_OpenPeriod.equals(p_PeriodAction))
-			sql.append (MPeriodControl.PERIODSTATUS_Open);
-		//	Close
-		else if (MPeriodControl.PERIODACTION_ClosePeriod.equals(p_PeriodAction))
-			sql.append (MPeriodControl.PERIODSTATUS_Closed);
-		//	Close Permanently
-		else if (MPeriodControl.PERIODACTION_PermanentlyClosePeriod.equals(p_PeriodAction))
-			sql.append (MPeriodControl.PERIODSTATUS_PermanentlyClosed);
-		else
+		int no = 0;
+		if (log.isLoggable(Level.INFO)) log.info((p_C_PeriodControl_IDs != null
+					? "C_PeriodControl_ID=" + p_C_PeriodControl_IDs
+					: "C_Period_ID=" + p_C_Period_IDs) + ", PeriodAction=" + p_PeriodAction);
+		if ((p_C_PeriodControl_IDs == null || p_C_PeriodControl_IDs.size() == 0)
+				&& (p_C_Period_IDs == null || p_C_Period_IDs.size() == 0)) {
+			throw new AdempiereUserError("@FillMandatory@ @C_Period_ID@");
+		}
+		if (Util.isEmpty(p_PeriodAction) || MPeriodControl.PERIODACTION_NoAction.equals(p_PeriodAction)) {
 			return "-";
-		//
-		sql.append("', PeriodAction='N', Updated=getDate(),UpdatedBy=").append(getAD_User_ID());
+		}
+
+		if ((   MPeriodControl.PERIODACTION_ClosePeriod.equalsIgnoreCase(p_PeriodAction)
+			 || MPeriodControl.PERIODACTION_PermanentlyClosePeriod.equalsIgnoreCase(p_PeriodAction))
+			&& MSysConfig.getBooleanValue(MSysConfig.FORCE_POSTING_PRIOR_TO_PERIOD_CLOSE, true, getAD_Client_ID())) {
+			if (p_C_Period_IDs != null) {
+				for (int periodID : p_C_Period_IDs) {
+					MPeriod p = MPeriod.get(periodID);
+					if (p.hasUnpostedDocs())
+						throw new AdempiereException(Msg.getMsg(getCtx(), "PostUnpostedDocs"));
+				}
+			} else {
+				for (int periodControlID : p_C_PeriodControl_IDs) {
+					MPeriodControl pc = new MPeriodControl(getCtx(), periodControlID, get_TrxName());
+					MPeriod p = MPeriod.get(pc.getC_Period_ID());
+					if (p.hasUnpostedDocs(periodControlID))
+						throw new AdempiereException(Msg.getMsg(getCtx(), "PostUnpostedDocs"));
+				}
+			}
+		}
+
+		StringBuilder sql = new StringBuilder ("UPDATE C_PeriodControl SET PeriodStatus=?, PeriodAction='N', Updated=getDate(), UpdatedBy=? WHERE ");
 		//	WHERE
-		sql.append(" WHERE C_Period_ID=").append(period.getC_Period_ID())
-			.append(" AND PeriodStatus<>'P'")
-			.append(" AND PeriodStatus<>'").append(p_PeriodAction).append("'");
-			
-		no += DB.executeUpdateEx(sql.toString(), get_TrxName());
-		
-		CacheMgt.get().reset("C_Period", p_C_Period_ID);
-	  }
-	  CacheMgt.get().reset("C_PeriodControl", 0);
-	  StringBuilder msgreturn = new StringBuilder("@Updated@ #").append(no);
-	  return msgreturn.toString();
+		StringBuilder wherepc = new StringBuilder();
+		if (p_C_Period_IDs != null && p_C_Period_IDs.size() > 0) {
+			wherepc.append("C_Period_ID IN (");
+			boolean addComma = false;
+			for (int id : p_C_Period_IDs) {
+				if (addComma)
+					wherepc.append(",");
+				else
+					addComma = true;
+				wherepc.append(id);
+			}
+		} else if (p_C_PeriodControl_IDs != null && p_C_PeriodControl_IDs.size() > 0) {
+			wherepc.append("C_PeriodControl_ID IN (");
+			boolean addComma = false;
+			for (int id : p_C_PeriodControl_IDs) {
+				if (addComma)
+					wherepc.append(",");
+				else
+					addComma = true;
+				wherepc.append(id);
+			}
+		}
+		wherepc.append(") AND PeriodStatus<>'P' AND PeriodStatus<>?");
+		if(p_C_DocBaseGroup_ID > 0) {
+			wherepc.append(" AND DocBaseType IN (")
+				.append(" SELECT gl.DocBaseType FROM C_DocBaseGroupLine gl WHERE gl.C_DocBaseGroup_ID = ").append(p_C_DocBaseGroup_ID)
+				.append(")");
+		}
+		sql.append(wherepc);
+		StringBuilder sqlPeriods = new StringBuilder("SELECT DISTINCT C_Period_ID FROM C_PeriodControl WHERE ").append(wherepc);
+		int[] periods = DB.getIDsEx(get_TrxName(), sqlPeriods.toString(), p_PeriodAction);
+		no += DB.executeUpdateEx(sql.toString(), new Object[] {p_PeriodAction, getAD_User_ID(), p_PeriodAction}, get_TrxName());
+
+		if (periods != null && periods.length > 0) {
+			for (int id : periods) {
+				CacheMgt.get().reset("C_Period", id);
+			}
+		}
+		if (p_C_PeriodControl_IDs != null && p_C_PeriodControl_IDs.size() > 0) {
+			for (int id : p_C_PeriodControl_IDs) {
+				CacheMgt.get().reset("C_PeriodControl", id);
+			}
+		}
+
+		StringBuilder msgreturn = new StringBuilder("@Updated@ #").append(no);
+		return msgreturn.toString();
 	}	//	doIt
 
 }	//	PeriodStatus

@@ -25,6 +25,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.DBException;
 import org.compiere.model.MAging;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRole;
 import org.compiere.util.DB;
 import org.compiere.util.TimeUtil;
@@ -34,11 +35,12 @@ import org.compiere.util.TimeUtil;
  *	Based on RV_Aging.
  *  @author Jorg Janke
  *  @author victor.perez@e-evolution.com  FR 1933937  Is necessary a new Aging to Date
- *  @see http://sourceforge.net/tracker/index.php?func=detail&aid=1933937&group_id=176962&atid=879335 
+ *  @see https://sourceforge.net/p/adempiere/feature-requests/408/ 
  *  @author Carlos Ruiz - globalqss  BF 2655587  Multi-org not supported in Aging
- *  @see https://sourceforge.net/tracker2/?func=detail&aid=2655587&group_id=176962&atid=879332 
+ *  @see https://sourceforge.net/p/adempiere/bugs/1786/ 
  *  @version $Id: Aging.java,v 1.5 2006/10/07 00:58:44 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class Aging extends SvrProcess
 {
 	/** The date to calculate the days due from			*/
@@ -84,7 +86,7 @@ public class Aging extends SvrProcess
 			else if (name.equals("IsListInvoices"))
 				p_IsListInvoices = "Y".equals(para[i].getParameter());
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 		if (p_StatementDate == null)
 			p_StatementDate = new Timestamp (System.currentTimeMillis());
@@ -197,15 +199,12 @@ public class Aging extends SvrProcess
 				int C_Currency_ID = rs.getInt(5);
 				boolean IsSOTrx = "Y".equals(rs.getString(6));
 				//
-				//Timestamp DateInvoiced = rs.getTimestamp(7);
-				//int NetDays = rs.getInt(8);
 				Timestamp DueDate = rs.getTimestamp(9);
 				//	Days Due
 				int DaysDue = rs.getInt(10)		//	based on today
 					+ m_statementOffset;
 				//
 				BigDecimal GrandTotal = rs.getBigDecimal(11);
-				//BigDecimal PaidAmt = rs.getBigDecimal(12);
 				BigDecimal OpenAmt = rs.getBigDecimal(13);
 				//
 				int C_Activity_ID = p_IsListInvoices ? rs.getInt(14) : 0;

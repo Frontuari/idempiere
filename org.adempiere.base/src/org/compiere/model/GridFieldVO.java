@@ -21,7 +21,6 @@ import static org.compiere.model.SystemIDs.REFERENCE_AD_USER;
 
 import java.io.Serializable;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.Properties;
@@ -31,7 +30,6 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 
-
 /**
  *  Field Model Value Object
  *
@@ -39,18 +37,19 @@ import org.compiere.util.Env;
  *  @author Victor Perez , e-Evolution.SC FR [ 1757088 ] , [1877902] Implement JSR 223 Scripting APIs to Callout
  *  @author Carlos Ruiz, qss FR [1877902]
  *  @author Juan David Arboleda (arboleda), GlobalQSS, [ 1795398 ] Process Parameter: add display and readonly logic
- *  @see  http://sourceforge.net/tracker/?func=detail&atid=879335&aid=1877902&group_id=176962 to FR [1877902]
+ *  @see  https://sourceforge.net/p/adempiere/feature-requests/318/ to FR [1877902]
  *  @version  $Id: GridFieldVO.java,v 1.3 2006/07/30 00:58:04 jjanke Exp $
  */
 public class GridFieldVO implements Serializable, Cloneable
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
-	private static final long serialVersionUID = -6183338435199702786L;
+	private static final long serialVersionUID = -4069340866487289281L;
 
 	/**
-	 *  Return the SQL statement used for the MFieldVO.create
+	 *  Get the SQL statement used for {@link #create(Properties, int, int, int, int, boolean, ResultSet)} or
+	 *  {@link #createFromResultSet(Properties, int, int, int, int, boolean, ResultSet)}.
 	 *  @param ctx context
 	 *  @return SQL with or w/o translation and 1 parameter
 	 */
@@ -78,18 +77,17 @@ public class GridFieldVO implements Serializable, Cloneable
 		return sql.toString();
 	}   //  getSQL
 
-
 	/**
 	 *  Create Field Value Object.
-	 *  The vo return is not safe to cache directly or through clone
+	 *  The VO return is not safe to cache directly or through clone.
 	 *  @param ctx context
 	 *  @param WindowNo window
 	 *  @param TabNo tab
 	 *  @param AD_Window_ID window
 	 *  @param AD_Tab_ID tab
 	 *  @param readOnly r/o
-	 *  @param rs resultset AD_Field_v
-	 *  @return MFieldVO
+	 *  @param rs resultset AD_Field_v/AD_Field_vt
+	 *  @return GridFieldVO
 	 */
 	public static GridFieldVO create (Properties ctx, int WindowNo, int TabNo, 
 		int AD_Window_ID, int AD_Tab_ID, boolean readOnly, ResultSet rs)
@@ -100,7 +98,7 @@ public class GridFieldVO implements Serializable, Cloneable
 	}   //  create
 
 	/**
-	 * Additional processing after a new vo have been created from db or cloned from cache
+	 * Additional processing after a new vo have been created from db or cloned from cache.
 	 * This include asp customization, user customization and loading of lookup info. 
 	 * @return GridFieldVO
 	 */
@@ -117,86 +115,89 @@ public class GridFieldVO implements Serializable, Cloneable
 		}
 		// FR IDEMPIERE-177
 		// Field Customization
-		if (vo.IsDisplayed) {
-			MUserDefField userDef = null;
-			userDef = MUserDefField.get(vo.ctx,vo.AD_Field_ID, vo.AD_Tab_ID, vo.AD_Window_ID);
-			if (userDef != null)
-			{
-				if (userDef.getName() != null)
-					vo.Header = userDef.getName();
-				if (userDef.getDescription() != null)
-					vo.Description = userDef.getDescription();
-				if (userDef.getHelp() != null)
-					vo.Help = userDef.getHelp();
-				if (userDef.getDisplayLength() > 0)
-					vo.DisplayLength = userDef.getDisplayLength();
-				if (userDef.getDisplayLogic() != null)
-					vo.DisplayLogic = userDef.getDisplayLogic();
-				if (userDef.getDefaultValue() != null)
-					vo.DefaultValue = userDef.getDefaultValue();
-				if (userDef.getSortNo() > 0)
-					vo.SortNo = userDef.getSortNo();
-				//IDEMPIERE-163
-				if (userDef.getIsDisplayed()!= null)
-				    vo.IsDisplayed = "Y".equals(userDef.getIsDisplayed());
-				if (userDef.getIsReadOnly()!= null)
-				    vo.IsReadOnly = "Y".equals(userDef.getIsReadOnly());
-				if (userDef.getIsSameLine()!= null)
-				    vo.IsSameLine = "Y".equals(userDef.getIsSameLine());
-				if (userDef.getIsUpdateable()!= null)
-				    vo.IsUpdateable = "Y".equals(userDef.getIsUpdateable());
-				if (userDef.getIsAlwaysUpdateable()!= null)	
-				   vo.IsAlwaysUpdateable = "Y".equals(userDef.getIsAlwaysUpdateable());
-				if (userDef.getReadOnlyLogic()!= null)
-					vo.ReadOnlyLogic = userDef.getReadOnlyLogic();
-				if (userDef.getMandatoryLogic()!= null )
-					vo.MandatoryLogic = userDef.getMandatoryLogic();	
-				if (userDef.getAD_Reference_ID()>0)
-					vo.displayType = userDef.getAD_Reference_ID();
-				if (userDef.getAD_Reference_Value_ID()>0)
-					vo.AD_Reference_Value_ID = userDef.getAD_Reference_Value_ID();
-				if (userDef.getIsMandatory()!= null)
-					vo.IsMandatory = "Y".equals(userDef.getIsMandatory());
-				if (userDef.getXPosition() > 0)
-					vo.XPosition = userDef.getXPosition();
-				if (userDef.getColumnSpan() > 0)
-					vo.ColumnSpan=userDef.getColumnSpan();
-				if (userDef.getNumLines() > 0)
-					vo.NumLines=userDef.getNumLines();
-				if (userDef.getIsToolbarButton() != null)
-					vo.IsToolbarButton  = userDef.getIsToolbarButton();
-				if (userDef.getVFormat() != null)
-					vo.VFormat = userDef.getVFormat();
-				//IDEMPIERE-1120 Implement Field SeqNo customization
-				if (userDef.getSeqNo() > 0)
-				    vo.SeqNo = userDef.getSeqNo();
-				if (userDef.getAD_Val_Rule_ID() > 0)
-					vo.ValidationCode  = MValRule.get(vo.ctx, userDef.getAD_Val_Rule_ID()).getCode();
-				if (userDef.getAD_Val_Rule_Lookup_ID() > 0)
-					vo.ValidationCodeLookup = MValRule.get(ctx, userDef.getAD_Val_Rule_Lookup_ID()).getCode();
-				if (userDef.getAD_LabelStyle_ID() > 0)
-					vo.AD_LabelStyle_ID = userDef.getAD_LabelStyle_ID();
-				
-				if (userDef.getAD_FieldStyle_ID() > 0)
-					vo.AD_FieldStyle_ID = userDef.getAD_FieldStyle_ID();
-				
-				if (userDef.getPA_DashboardContent_ID() > 0)
-					vo.PA_DashboardContent_ID = userDef.getPA_DashboardContent_ID();
+		MUserDefField userDef = MUserDefField.get(vo.ctx,vo.AD_Field_ID, vo.AD_Tab_ID, vo.AD_Window_ID);
+		if (userDef != null)
+		{
+			if (userDef.getName() != null)
+				vo.Header = userDef.getName();
+			if (userDef.getDescription() != null)
+				vo.Description = userDef.getDescription();
+			if (userDef.getHelp() != null)
+				vo.Help = userDef.getHelp();
+			if (userDef.getDisplayLength() > 0)
+				vo.DisplayLength = userDef.getDisplayLength();
+			if (userDef.getDisplayLogic() != null)
+				vo.DisplayLogic = userDef.getDisplayLogic();
+			if (userDef.getDefaultValue() != null)
+				vo.DefaultValue = userDef.getDefaultValue();
+			if (userDef.getSortNo() > 0)
+				vo.SortNo = userDef.getSortNo();
+			//IDEMPIERE-163
+			if (userDef.getIsDisplayed()!= null)
+				vo.IsDisplayed = "Y".equals(userDef.getIsDisplayed());
+			if (userDef.getIsReadOnly()!= null)
+				vo.IsReadOnly = "Y".equals(userDef.getIsReadOnly());
+			if (userDef.getIsSameLine()!= null)
+				vo.IsSameLine = "Y".equals(userDef.getIsSameLine());
+			if (userDef.getIsUpdateable()!= null)
+				vo.IsUpdateable = "Y".equals(userDef.getIsUpdateable());
+			if (userDef.getIsAlwaysUpdateable()!= null)	
+				vo.IsAlwaysUpdateable = "Y".equals(userDef.getIsAlwaysUpdateable());
+			if(userDef.getAlwaysUpdatableLogic()!=null)
+				vo.AlwaysUpdatableLogic = userDef.getAlwaysUpdatableLogic();
+			if (userDef.getReadOnlyLogic()!= null)
+				vo.ReadOnlyLogic = userDef.getReadOnlyLogic();
+			if (userDef.getMandatoryLogic()!= null )
+				vo.MandatoryLogic = userDef.getMandatoryLogic();	
+			if (userDef.getAD_Reference_ID()>0)
+				vo.displayType = userDef.getAD_Reference_ID();
+			if (userDef.getAD_Reference_Value_ID()>0)
+				vo.AD_Reference_Value_ID = userDef.getAD_Reference_Value_ID();
+			if (userDef.getIsMandatory()!= null)
+				vo.IsMandatory = "Y".equals(userDef.getIsMandatory());
+			if (userDef.getXPosition() > 0)
+				vo.XPosition = userDef.getXPosition();
+			if (userDef.getColumnSpan() > 0)
+				vo.ColumnSpan=userDef.getColumnSpan();
+			if (userDef.getNumLines() > 0)
+				vo.NumLines=userDef.getNumLines();
+			if (userDef.getIsToolbarButton() != null)
+				vo.IsToolbarButton  = userDef.getIsToolbarButton();
+			if (userDef.getVFormat() != null)
+				vo.VFormat = userDef.getVFormat();
+			//IDEMPIERE-1120 Implement Field SeqNo customization
+			if (userDef.getSeqNo() > 0)
+				vo.SeqNo = userDef.getSeqNo();
+			if (userDef.getIsDisplayedGrid() != null)
+				vo.IsDisplayedGrid = "Y".equals(userDef.getIsDisplayedGrid());
+			if (userDef.getSeqNoGrid() > 0)
+				vo.SeqNoGrid = userDef.getSeqNoGrid();
+			if (userDef.getAD_Val_Rule_ID() > 0)
+				vo.ValidationCode  = MValRule.get(vo.ctx, userDef.getAD_Val_Rule_ID()).getCode();
+			if (userDef.getAD_Val_Rule_Lookup_ID() > 0)
+				vo.ValidationCodeLookup = MValRule.get(ctx, userDef.getAD_Val_Rule_Lookup_ID()).getCode();
+			if (userDef.getAD_LabelStyle_ID() > 0)
+				vo.AD_LabelStyle_ID = userDef.getAD_LabelStyle_ID();
 
-				if (userDef.getPlaceholder() != null)
-					vo.Placeholder = userDef.getPlaceholder();
-				
-				//devCoffee 8535
-				if (userDef.getAD_FieldGroup_ID() > 0)
-				{
-					vo.FieldGroup = ((X_AD_FieldGroup)userDef.getAD_FieldGroup()).get_Translation(I_AD_FieldGroup.COLUMNNAME_Name);
-					vo.FieldGroupType = userDef.getAD_FieldGroup().getFieldGroupType();
-				}
-				//fim devCoffee 8535
-				
-				if (userDef.getIsAutocomplete() != null)
-					vo.IsAutocomplete = "Y".equals(userDef.getIsAutocomplete());
+			if (userDef.getAD_FieldStyle_ID() > 0)
+				vo.AD_FieldStyle_ID = userDef.getAD_FieldStyle_ID();
+
+			if (userDef.getPA_DashboardContent_ID() > 0)
+				vo.PA_DashboardContent_ID = userDef.getPA_DashboardContent_ID();
+
+			if (userDef.getPlaceholder() != null)
+				vo.Placeholder = userDef.getPlaceholder();
+
+			if (userDef.getAD_FieldGroup_ID() > 0)
+			{
+				vo.FieldGroup = ((X_AD_FieldGroup)userDef.getAD_FieldGroup()).get_Translation(I_AD_FieldGroup.COLUMNNAME_Name);
+				vo.FieldGroupType = userDef.getAD_FieldGroup().getFieldGroupType();
 			}
+
+			if (userDef.getIsAutocomplete() != null)
+				vo.IsAutocomplete = "Y".equals(userDef.getIsAutocomplete());
+			if (userDef.getAD_Chart_ID() > 0)
+				vo.AD_Chart_ID = userDef.getAD_Chart_ID();
 		}
 		//
 		vo.initFinish();
@@ -205,7 +206,7 @@ public class GridFieldVO implements Serializable, Cloneable
 
 	/**
 	 * Create GridFieldVO from db resultset. 
-	 * No further processing is apply to the vo and the vo is safe to cache through clone 
+	 * No further processing is apply to the VO and the VO is safe to cache through clone. 
 	 * @param ctx
 	 * @param WindowNo
 	 * @param TabNo
@@ -219,188 +220,142 @@ public class GridFieldVO implements Serializable, Cloneable
 			boolean readOnly, ResultSet rs) {
 		GridFieldVO vo = new GridFieldVO (ctx, WindowNo, TabNo, 
 			AD_Window_ID, AD_Tab_ID, readOnly);
-		String columnName = "ColumnName";
 		try
 		{
 			vo.ColumnName = rs.getString("ColumnName");
 			if (vo.ColumnName == null)
 				return null;
 
-			CLogger.get().fine(vo.ColumnName);
-
-			ResultSetMetaData rsmd = rs.getMetaData();
-			for (int i = 1; i <= rsmd.getColumnCount(); i++)
+			vo.Header = rs.getString ("Name");
+			vo.displayType = rs.getInt ("AD_Reference_ID");
+			vo.AD_Column_ID = rs.getInt ("AD_Column_ID");
+			vo.AD_Table_ID = rs.getInt ("AD_Table_ID");
+			vo.DisplayLength = rs.getInt ("DisplayLength");
+			vo.IsSameLine = "Y".equals(rs.getString ("IsSameLine"));
+			vo.IsDisplayed = "Y".equals(rs.getString ("IsDisplayed"));
+			vo.IsDisplayedGrid = "Y".equals(rs.getString ("IsDisplayedGrid"));
+			vo.SeqNo = rs.getInt ("SeqNo");
+			vo.SeqNoGrid = rs.getInt ("SeqNoGrid");
+			vo.DisplayLogic = rs.getString ("DisplayLogic");
+			vo.DefaultValue = rs.getString ("DefaultValue");
+			vo.IsMandatory = "Y".equals(rs.getString ("IsMandatory"));
+			vo.IsReadOnly = "Y".equals(rs.getString ("IsReadOnly"));
+			vo.IsUpdateable = "Y".equals(rs.getString ("IsUpdateable"));
+			vo.IsAlwaysUpdateable = "Y".equals(rs.getString ("IsAlwaysUpdateable"));
+			vo.IsHeading = "Y".equals(rs.getString ("IsHeading"));
+			vo.IsFieldOnly = "Y".equals(rs.getString ("IsFieldOnly"));
+			vo.IsEncryptedField = "Y".equals(rs.getString ("IsEncryptedField"));
+			vo.IsEncryptedColumn = "Y".equals(rs.getString ("IsEncryptedColumn"));
+			vo.IsSelectionColumn = "Y".equals(rs.getString ("IsSelectionColumn"));
+			vo.SeqNoSelection = rs.getInt ("SeqNoSelection");
+			vo.SortNo = rs.getInt ("SortNo");
+			vo.FieldLength = rs.getInt ("FieldLength");
+			vo.VFormat = rs.getString ("VFormat");
+			vo.FormatPattern = rs.getString ("FormatPattern");
+			vo.ValueMin = rs.getString ("ValueMin");
+			vo.ValueMax = rs.getString ("ValueMax");
+			vo.FieldGroup = rs.getString ("FieldGroup");
+			vo.FieldGroupType = rs.getString ("FieldGroupType");
+			vo.IsKey = "Y".equals(rs.getString ("IsKey"));
+			vo.IsParent = "Y".equals(rs.getString ("IsParent"));
 			{
-				columnName = rsmd.getColumnName (i);
-				if (columnName.equalsIgnoreCase("Name"))
-					vo.Header = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("AD_Reference_ID"))
-					vo.displayType = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("AD_Column_ID"))
-					vo.AD_Column_ID = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("AD_Table_ID"))
-					vo.AD_Table_ID = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("DisplayLength"))
-					vo.DisplayLength = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("IsSameLine"))
-					vo.IsSameLine = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsDisplayed"))
-					vo.IsDisplayed = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsDisplayedGrid"))
-					vo.IsDisplayedGrid = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("SeqNo"))
-					vo.SeqNo = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("SeqNoGrid"))
-					vo.SeqNoGrid = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("DisplayLogic"))
-					vo.DisplayLogic = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("DefaultValue"))
-					vo.DefaultValue = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("IsMandatory"))
-					vo.IsMandatory = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsReadOnly"))
-					vo.IsReadOnly = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsUpdateable"))
-					vo.IsUpdateable = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsAlwaysUpdateable"))
-					vo.IsAlwaysUpdateable = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsHeading"))
-					vo.IsHeading = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsFieldOnly"))
-					vo.IsFieldOnly = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsEncryptedField"))
-					vo.IsEncryptedField = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsEncryptedColumn"))
-					vo.IsEncryptedColumn = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsSelectionColumn"))
-					vo.IsSelectionColumn = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("SeqNoSelection"))
-					vo.SeqNoSelection = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("SortNo"))
-					vo.SortNo = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("FieldLength"))
-					vo.FieldLength = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("VFormat"))
-					vo.VFormat = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("FormatPattern"))
-					vo.FormatPattern = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("ValueMin"))
-					vo.ValueMin = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("ValueMax"))
-					vo.ValueMax = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("FieldGroup"))
-					vo.FieldGroup = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("FieldGroupType"))
-					vo.FieldGroupType = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("IsKey"))
-					vo.IsKey = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("IsParent"))
-					vo.IsParent = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("Description"))
-				{
-					String s = rs.getString (i);
-					vo.Description = s != null ? s.intern() : s;
-				}
-				else if (columnName.equalsIgnoreCase("Help"))
-				{
-					String s = rs.getString (i);
-					vo.Help = s != null ? s.intern() : s; 
-				}
-				else if (columnName.equalsIgnoreCase("Callout"))
-					vo.Callout = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("AD_Process_ID"))
-					vo.AD_Process_ID = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("ReadOnlyLogic"))
-					vo.ReadOnlyLogic = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("MandatoryLogic"))
-					vo.MandatoryLogic = rs.getString (i);	
-				else if (columnName.equalsIgnoreCase("ObscureType"))
-					vo.ObscureType = rs.getString (i);
-				else if (columnName.equalsIgnoreCase("IsDefaultFocus"))
-					vo.IsDefaultFocus = "Y".equals(rs.getString(i));
-				//
-				else if (columnName.equalsIgnoreCase("AD_Reference_Value_ID"))
-					vo.AD_Reference_Value_ID = rs.getInt(i);
-				else if (columnName.equalsIgnoreCase("ValidationCode"))
-					vo.ValidationCode = rs.getString(i);
-				else if (columnName.equalsIgnoreCase("ValidationCodeLookup"))
-					vo.ValidationCodeLookup = rs.getString(i);
-				else if (columnName.equalsIgnoreCase("IsQuickForm"))
-					vo.IsQuickForm = "Y".equals(rs.getString (i));
-				else if (columnName.equalsIgnoreCase("ColumnSQL")) {
-					vo.ColumnSQL = rs.getString(i);
-					if (vo.ColumnSQL != null && !vo.ColumnSQL.startsWith("@SQL=") && !vo.ColumnSQL.startsWith("@SQLFIND=") && vo.ColumnSQL.contains("@")) {
-						// NOTE: cannot use window context because this is set globally on the query, not per record
-						vo.ColumnSQL = Env.parseContext(ctx, -1, vo.ColumnSQL, false, true);
-					}
-				//Feature Request FR [ 1757088 ]
-				} else if (columnName.equalsIgnoreCase("Included_Tab_ID"))
-					vo.Included_Tab_ID = rs.getInt(i);
-				// Collapse Default State
-				else if (columnName.equalsIgnoreCase("IsCollapsedByDefault"))
-					vo.IsCollapsedByDefault = "Y".equals(rs.getString(i));
-//				Feature Request FR [ 2003044 ]
-				else if (columnName.equalsIgnoreCase("IsAutocomplete"))
-					vo.IsAutocomplete  = "Y".equals(rs.getString(i));
-				else if (columnName.equalsIgnoreCase("IsAllowCopy"))
-					vo.IsAllowCopy  = "Y".equals(rs.getString(i));
-				else if (columnName.equalsIgnoreCase("AD_Field_ID"))
-					vo.AD_Field_ID = rs.getInt(i);
-				/*IDEMPIERE-358*/
-				else if (columnName.equalsIgnoreCase("XPosition"))
-					vo.XPosition=rs.getInt(i);
-				else if (columnName.equalsIgnoreCase("ColumnSpan"))
-					vo.ColumnSpan=rs.getInt(i);
-				else if (columnName.equalsIgnoreCase("NumLines"))
-					vo.NumLines=rs.getInt(i);
-				else if (columnName.equalsIgnoreCase("IsToolbarButton"))
-					vo.IsToolbarButton  = rs.getString(i);
-				else if (columnName.equalsIgnoreCase("AD_Chart_ID"))
-					vo.AD_Chart_ID = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("AD_LabelStyle_ID"))
-					vo.AD_LabelStyle_ID = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("AD_FieldStyle_ID"))
-					vo.AD_FieldStyle_ID = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("PA_DashboardContent_ID"))
-					vo.PA_DashboardContent_ID = rs.getInt (i);
-				else if (columnName.equalsIgnoreCase("placeholder"))
-					vo.Placeholder = rs.getString(i);
-				else if (columnName.equalsIgnoreCase("IsHtml"))
-					vo.IsHtml = "Y".equals(rs.getString(i));
+				String s = rs.getString ("Description");
+				vo.Description = s != null ? s.intern() : s;
 			}
+			{
+				String s = rs.getString ("Help");
+				vo.Help = s != null ? s.intern() : s; 
+			}
+			vo.Callout = rs.getString ("Callout");
+			vo.AD_Process_ID = rs.getInt ("AD_Process_ID");
+			vo.AD_InfoWindow_ID = rs.getInt ("AD_InfoWindow_ID");
+			vo.ReadOnlyLogic = rs.getString ("ReadOnlyLogic");
+			vo.AlwaysUpdatableLogic = rs.getString ("AlwaysUpdatableLogic");
+			vo.MandatoryLogic = rs.getString ("MandatoryLogic");	
+			vo.ObscureType = rs.getString ("ObscureType");
+			vo.IsDefaultFocus = "Y".equals(rs.getString("IsDefaultFocus"));
+			vo.AD_Reference_Value_ID = rs.getInt("AD_Reference_Value_ID");
+			vo.ValidationCode = rs.getString("ValidationCode");
+			vo.ValidationCodeLookup = rs.getString("ValidationCodeLookup");
+			vo.IsQuickForm = "Y".equals(rs.getString ("IsQuickForm"));
+			{
+				vo.ColumnSQL = rs.getString("ColumnSQL");
+				if (vo.ColumnSQL != null && !vo.ColumnSQL.startsWith("@SQL=") && !vo.ColumnSQL.startsWith("@SQLFIND=") && vo.ColumnSQL.contains("@")) {
+					// NOTE: cannot use window context because this is set globally on the query, not per record
+					vo.ColumnSQL = Env.parseContext(ctx, -1, vo.ColumnSQL, false, true);
+				}			
+			} 
+			//Feature Request FR [ 1757088 ]
+			vo.Included_Tab_ID = rs.getInt("Included_Tab_ID");
+			// Collapse Default State
+			vo.IsCollapsedByDefault = "Y".equals(rs.getString("IsCollapsedByDefault"));
+			// Feature Request FR [ 2003044 ]
+			vo.IsAutocomplete  = "Y".equals(rs.getString("IsAutocomplete"));
+			vo.IsAllowCopy  = "Y".equals(rs.getString("IsAllowCopy"));
+			vo.AD_Field_ID = rs.getInt("AD_Field_ID");
+			/*IDEMPIERE-358*/
+			vo.XPosition=rs.getInt("XPosition");
+			vo.ColumnSpan=rs.getInt("ColumnSpan");
+			vo.NumLines=rs.getInt("NumLines");
+			vo.IsToolbarButton  = rs.getString("IsToolbarButton");
+			vo.AD_Chart_ID = rs.getInt ("AD_Chart_ID");
+			vo.AD_LabelStyle_ID = rs.getInt ("AD_LabelStyle_ID");
+			vo.AD_FieldStyle_ID = rs.getInt ("AD_FieldStyle_ID");
+			vo.PA_DashboardContent_ID = rs.getInt ("PA_DashboardContent_ID");
+			vo.Placeholder = rs.getString("Placeholder");
+			vo.IsHtml = "Y".equals(rs.getString("IsHtml"));
+			
 			if (vo.Header == null)
 				vo.Header = vo.ColumnName;
 		}
 		catch (SQLException e)
 		{
-			CLogger.get().log(Level.SEVERE, "ColumnName=" + columnName, e);
+			CLogger.get().log(Level.SEVERE, e.getMessage(), e);
 			return null;
 		}
 		return vo;
 	}
 
 	/**
-	 *  Init Field for Process Parameter
+	 *  Create Field VO for Process Parameter
 	 *  @param ctx context
 	 *  @param WindowNo window
+	 *  @param ProcessIDOfPanel
+	 *  @param WindowIDOfPanel
+	 *  @param InfoWindowIDOfPanel
 	 *  @param rs result set AD_Process_Para
-	 *  @return MFieldVO
+	 *  @return GridFieldVO
 	 */
-	public static GridFieldVO createParameter (Properties ctx, int WindowNo, int ProcessIDOfPanel, int WindowIDOfPanel, int adInfoPaneId, ResultSet rs)
+	public static GridFieldVO createParameter (Properties ctx, int WindowNo, int ProcessIDOfPanel, int WindowIDOfPanel, int InfoWindowIDOfPanel, ResultSet rs)
 	{
-		GridFieldVO vo = new GridFieldVO (ctx, WindowNo, 0, 0, 0, false);
+		return GridFieldVO.createParameter(ctx, WindowNo, 0, ProcessIDOfPanel, WindowIDOfPanel, InfoWindowIDOfPanel, rs);
+	}
+	/**
+	 *  Create Field VO for Process Parameter
+	 *  @param ctx context
+	 *  @param WindowNo window
+	 *  @param TabNo
+	 *  @param ProcessIDOfPanel
+	 *  @param WindowIDOfPanel
+	 *  @param InfoWindowIDOfPanel
+	 *  @param rs result set AD_Process_Para
+	 *  @return GridFieldVO
+	 */
+	public static GridFieldVO createParameter (Properties ctx, int WindowNo, int TabNo, int ProcessIDOfPanel, int WindowIDOfPanel, int InfoWindowIDOfPanel, ResultSet rs)
+	{
+		GridFieldVO vo = new GridFieldVO (ctx, WindowNo, TabNo, 0, 0, false);
 		vo.isProcess = true;
 		vo.IsDisplayed = true;
 		vo.IsReadOnly = false;
 		vo.IsUpdateable = true;
 		vo.AD_Process_ID_Of_Panel = ProcessIDOfPanel;
 		vo.AD_Window_ID_Of_Panel = WindowIDOfPanel;
-		vo.AD_Infowindow_ID = adInfoPaneId;
+		vo.AD_InfoWindow_ID_Of_Panel = InfoWindowIDOfPanel;
 		
 		try
 		{
 			vo.AD_Table_ID = 0;
-			vo.AD_Column_ID = rs.getInt("AD_Process_Para_ID");	//	**
+			vo.AD_Column_ID = rs.getInt("AD_Process_Para_ID");
 			vo.ColumnName = rs.getString("ColumnName");
 			vo.Header = rs.getString("Name");
 			vo.Description = rs.getString("Description");
@@ -417,6 +372,7 @@ public class GridFieldVO implements Serializable, Cloneable
 			vo.ValueMin = rs.getString("ValueMin");
 			vo.ValueMax = rs.getString("ValueMax");
 			vo.isRange = rs.getString("IsRange").equals("Y");
+			vo.dateRangeOption = rs.getString("DateRangeOption");
 			//
 			vo.AD_Reference_Value_ID = rs.getInt("AD_Reference_Value_ID");
 			vo.ValidationCode = rs.getString("ValidationCode");
@@ -428,12 +384,16 @@ public class GridFieldVO implements Serializable, Cloneable
 			vo.Placeholder = rs.getString("Placeholder");
 			vo.Placeholder2 = rs.getString("Placeholder2");
 			vo.IsAutocomplete = "Y".equals(rs.getString("IsAutoComplete"));
+			//
+			vo.FieldGroup = rs.getString("FieldGroup");
+			vo.FieldGroupType = rs.getString("FieldGroupType");
+			vo.IsCollapsedByDefault = "Y".equals(rs.getString("IsCollapsedByDefault"));
+			vo.IsShowNegateButton = "Y".equals(rs.getString("IsShowNegateButton"));
 		}
 		catch (SQLException e)
 		{
 			CLogger.get().log(Level.SEVERE, "createParameter", e);
 		}
-		//devCoffee - #3858
 		if(vo.IsDisplayed) {
 			MUserDefProcParameter userDef = MUserDefProcParameter.get(ctx, vo.AD_Column_ID, vo.AD_Process_ID_Of_Panel);
 			if(userDef != null) {
@@ -475,9 +435,13 @@ public class GridFieldVO implements Serializable, Cloneable
 					vo.ValueMax = userDef.getValueMax();
 				if (userDef.getIsMandatory()!= null)
 					vo.IsMandatory = "Y".equals(userDef.getIsMandatory());
+				if (userDef.getAD_FieldGroup_ID() > 0) {
+					X_AD_FieldGroup fg = new X_AD_FieldGroup(Env.getCtx(), userDef.getAD_FieldGroup_ID(), null);
+					vo.FieldGroup = fg.get_Translation(X_AD_FieldGroup.COLUMNNAME_Name);
+					vo.FieldGroupType = fg.getFieldGroupType();
+				}
 			}
 		}
-		//fim devCoffee - 3858
 		//
 		vo.initFinish();
 		if (vo.DefaultValue2 == null)
@@ -491,7 +455,7 @@ public class GridFieldVO implements Serializable, Cloneable
 	/**
 	 *  Create range "to" Parameter Field from "from" Parameter Field
 	 *  @param voF field value object
-	 *  @return to MFieldVO
+	 *  @return to GridFieldVO
 	 */
 	public static GridFieldVO createParameter (GridFieldVO voF)
 	{
@@ -513,12 +477,14 @@ public class GridFieldVO implements Serializable, Cloneable
 		voT.FieldLength = voF.FieldLength;
 		voT.DisplayLength = voF.FieldLength;
 		voT.DefaultValue = voF.DefaultValue2;
+		voT.Placeholder = voF.Placeholder2;
 		voT.Placeholder2 = voF.Placeholder2;
 		voT.VFormat = voF.VFormat;
 		voT.FormatPattern = voF.FormatPattern;
 		voT.ValueMin = voF.ValueMin;
 		voT.ValueMax = voF.ValueMax;
 		voT.isRange = voF.isRange;
+		voT.dateRangeOption = voF.dateRangeOption;
 		//
 		// Genied: For a range parameter the second field 
 		// lookup behaviour should match the first one.
@@ -539,6 +505,8 @@ public class GridFieldVO implements Serializable, Cloneable
 	 * Create parameter for infoWindow
 	 * @param ctx ctx
 	 * @param WindowNo WindowNo
+	 * @param WindowIDOfPanel
+	 * @param infoWindowID
 	 * @param AD_Column_ID AD_Column_ID
 	 * @param ColumnName ColumnName
 	 * @param Name  Name
@@ -546,7 +514,8 @@ public class GridFieldVO implements Serializable, Cloneable
 	 * @param AD_Reference_Value_ID AD_Reference_Value_ID
 	 * @param IsMandatory  IsMandatory
 	 * @param IsEncrypted IsEncrypted
-	 * @return GridFieldV0 v0
+	 * @param Placeholder
+	 * @return GridFieldV0
 	 */
 	public static GridFieldVO createParameter (Properties ctx, int WindowNo, int WindowIDOfPanel, int infoWindowID,
 			int AD_Column_ID, String ColumnName, String Name, int AD_Reference_ID, int AD_Reference_Value_ID, 
@@ -565,7 +534,7 @@ public class GridFieldVO implements Serializable, Cloneable
 		vo.AD_Reference_Value_ID = AD_Reference_Value_ID;
 		vo.IsMandatory = IsMandatory;
 		vo.IsEncryptedField= IsEncrypted;			
-		vo.AD_Infowindow_ID = infoWindowID;
+		vo.AD_InfoWindow_ID_Of_Panel = infoWindowID;
 		vo.AD_Window_ID_Of_Panel = WindowIDOfPanel;
 		vo.Placeholder = Placeholder;
 		//
@@ -574,16 +543,16 @@ public class GridFieldVO implements Serializable, Cloneable
 	}
 
 	/**
-	 *  Make a standard field (Created/Updated/By)
+	 *  Create standard field (Created/Updated/By) VO.
 	 *  @param ctx context
 	 *  @param WindowNo window
 	 *  @param TabNo tab
 	 *  @param AD_Window_ID window
 	 *  @param AD_Tab_ID tab
-	 *  @param tabReadOnly rab is r/o
+	 *  @param tabReadOnly tab is r/o
 	 *  @param isCreated is Created field
 	 *  @param isTimestamp is the timestamp (not by)
-	 *  @return MFieldVO
+	 *  @return GridFieldVO
 	 */
 	public static GridFieldVO createStdField (Properties ctx, int WindowNo, int TabNo, 
 		int AD_Window_ID, int AD_Tab_ID, boolean tabReadOnly,
@@ -604,9 +573,8 @@ public class GridFieldVO implements Serializable, Cloneable
 		vo.initFinish();
 		return vo;
 	}   //  initStdField
-
 	
-	/**************************************************************************
+	/**
 	 *  Private constructor.
 	 *  @param Ctx context
 	 *  @param windowNo window
@@ -635,8 +603,8 @@ public class GridFieldVO implements Serializable, Cloneable
 	/** AD_Winmdow_ID               */
 	public int          AD_Window_ID;
 	/** 
-	 *  in case this field lie on parameter process panel, AD_Process_ID_Of_Panel is id of process will run in this panel 
-	 *  it's difference with AD_Process_ID
+	 *  When this field is inside process parameter panel, AD_Process_ID_Of_Panel is id of process that will run in this panel. 
+	 *  This is different from AD_Process_ID of field.
 	 */
 	public int          AD_Process_ID_Of_Panel;
 	/**
@@ -644,9 +612,9 @@ public class GridFieldVO implements Serializable, Cloneable
 	 */
 	public int          AD_Window_ID_Of_Panel;
 	/**
-	 * AD_Infowindow_ID call process. user in case from info window call process.
+	 * AD_Infowindow_ID of containing panel
 	 */
-	public int          AD_Infowindow_ID;
+	public int          AD_InfoWindow_ID_Of_Panel;
 	/** AD_Tab_ID					*/
 	public int			AD_Tab_ID;
 	/** Is the Tab Read Only        */
@@ -665,7 +633,7 @@ public class GridFieldVO implements Serializable, Cloneable
 	public int          displayType = 0;
 	/**	Table ID		*/
 	public int          AD_Table_ID = 0;
-	/**	Clumn ID		*/
+	/**	Column ID		*/
 	public int          AD_Column_ID = 0;
 	/**	Display Length	*/
 	public int          DisplayLength = 0;
@@ -679,7 +647,7 @@ public class GridFieldVO implements Serializable, Cloneable
 	public int			SeqNo = 0;
 	/** Grid Display sequence	*/
 	public int			SeqNoGrid = 0;
-	/**	Dislay Logic, never set null for it	*/
+	/**	Display Logic, never set null for it	*/
 	public String       DisplayLogic = "";
 	/**	Default Value, never set null for it	*/	
 	public String       DefaultValue = "";
@@ -727,6 +695,8 @@ public class GridFieldVO implements Serializable, Cloneable
 	public String       Callout = "";
 	/**	Process			*/
 	public int          AD_Process_ID = 0;
+	/** Info Window		*/
+	public int			AD_InfoWindow_ID = 0;
 	/**	Description		*/
 	public String       Description = "";
 	/**	Help			*/
@@ -735,6 +705,8 @@ public class GridFieldVO implements Serializable, Cloneable
 	public String 		MandatoryLogic = "";
 	/**	Read Only Logic	*/
 	public String       ReadOnlyLogic = "";
+	/**	Always Updatable Logic	*/
+	public String       AlwaysUpdatableLogic = "";
 	/**	Display Obscure	*/
 	public String		ObscureType = null;
 	/** Default Focus	*/
@@ -751,6 +723,8 @@ public class GridFieldVO implements Serializable, Cloneable
 	public boolean      isRange = false;
 	/**	Process Parameter Value2	*/
 	public String       DefaultValue2 = "";
+	/**	Date Range Option		*/
+	public String      dateRangeOption = "";
 
 	/** Lookup Value Object     */
 	public MLookupInfo  lookupInfo = null;
@@ -797,8 +771,11 @@ public class GridFieldVO implements Serializable, Cloneable
 	/* Allow to show field in Quick Form */
 	public boolean IsQuickForm = false;
 
+	/** Show Negate button (only for Chosen Multiple fields) */
+	public boolean IsShowNegateButton = false;
+
 	/**
-	 *  Set Context including contained elements
+	 *  Set context including context of lookupInfo.
 	 *  @param newCtx new context
 	 */
 	public void setCtx (Properties newCtx)
@@ -830,11 +807,12 @@ public class GridFieldVO implements Serializable, Cloneable
 			Callout = "";
 		if (ReadOnlyLogic == null)
 			ReadOnlyLogic = "";
+		if (AlwaysUpdatableLogic == null)
+			AlwaysUpdatableLogic = "";
 		if (MandatoryLogic == null)
 			MandatoryLogic = "";
 		if (Placeholder == null)
 			Placeholder = "";
-
 
 		//  Create Lookup, if not ID
 		if (DisplayType.isLookup(displayType) && IsDisplayed)
@@ -864,8 +842,8 @@ public class GridFieldVO implements Serializable, Cloneable
 	}
 
 	/**
-	 * 	Clone Field.
-	 *	@param Ctx ctx
+	 * 	Clone Field VO.
+	 *	@param ctx context
 	 *	@param windowNo window no
 	 *	@param tabNo tab no
 	 *	@param ad_Window_ID window id
@@ -873,8 +851,8 @@ public class GridFieldVO implements Serializable, Cloneable
 	 *	@param TabReadOnly r/o
 	 *	@return Field or null
 	 */
-	public GridFieldVO clone(Properties Ctx, int windowNo, int tabNo, 
-		int ad_Window_ID, int ad_Tab_ID, 
+	public GridFieldVO clone(Properties ctx, int windowNo, int tabNo,
+		int ad_Window_ID, int ad_Tab_ID,
 		boolean TabReadOnly)
 	{
 		GridFieldVO clone = null;
@@ -916,14 +894,14 @@ public class GridFieldVO implements Serializable, Cloneable
 	 */
 	public String toString ()
 	{
-		StringBuilder sb = new StringBuilder ("MFieldVO[");
+		StringBuilder sb = new StringBuilder ("GridFieldVO[");
 		sb.append(AD_Column_ID).append("-").append(ColumnName)
 			.append ("]");
 		return sb.toString ();
 	}	//	toString
 	
 	/**
-	 * 
+	 * Comparator for GridFieldVO.SeqNo
 	 * @author a42niem
 	 * IDEMPIERE-1120 Implement Field SeqNo customization
 	 */

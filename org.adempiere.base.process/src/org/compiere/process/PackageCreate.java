@@ -20,6 +20,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MInOut;
 import org.compiere.model.MPackage;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MShipper;
  
 /**
@@ -28,6 +29,7 @@ import org.compiere.model.MShipper;
  *  @author Jorg Janke
  *  @version $Id: PackageCreate.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class PackageCreate extends SvrProcess
 {
 	/**	Shipper				*/
@@ -56,13 +58,8 @@ public class PackageCreate extends SvrProcess
 			else if (name.equals("NoOfPackages"))
 				p_no_of_packages = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
-
-		// Bug [ 1754889 ] Create Package error
-		// Commenting these lines because this process is called also from window "Ship/Receipt Confirm"
-		// if (p_M_InOut_ID == 0)
-			// p_M_InOut_ID = getRecord_ID();
 
 	}	//	prepare
 

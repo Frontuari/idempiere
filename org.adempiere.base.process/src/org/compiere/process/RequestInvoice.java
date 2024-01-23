@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MInvoiceLine;
+import org.compiere.model.MProcessPara;
 import org.compiere.model.MRequest;
 import org.compiere.model.MRequestType;
 import org.compiere.model.MRequestUpdate;
@@ -38,6 +39,7 @@ import org.compiere.util.Msg;
  *  @author Jorg Janke
  *  @version $Id: RequestInvoice.java,v 1.2 2006/07/30 00:51:01 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class RequestInvoice extends SvrProcess
 {
 	/** Request Type				*/
@@ -78,7 +80,7 @@ public class RequestInvoice extends SvrProcess
 			else if (name.equals("M_Product_ID"))
 				p_M_Product_ID = para[i].getParameterAsInt();
 			else
-				log.log(Level.SEVERE, "Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 	
@@ -103,9 +105,7 @@ public class RequestInvoice extends SvrProcess
 			.append(" INNER JOIN R_Status s ON (r.R_Status_ID=s.R_Status_ID) ")
 			.append("WHERE s.IsClosed='Y'")
 			.append(" AND r.R_RequestType_ID=?");
-			// globalqss -- avoid double invoicing
-			// + " AND EXISTS (SELECT 1 FROM R_RequestUpdate ru " +
-			//		"WHERE ru.R_Request_ID=r.R_Request_ID AND NVL(C_InvoiceLine_ID,0)=0";
+
 		if (p_R_Group_ID != 0)
 			sql.append(" AND r.R_Group_ID=?");
 		if (p_R_Category_ID != 0)
@@ -215,8 +215,6 @@ public class RequestInvoice extends SvrProcess
 			BigDecimal qty = updates[i].getQtyInvoiced();
 			if (qty == null || qty.signum() == 0)
 				continue;
-			// if (updates[i].getC_InvoiceLine_ID() > 0)
-			//	continue;
 			
 			MInvoiceLine il = new MInvoiceLine(m_invoice);
 			m_linecount++;
@@ -231,8 +229,6 @@ public class RequestInvoice extends SvrProcess
 			//
 			il.setPrice();
 			il.saveEx();
-			// updates[i].setC_InvoiceLine_ID(il.getC_InvoiceLine_ID());
-			// updates[i].saveEx();
 		}
 	}	//	invoiceLine
 	

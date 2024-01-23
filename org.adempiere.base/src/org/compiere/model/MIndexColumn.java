@@ -19,13 +19,24 @@ package org.compiere.model;
 import java.sql.ResultSet;
 import java.util.Properties;
 
-
+/**
+ * Column of index
+ */
 public class MIndexColumn extends X_AD_IndexColumn {
-
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = -7588207529142215755L;
+
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param AD_IndexColumn_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MIndexColumn(Properties ctx, String AD_IndexColumn_UU, String trxName) {
+        super(ctx, AD_IndexColumn_UU, trxName);
+    }
 
 	/**
 	 * Standard constructor
@@ -62,11 +73,12 @@ public class MIndexColumn extends X_AD_IndexColumn {
 		setAD_TableIndex_ID(parent.getAD_TableIndex_ID());
 		setAD_Column_ID(column.getAD_Column_ID());
 		setSeqNo(seqNo);
+		setEntityType(parent.getEntityType());
 	}
 	
 	/**
 	 * Get column name
-	 * @return column name
+	 * @return column SQL expression or name
 	 */
 	public String getColumnName()
 	{

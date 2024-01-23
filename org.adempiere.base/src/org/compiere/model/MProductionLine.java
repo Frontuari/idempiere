@@ -1,3 +1,24 @@
+/***********************************************************************
+ * This file is part of iDempiere ERP Open Source                      *
+ * http://www.idempiere.org                                            *
+ *                                                                     *
+ * Copyright (C) Contributors                                          *
+ *                                                                     *
+ * This program is free software; you can redistribute it and/or       *
+ * modify it under the terms of the GNU General Public License         *
+ * as published by the Free Software Foundation; either version 2      *
+ * of the License, or (at your option) any later version.              *
+ *                                                                     *
+ * This program is distributed in the hope that it will be useful,     *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of      *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the        *
+ * GNU General Public License for more details.                        *
+ *                                                                     *
+ * You should have received a copy of the GNU General Public License   *
+ * along with this program; if not, write to the Free Software         *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,          *
+ * MA 02110-1301, USA.                                                 *
+ **********************************************************************/
 package org.compiere.model;
 
 import java.math.BigDecimal;
@@ -13,17 +34,31 @@ import java.util.logging.Level;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 
-
+/**
+ * Production line model
+ */
 public class MProductionLine extends X_M_ProductionLine {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 3720901152312853611L;
 
 	protected MProduction productionParent;
 
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param M_ProductionLine_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MProductionLine(Properties ctx, String M_ProductionLine_UU, String trxName) {
+        super(ctx, M_ProductionLine_UU, trxName);
+		if (Util.isEmpty(M_ProductionLine_UU))
+			setInitialDefaults();
+    }
 
 	/**
 	 * 	Standard Constructor
@@ -32,21 +67,38 @@ public class MProductionLine extends X_M_ProductionLine {
 	 */
 	public MProductionLine (Properties ctx, int M_ProductionLine_ID, String trxName)
 	{
-		super (ctx, M_ProductionLine_ID, trxName);
-		if (M_ProductionLine_ID == 0)
-		{
-			setLine (0);	// @SQL=SELECT NVL(MAX(Line),0)+10 AS DefaultValue FROM M_ProductionLine WHERE M_Production_ID=@M_Production_ID@
-			setM_AttributeSetInstance_ID (0);
-//			setM_Locator_ID (0);	// @M_Locator_ID@
-//			setM_Product_ID (0);
-			setM_ProductionLine_ID (0);
-			setM_Production_ID (0);
-			setMovementQty (Env.ZERO);
-			setProcessed (false);
-		}
-			
+		this (ctx, M_ProductionLine_ID, trxName, (String[]) null);
 	}	// MProductionLine
-	
+
+	/**
+	 * @param ctx
+	 * @param M_ProductionLine_ID
+	 * @param trxName
+	 * @param virtualColumns
+	 */
+	public MProductionLine(Properties ctx, int M_ProductionLine_ID, String trxName, String... virtualColumns) {
+		super(ctx, M_ProductionLine_ID, trxName, virtualColumns);
+		if (M_ProductionLine_ID == 0)
+			setInitialDefaults();
+	}
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setLine (0);
+		setM_AttributeSetInstance_ID (0);
+		setM_ProductionLine_ID (0);
+		setM_Production_ID (0);
+		setMovementQty (Env.ZERO);
+		setProcessed (false);
+	}
+
+	/**
+	 * @param ctx
+	 * @param rs
+	 * @param trxName
+	 */
 	public MProductionLine (Properties ctx, ResultSet rs, String trxName)
 	{
 		super(ctx, rs, trxName);
@@ -54,7 +106,7 @@ public class MProductionLine extends X_M_ProductionLine {
 	
 	/**
 	 * Parent Constructor
-	 * @param plan
+	 * @param header
 	 */
 	public MProductionLine( MProduction header ) {
 		super( header.getCtx(), 0, header.get_TrxName() );
@@ -64,6 +116,9 @@ public class MProductionLine extends X_M_ProductionLine {
 		productionParent = header;
 	}
 	
+	/**
+	 * @param header
+	 */
 	public MProductionLine( MProductionPlan header ) {
 		super( header.getCtx(), 0, header.get_TrxName() );
 		setM_ProductionPlan_ID( header.get_ID());
@@ -71,11 +126,11 @@ public class MProductionLine extends X_M_ProductionLine {
 		setAD_Org_ID(header.getAD_Org_ID());
 	}
 	
-
 	/**
-	 * 
+	 * Create material transactions
 	 * @param date
-	 * @return "" for success, error string if failed
+	 * @param mustBeStocked true to verify on hand quantity
+	 * @return "" for success, error message if failed
 	 */
 	public String createTransactions(Timestamp date, boolean mustBeStocked) {
 		int reversalId = getProductionReversalId ();
@@ -96,11 +151,11 @@ public class MProductionLine extends X_M_ProductionLine {
 		StringBuilder errorString = new StringBuilder();
 		
 		MAttributeSetInstance asi = new MAttributeSetInstance(getCtx(), getM_AttributeSetInstance_ID(), get_TrxName());
-		I_M_AttributeSet attributeset = prod.getM_AttributeSet();
+		I_M_AttributeSet attributeset = prod.getM_AttributeSet_ID() > 0 ? MAttributeSet.get(prod.getM_AttributeSet_ID()) : null;
 		boolean isAutoGenerateLot = false;
 		if (attributeset != null)
 			isAutoGenerateLot = attributeset.isAutoGenerateLot();		
-		String asiString = asi.getDescription();
+		String asiString = asi.get_ID() > 0 ? asi.getDescription() : "";
 		if ( asiString == null )
 			asiString = "";
 		
@@ -166,16 +221,15 @@ public class MProductionLine extends X_M_ProductionLine {
 					if (lineQty.compareTo(qtyToMove ) > 0)
 							lineQty = qtyToMove;
 	
-					MAttributeSetInstance slASI = new MAttributeSetInstance(getCtx(),
-							storages[sl].getM_AttributeSetInstance_ID(),get_TrxName());
-					String slASIString = slASI.getDescription();
+					MAttributeSetInstance slASI = storages[sl].getM_AttributeSetInstance_ID() > 0 ? new MAttributeSetInstance(getCtx(),
+							storages[sl].getM_AttributeSetInstance_ID(),get_TrxName()) : null;
+					String slASIString = slASI != null ? slASI.getDescription() : "";
 					if (slASIString == null)
 						slASIString = "";
 					
 					if (log.isLoggable(Level.FINEST))log.log(Level.FINEST,"slASI-Description =" + slASIString);
 						
-					if ( slASIString.compareTo(asiString) == 0
-							|| asi.getM_AttributeSet_ID() == 0  )  
+					if (asi.getM_AttributeSet_ID() == 0 || slASIString.equals(asiString))  
 					//storage matches specified ASI or is a costing asi (inc. 0)
 				    // This process will move negative stock on hand quantities
 					{
@@ -228,7 +282,7 @@ public class MProductionLine extends X_M_ProductionLine {
 				{
 					setM_AttributeSetInstance_ID(storage.getM_AttributeSetInstance_ID());
 					asi = new MAttributeSetInstance(getCtx(), storage.getM_AttributeSetInstance_ID(), get_TrxName());
-					asiString = asi.getDescription();
+					asiString = asi.get_ID() > 0 ? asi.getDescription() : "";
 				} 
 				else
 				{	
@@ -259,8 +313,7 @@ public class MProductionLine extends X_M_ProductionLine {
 			
 			}
 		}
-		
-		
+				
 		if ( !( qtyToMove.signum() == 0) ) {
 			if (mustBeStocked && qtyToMove.signum() > 0)
 			{
@@ -274,16 +327,15 @@ public class MProductionLine extends X_M_ProductionLine {
 						asi.get_ID(), date, get_TrxName(), true);
 				
 				BigDecimal lineQty = qtyToMove;
-				MAttributeSetInstance slASI = new MAttributeSetInstance(getCtx(),
-						storage.getM_AttributeSetInstance_ID(),get_TrxName());
-				String slASIString = slASI.getDescription();
+				MAttributeSetInstance slASI = storage.getM_AttributeSetInstance_ID() > 0 
+						? new MAttributeSetInstance(getCtx(), storage.getM_AttributeSetInstance_ID(),get_TrxName()) : null;
+				String slASIString = slASI != null ? slASI.getDescription() : "";
 				if (slASIString == null)
 					slASIString = "";
 				
 				if (log.isLoggable(Level.FINEST))log.log(Level.FINEST,"slASI-Description =" + slASIString);
 					
-				if ( slASIString.compareTo(asiString) == 0
-						|| asi.getM_AttributeSet_ID() == 0  )  
+				if (asi.getM_AttributeSet_ID() == 0 || slASIString.compareTo(asiString) == 0)  
 				//storage matches specified ASI or is a costing asi (inc. 0)
 			    // This process will move negative stock on hand quantities
 				{
@@ -323,6 +375,9 @@ public class MProductionLine extends X_M_ProductionLine {
 		
 	}
 
+	/**
+	 * @return end product id (from production or production plan)
+	 */
 	protected int getEndProduct_ID() {
 		if (productionParent != null) {
 			return productionParent.getM_Product_ID();
@@ -333,12 +388,17 @@ public class MProductionLine extends X_M_ProductionLine {
 		}
 	}
 
+	/**
+	 * Delete M_ProductionLineMA records
+	 * @return number of records deleted
+	 */
 	protected int deleteMA() {
 		String sql = "DELETE FROM M_ProductionLineMA WHERE M_ProductionLine_ID = " + get_ID();
 		int count = DB.executeUpdateEx( sql, get_TrxName() );
 		return count;
 	}
 
+	@Override
 	public String toString() {
 		if ( getM_Product_ID() == 0 )
 			return ("No product defined for production line " + getLine());
@@ -354,6 +414,10 @@ public class MProductionLine extends X_M_ProductionLine {
 
 		if (getM_Production_ID() > 0) 
 		{
+			if (newRecord && productionParent.isProcessed()) {
+				log.saveError("ParentComplete", Msg.translate(getCtx(), "M_Production_ID"));
+				return false;
+			}
 			if ( productionParent.getM_Product_ID() == getM_Product_ID() && productionParent.getProductionQty().signum() == getMovementQty().signum())
 				setIsEndProduct(true);
 			else 
@@ -362,6 +426,11 @@ public class MProductionLine extends X_M_ProductionLine {
 		else 
 		{
 			I_M_ProductionPlan plan = getM_ProductionPlan();
+			MProduction prod = new MProduction(getCtx(), plan.getM_Production_ID(), get_TrxName());
+			if (newRecord && prod.isProcessed()) {
+				log.saveError("ParentComplete", Msg.translate(getCtx(), "M_Production_ID"));
+				return false;
+			}
 			if (plan.getM_Product_ID() == getM_Product_ID() && plan.getProductionQty().signum() == getMovementQty().signum())
 				setIsEndProduct(true);
 			else 
@@ -411,8 +480,7 @@ public class MProductionLine extends X_M_ProductionLine {
 	}
 
 	/**
-	 * 
-	 * @return
+	 * @return array of MProductionLineMA
 	 */
 	public MProductionLineMA[] getLineMAs() {
 		ArrayList<MProductionLineMA> list = new ArrayList<MProductionLineMA>();

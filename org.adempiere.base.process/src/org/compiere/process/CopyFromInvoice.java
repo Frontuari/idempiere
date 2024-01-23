@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.logging.Level;
 
 import org.compiere.model.MInvoice;
+import org.compiere.model.MProcessPara;
 
 /**
  *  Copy Invoice Lines
@@ -27,6 +28,7 @@ import org.compiere.model.MInvoice;
  *	@author Jorg Janke
  *	@version $Id: CopyFromInvoice.java,v 1.2 2006/07/30 00:51:02 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class CopyFromInvoice extends SvrProcess
 {
 	private int		m_C_Invoice_ID = 0;
@@ -45,7 +47,7 @@ public class CopyFromInvoice extends SvrProcess
 			else if (name.equals("C_Invoice_ID"))
 				m_C_Invoice_ID = ((BigDecimal)para[i].getParameter()).intValue();
 			else
-				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
+				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
 	}	//	prepare
 

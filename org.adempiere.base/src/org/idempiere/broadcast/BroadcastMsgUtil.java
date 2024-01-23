@@ -27,6 +27,7 @@ import org.adempiere.exceptions.DBException;
 import org.adempiere.model.MBroadcastMessage;
 import org.compiere.Adempiere;
 import org.compiere.model.MNote;
+import org.compiere.model.MRole;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -34,21 +35,18 @@ import org.compiere.util.Env;
 import org.compiere.util.WebUtil;
 
 /**
- * 
+ * Static methods for broadcast message service
  * @author Vivek
  * @author Deepak Pansheriya
- *
  */
 public class BroadcastMsgUtil
- {
-	
+ {	
 	private static final CLogger logger = CLogger
 			.getCLogger(BroadcastMsgUtil.class);
 	// BROADCAST_MESSAGE_QUEUE
 
-
 	/**
-	 * Publish Message
+	 * Publish Broadcast Message
 	 * @param messageID
 	 * @param trxName
 	 */
@@ -59,12 +57,15 @@ public class BroadcastMsgUtil
 		
 		if (MBroadcastMessage.BROADCASTTYPE_Login.equals(broadcastType)
 				|| MBroadcastMessage.BROADCASTTYPE_ImmediatePlusLogin.equals(broadcastType)) {
+			int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
 			// get list of users based on rule
 			if (mbMessage.getTarget() != null) {
 				String sql = "SELECT DISTINCT(AD_User_ID) FROM AD_User_Roles WHERE IsActive='Y'";
 				// Role
 				if (mbMessage.getTarget().equals(MBroadcastMessage.TARGET_Role)) {
 					sql += " AND AD_Role_ID=" + mbMessage.getAD_Role_ID();
+					MRole role = MRole.get(Env.getCtx(), mbMessage.getAD_Role_ID());
+					AD_Client_ID = role.getAD_Client_ID();
 				} else if (mbMessage.getTarget().equals(MBroadcastMessage.TARGET_User)) {
 					sql += " AND AD_User_ID=" + mbMessage.getAD_User_ID();
 				} else if (mbMessage.getTarget().equals(MBroadcastMessage.TARGET_Client)) {
@@ -72,13 +73,17 @@ public class BroadcastMsgUtil
 				} // else Everybody doesn't need additional filtering
 
 				int[] userIDs = DB.getIDsEx(null, sql);
-
+				
 				for (int userID : userIDs) {
 					MUser user = MUser.get(Env.getCtx(), userID);
 					if (! user.isActive())
 							continue;
+					if (mbMessage.getTarget().equals(MBroadcastMessage.TARGET_User) || mbMessage.getTarget().equals(MBroadcastMessage.TARGET_Everybody))
+					{
+						AD_Client_ID = user.getAD_Client_ID();
+					}
 					MNote note = new MNote(Env.getCtx(), 0, trxName);
-					note.setClientOrg(user.getAD_Client_ID(), 0);
+					note.setClientOrg(AD_Client_ID, 0);
 					note.setAD_BroadcastMessage_ID(messageID);
 					note.setAD_User_ID(userID);
 					note.setAD_Message_ID(0);
@@ -104,6 +109,11 @@ public class BroadcastMsgUtil
 	
 	}
 
+	/**
+	 * Publish message using message service or using OSGi event service.
+	 * @param msg message to broadcast
+	 * @param isLocalOnly true to use event service, false to use message service
+	 */
 	public static void pushToQueue(final BroadCastMsg msg, boolean isLocalOnly) {
 
 		boolean isPublished = false;
@@ -120,7 +130,7 @@ public class BroadcastMsgUtil
 				public void run() {
 
 					org.osgi.service.event.Event event = EventManager.newEvent(
-							IEventTopics.BROADCAST_MESSAGE, msg);
+							IEventTopics.BROADCAST_MESSAGE, msg, true);
 					EventManager.getInstance().postEvent(event);
 				}
 			};
@@ -131,7 +141,7 @@ public class BroadcastMsgUtil
 		}
 	}
 	/**
-	 * Test message
+	 * Broadcast Test message
 	 * @param messageID
 	 * @param AD_Session_ID
 	 */
@@ -160,6 +170,7 @@ public class BroadcastMsgUtil
 				+ "       AND n.AD_Client_ID = ? "
 				+ "       AND ( bm.BroadcastType = 'IL' OR bm.BroadcastType = 'L' ) "
 				+ "       AND bm.isPublished = 'Y' "
+				+ "       AND bm.IsActive = 'Y' "
 				+ "       AND ( n.Processed = 'N' OR ( n.Processed = 'Y' AND bm.BroadcastFrequency = 'E' ) ) "
 				+ "       AND ( bm.Expired = 'N' AND ( bm.Expiration IS NULL OR bm.Expiration > getDate() ) ) ";
 

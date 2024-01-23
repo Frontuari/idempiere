@@ -74,6 +74,9 @@ public class Doc_Invoice extends Doc
 
 	/** Contained Optional Tax Lines    */
 	protected DocTax[]        m_taxes = null;
+	/** Contained Optional Tax Lines Distributed to Line Item */
+	@SuppressWarnings("unused")
+	private DocTax[]        m_addToLineTaxes = null;
 	/** Currency Precision				*/
 	protected int				m_precision = -1;
 	/** All lines are Service			*/
@@ -85,6 +88,7 @@ public class Doc_Invoice extends Doc
 	 *  Load Specific Document Details
 	 *  @return error message or null
 	 */
+	@Override
 	protected String loadDocumentDetails ()
 	{
 		MInvoice invoice = (MInvoice)getPO();
@@ -109,6 +113,7 @@ public class Doc_Invoice extends Doc
 	private DocTax[] loadTaxes()
 	{
 		ArrayList<DocTax> list = new ArrayList<DocTax>();
+		ArrayList<DocTax> distributeList = new ArrayList<DocTax>();
 		String sql = "SELECT it.C_Tax_ID, t.Name, t.Rate, it.TaxBaseAmt, it.TaxAmt, t.IsSalesTax "
 				+ "FROM C_Tax t, C_InvoiceTax it "
 				+ "WHERE t.C_Tax_ID=it.C_Tax_ID AND it.C_Invoice_ID=?";
@@ -129,10 +134,18 @@ public class Doc_Invoice extends Doc
 				BigDecimal amount = rs.getBigDecimal(5);
 				boolean salesTax = "Y".equals(rs.getString(6));
 				//
+				MTax tax = MTax.get(getCtx(), C_Tax_ID);
 				DocTax taxLine = new DocTax(C_Tax_ID, name, rate,
 					taxBaseAmt, amount, salesTax);
 				if (log.isLoggable(Level.FINE)) log.fine(taxLine.toString());
-				list.add(taxLine);
+				if (!tax.isDistributeTaxWithLineItem())
+				{					
+					list.add(taxLine);
+				}
+				else
+				{
+					distributeList.add(taxLine);
+				}
 			}
 		}
 		catch (SQLException e)
@@ -148,6 +161,9 @@ public class Doc_Invoice extends Doc
 		//	Return Array
 		DocTax[] tl = new DocTax[list.size()];
 		list.toArray(tl);
+		//	Distribute list
+		m_addToLineTaxes = distributeList.toArray(new DocTax[0]);
+		
 		return tl;
 	}	//	loadTaxes
 
@@ -184,24 +200,33 @@ public class Doc_Invoice extends Doc
 				{
 					BigDecimal LineNetAmtTax = tax.calculateTax(LineNetAmt, true, getStdPrecision());
 					if (log.isLoggable(Level.FINE)) log.fine("LineNetAmt=" + LineNetAmt + " - Tax=" + LineNetAmtTax);
-					LineNetAmt = LineNetAmt.subtract(LineNetAmtTax);
 
 					if (tax.isSummary()) {
+						LineNetAmt = LineNetAmt.subtract(LineNetAmtTax);
+						BigDecimal base = LineNetAmt;
 						BigDecimal sumChildLineNetAmtTax = Env.ZERO;
 						DocTax taxToApplyDiff = null;
 						for (MTax childTax : tax.getChildTaxes(false)) {
 							if (!childTax.isZeroTax())
 							{
-								BigDecimal childLineNetAmtTax = childTax.calculateTax(LineNetAmt, false, getStdPrecision());
-								if (log.isLoggable(Level.FINE)) log.fine("LineNetAmt=" + LineNetAmt + " - Child Tax=" + childLineNetAmtTax);
-								for (int t = 0; t < m_taxes.length; t++)
+								BigDecimal childLineNetAmtTax = childTax.calculateTax(base, false, getStdPrecision());
+								if (log.isLoggable(Level.FINE)) log.fine("LineNetAmt=" + base + " - Child Tax=" + childLineNetAmtTax);
+								if (childTax.isDistributeTaxWithLineItem())
 								{
-									if (m_taxes[t].getC_Tax_ID() == childTax.getC_Tax_ID())
+									LineNetAmt = LineNetAmt.add(childLineNetAmtTax);
+									LineNetAmtTax = LineNetAmtTax.subtract(childLineNetAmtTax);
+								}
+								else
+								{
+									for (int t = 0; t < m_taxes.length; t++)
 									{
-										m_taxes[t].addIncludedTax(childLineNetAmtTax);
-										taxToApplyDiff = m_taxes[t];
-										sumChildLineNetAmtTax = sumChildLineNetAmtTax.add(childLineNetAmtTax);
-										break;
+										if (m_taxes[t].getC_Tax_ID() == childTax.getC_Tax_ID())
+										{
+											m_taxes[t].addIncludedTax(childLineNetAmtTax);
+											taxToApplyDiff = m_taxes[t];
+											sumChildLineNetAmtTax = sumChildLineNetAmtTax.add(childLineNetAmtTax);
+											break;
+										}
 									}
 								}
 							}
@@ -211,12 +236,16 @@ public class Doc_Invoice extends Doc
 							taxToApplyDiff.addIncludedTax(diffChildVsSummary);
 						}
 					} else {
-						for (int t = 0; t < m_taxes.length; t++)
+						if (!tax.isDistributeTaxWithLineItem())
 						{
-							if (m_taxes[t].getC_Tax_ID() == C_Tax_ID)
+							LineNetAmt = LineNetAmt.subtract(LineNetAmtTax);
+							for (int t = 0; t < m_taxes.length; t++)
 							{
-								m_taxes[t].addIncludedTax(LineNetAmtTax);
-								break;
+								if (m_taxes[t].getC_Tax_ID() == C_Tax_ID)
+								{
+									m_taxes[t].addIncludedTax(LineNetAmtTax);
+									break;
+								}
 							}
 						}
 					}
@@ -225,6 +254,29 @@ public class Doc_Invoice extends Doc
 					PriceList = PriceList.subtract(PriceListTax);
 				}
 			}	//	correct included Tax
+			else
+			{
+				int stdPrecision = MCurrency.getStdPrecision(getCtx(), invoice.getC_Currency_ID());
+				MTax tax = MTax.get(getCtx(), C_Tax_ID);
+				if (tax.isSummary())
+				{
+					MTax[] cTaxes = tax.getChildTaxes(false);
+					BigDecimal base = LineNetAmt;
+					for(MTax cTax : cTaxes)
+					{
+						if (cTax.isDistributeTaxWithLineItem())
+						{
+							BigDecimal taxAmt = cTax.calculateTax(base, false, stdPrecision);
+							LineNetAmt = LineNetAmt.add(taxAmt);
+						}
+					}
+				}
+				else if (tax.isDistributeTaxWithLineItem())
+				{
+					BigDecimal taxAmt = tax.calculateTax(LineNetAmt, false, stdPrecision);
+					LineNetAmt = LineNetAmt.add(taxAmt);
+				}
+			}
 
 			docLine.setAmount (LineNetAmt, PriceList, Qty);	//	qty for discount calc
 			if (docLine.isItem())
@@ -291,10 +343,11 @@ public class Doc_Invoice extends Doc
 	}	//	getPrecision
 
 
-	/**************************************************************************
+	/**
 	 *  Get Source Currency Balance - subtracts line and tax amounts from total - no rounding
 	 *  @return positive amount, if total invoice is bigger than lines
 	 */
+	@Override
 	public BigDecimal getBalance()
 	{
 		BigDecimal retValue = Env.ZERO;
@@ -354,6 +407,7 @@ public class Doc_Invoice extends Doc
 	 *  @param as accounting schema
 	 *  @return Fact
 	 */
+	@Override
 	public ArrayList<Fact> createFacts (MAcctSchema as)
 	{
 		//
@@ -418,9 +472,7 @@ public class Doc_Invoice extends Doc
 
 			//  Receivables     DR
 			int receivables_ID = getValidCombination_ID(Doc.ACCTTYPE_C_Receivable, as);
-			// Deprecated IDEMPIERE-362
-			// int receivablesServices_ID = getValidCombination_ID (Doc.ACCTTYPE_C_Receivable_Services, as);
-			int receivablesServices_ID = receivables_ID;
+			int receivablesServices_ID = receivables_ID; // Receivable Services account Deprecated IDEMPIERE-362
 			if (m_allLinesItem || !as.isPostServices()
 				|| receivables_ID == receivablesServices_ID)
 			{
@@ -502,7 +554,7 @@ public class Doc_Invoice extends Doc
 
 			//  Receivables             CR
 			int receivables_ID = getValidCombination_ID (Doc.ACCTTYPE_C_Receivable, as);
-			int receivablesServices_ID = getValidCombination_ID (Doc.ACCTTYPE_C_Receivable_Services, as);
+			int receivablesServices_ID = receivables_ID; // Receivable Services account Deprecated IDEMPIERE-362
 			if (m_allLinesItem || !as.isPostServices()
 				|| receivables_ID == receivablesServices_ID)
 			{
@@ -608,9 +660,7 @@ public class Doc_Invoice extends Doc
 
 			//  Liability               CR
 			int payables_ID = getValidCombination_ID (Doc.ACCTTYPE_V_Liability, as);
-			// Deprecated IDEMPIERE-362
-			// int payablesServices_ID = getValidCombination_ID (Doc.ACCTTYPE_V_Liability_Services, as);
-			int payablesServices_ID = payables_ID;
+			int payablesServices_ID = payables_ID; // Liability Services account Deprecated IDEMPIERE-362
 			if (m_allLinesItem || !as.isPostServices()
 				|| payables_ID == payablesServices_ID)
 			{
@@ -717,7 +767,7 @@ public class Doc_Invoice extends Doc
 
 			//  Liability       DR
 			int payables_ID = getValidCombination_ID (Doc.ACCTTYPE_V_Liability, as);
-			int payablesServices_ID = getValidCombination_ID (Doc.ACCTTYPE_V_Liability_Services, as);
+			int payablesServices_ID = payables_ID; // Liability Services account Deprecated IDEMPIERE-362
 			if (m_allLinesItem || !as.isPostServices()
 				|| payables_ID == payablesServices_ID)
 			{
@@ -759,7 +809,7 @@ public class Doc_Invoice extends Doc
 	}   //  createFact
 
 	/**
-	 * 	Create Fact Cash Based (i.e. only revenue/expense)
+	 * 	Create Fact for Cash Based accounting (i.e. only revenue/expense)
 	 *	@param as accounting schema
 	 *	@param fact fact to add lines to
 	 *	@param multiplier source amount multiplier
@@ -864,11 +914,11 @@ public class Doc_Invoice extends Doc
 
 
 	/**
-	 * 	Create Landed Cost accounting & Cost lines
+	 * 	Create Landed Cost accounting and Cost lines
 	 *	@param as accounting schema
 	 *	@param fact fact
 	 *	@param line document line
-	 *	@param dr DR entry (normal api)
+	 *	@param dr true for DR side, false otherwise
 	 *	@return true if landed costs were created
 	 */
 	protected boolean landedCost (MAcctSchema as, Fact fact, DocLine line, boolean dr)
@@ -1148,7 +1198,6 @@ public class Doc_Invoice extends Doc
 			.append("FROM C_Invoice i, C_InvoiceLine il ")
 			.append("WHERE i.C_Invoice_ID=il.C_Invoice_ID")
 			.append(" AND po.M_Product_ID=il.M_Product_ID AND po.C_BPartner_ID=i.C_BPartner_ID");
-			//jz + " AND ROWNUM=1 AND i.C_Invoice_ID=").append(get_ID()).append(") ")
 			if (DB.isOracle()) //jz
 			{
 				sql.append(" AND ROWNUM=1 ");

@@ -13,11 +13,13 @@
  * For the text or an alternative of this public license, you may reach us    *
  * Posterita Ltd., 3, Draper Avenue, Quatre Bornes, Mauritius                 *
  * or via info@posterita.org or http://www.posterita.org/                     *
+ *                                                                            *
+ * Contributor:                                                               *
+ *   Andreas Sumerauer                                                        *
  *****************************************************************************/
 
 package org.adempiere.webui.editor;
 
-import java.beans.PropertyChangeEvent;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Properties;
@@ -26,6 +28,7 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
 import org.adempiere.webui.ClientInfo;
+import org.adempiere.webui.Extensions;
 import org.adempiere.webui.ValuePreference;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.AutoComplete;
@@ -33,8 +36,9 @@ import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.event.ContextMenuEvent;
 import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.DialogEvents;
+import org.adempiere.webui.event.DrillEvent.DrillData;
 import org.adempiere.webui.event.ValueChangeEvent;
-import org.adempiere.webui.grid.WQuickEntry;
+import org.adempiere.webui.grid.AbstractWQuickEntry;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.WFieldRecordInfo;
@@ -47,9 +51,11 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLocation;
 import org.compiere.model.MLocator;
 import org.compiere.model.MLookup;
+import org.compiere.model.MQuery;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
+import org.compiere.model.SystemIDs;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.CacheMgt;
@@ -67,15 +73,14 @@ import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zk.ui.event.InputEvent;
 import org.zkoss.zk.ui.sys.SessionCtrl;
-import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zk.ui.util.DesktopCleanup;
 import org.zkoss.zul.Comboitem;
 import org.zkoss.zul.Menuitem;
 
 /**
- *
+ * Default editor for display type TableDir, TableDirUU, Table, TableUU and List.
+ * Implemented with {@link EditorCombobox} or {@link EditorAutoComplete} (AD_Field.IsAutoComplete=Y) component.
  * @author  <a href="mailto:agramdass@gmail.com">Ashley G Ramdass</a>
  * @date    Mar 12, 2007
  * @version $Revision: 0.10 $
@@ -83,7 +88,19 @@ import org.zkoss.zul.Menuitem;
 public class WTableDirEditor extends WEditor implements ListDataListener, 
 ContextMenuListener, IZoomableEditor
 {
-    public final static String[] LISTENER_EVENTS = {Events.ON_SELECT};
+	/** custom script for up arrow key processed */
+    private static final String UP_PRESSED_OVERRIDE_SCRIPT = "function(evt) {"
+			+ "   if (!this.isOpen()) this.open();"
+			+ "   this.$upPressed_(evt);"
+			+ "}";
+
+    /** custom script for down arrow key processed */
+	private static final String DOWN_PRESSED_OVERRIDE_SCRIPT = "function(evt) {"
+			+ "   if (!this.isOpen()) this.open();"
+			+ "   this.$dnPressed_(evt);"
+			+ "}";
+
+	public final static String[] LISTENER_EVENTS = {Events.ON_SELECT};
     
     @SuppressWarnings("unused")
 	private static final CLogger logger;
@@ -94,15 +111,26 @@ ContextMenuListener, IZoomableEditor
     }
     
     private Lookup  lookup;
+    /** ID, UUID or AD_RefList Value */
     private Object oldValue;
+    /** Reference/target table name */
+    private String m_tableName = null;
+    /** Reference/target key column name */
+	private String m_keyColumnName = null;
 
+	/** Context menu item attribute to store context menu event name/id */
     public static final String SHORT_LIST_EVENT = "SHORT_LIST";	// IDEMPIERE 90
+    /** true if lookup only contain short list items (i.e with IsShortList=Y) */
     protected boolean onlyShortListItems;	// IDEMPIERE 90
 
+    /** CCache listener to auto refresh lookup list */
 	private CCacheListener tableCacheListener;
 
+	/** true if editor is handling ON_SELECT event */
 	private boolean onselecting = false;
 
+	private boolean retainSelectedValueAfterRefresh = true;
+	
 	/**
 	 * 
 	 * @param gridField
@@ -130,9 +158,9 @@ ContextMenuListener, IZoomableEditor
 	 * Constructor for use if a grid field is unavailable
 	 * 
 	 * @param lookup		Store of selectable data
-	 * @param label			column name (not displayed)
+	 * @param label			field label
 	 * @param description	description of component
-	 * @param mandatory		whether a selection must be made
+	 * @param mandatory		whether field is mandatory
 	 * @param readonly		whether or not the editor is read only
 	 * @param updateable	whether the editor contents can be changed
 	 */   
@@ -141,11 +169,29 @@ ContextMenuListener, IZoomableEditor
     	this(lookup, label, description, mandatory, readonly, updateable, false);
 	}
     
+    /**
+     * @param lookup
+     * @param label
+     * @param description
+     * @param mandatory
+     * @param readonly
+     * @param updateable
+     * @param autocomplete
+     */
     public WTableDirEditor(Lookup lookup, String label, String description, boolean mandatory, boolean readonly, boolean updateable, boolean autocomplete)
     {
     	this(autocomplete ? new EditorAutoComplete() : new EditorCombobox(), lookup, label, description, mandatory, readonly, updateable);
     }
     
+    /**
+     * @param comp
+     * @param lookup
+     * @param label
+     * @param description
+     * @param mandatory
+     * @param readonly
+     * @param updateable
+     */
     private WTableDirEditor(Component comp, Lookup lookup, String label, String description, boolean mandatory, boolean readonly, boolean updateable)
     {
     	super(comp, label, description, mandatory, readonly, updateable);
@@ -162,7 +208,6 @@ ContextMenuListener, IZoomableEditor
 	}
     
     /**
-     * For ease of porting swing form
      * @param columnName
      * @param mandatory
      * @param isReadOnly
@@ -174,11 +219,27 @@ ContextMenuListener, IZoomableEditor
     	this(columnName, mandatory, isReadOnly, isUpdateable, lookup, false);
     }
     
+    /**
+     * @param columnName
+     * @param mandatory
+     * @param isReadOnly
+     * @param isUpdateable
+     * @param lookup
+     * @param autocomplete
+     */
     public WTableDirEditor(String columnName, boolean mandatory, boolean isReadOnly, boolean isUpdateable, Lookup lookup, boolean autocomplete)
     {
     	this(autocomplete ? new EditorAutoComplete() : new EditorCombobox(), columnName, mandatory, isReadOnly, isUpdateable, lookup);
     }
     
+    /**
+     * @param comp Component
+     * @param columnName
+     * @param mandatory
+     * @param isReadOnly
+     * @param isUpdateable
+     * @param lookup
+     */
     private WTableDirEditor(Component comp, String columnName, boolean mandatory, boolean isReadOnly, boolean isUpdateable, Lookup lookup)
     {
     	super(comp, columnName, null, null, mandatory, isReadOnly, isUpdateable);
@@ -191,25 +252,36 @@ ContextMenuListener, IZoomableEditor
     	init();
     }
     
+    /**
+     * Init component and context menu
+     */
     private void init()
     {
     	ZKUpdateUtil.setWidth(getComponent(), "200px"); 
         getComponent().setAutocomplete(true);
-        getComponent().setAutodrop(true);
+        getComponent().setAutodrop(false);
+        getComponent().setInstantSelect(false);
     	getComponent().addEventListener(Events.ON_BLUR, this);
         if (getComponent() instanceof EditorAutoComplete) {
         	;
         } else {
-        	getComponent().addEventListener(Events.ON_CHANGING, this);
+        	getComponent().addScrollSelectedIntoViewListener();
         }
 
+        //auto open for up/down key
+        if (MSysConfig.getBooleanValue(MSysConfig.ZK_AUTO_SAVE_CHANGES, false, Env.getAD_Client_ID(Env.getCtx())))
+        {
+        	getComponent().setWidgetOverride("dnPressed_", DOWN_PRESSED_OVERRIDE_SCRIPT);
+        	getComponent().setWidgetOverride("upPressed_", UP_PRESSED_OVERRIDE_SCRIPT);
+        }
+        
         boolean zoom= false;
         if (lookup != null)
         {
             lookup.addListDataListener(this);
             lookup.setMandatory(isMandatory());
             
-            if ((lookup.getDisplayType() == DisplayType.List && Env.getContextAsInt(Env.getCtx(), "#AD_Role_ID") == 0)
+            if ((lookup.getDisplayType() == DisplayType.List && Env.getContextAsInt(Env.getCtx(), Env.AD_ROLE_ID) == SystemIDs.ROLE_SYSTEM)
             		|| lookup.getDisplayType() != DisplayType.List) 
             {
     			zoom= true;
@@ -222,15 +294,19 @@ ContextMenuListener, IZoomableEditor
             	refreshList();            
         }
         
-        String tableName_temp = lookup.getColumnName();	// Returns AD_Org.AD_Org_ID
+        String tableName_temp = lookup.getColumnName();	// Returns [table name].[key column name]
         int posPoint = tableName_temp.indexOf(".");
 		String tableName = tableName_temp.substring(0, posPoint);
 		
+		boolean enableDrill = false;
+		if(getGridField() != null && getGridField().getGridTab() != null && getGridField().getColumnName().endsWith("_ID") 
+				&& MRole.getDefault().isCanReport(getGridField().getGridTab().getAD_Table_ID()))
+			enableDrill = true;
         if (tableName.toUpperCase().equals("C_BPARTNER_LOCATION"))    				
 		{
-			popupMenu = new WEditorPopupMenu(true, true, isShowPreference(), false, false, true, lookup);
+			popupMenu = new WEditorPopupMenu(true, true, isShowPreference(), false, false, true, enableDrill, lookup);
 		} else {
-        	popupMenu = new WEditorPopupMenu(zoom, true, isShowPreference(), false, false, false, lookup);
+        	popupMenu = new WEditorPopupMenu(zoom, true, isShowPreference(), false, false, false, enableDrill, lookup);
 		}
     	addChangeLogMenu(popupMenu);
     	
@@ -241,7 +317,7 @@ ContextMenuListener, IZoomableEditor
         	if (lookup != null && (lookup.getDisplayType() == DisplayType.TableDir || lookup.getDisplayType() == DisplayType.Table))	// only for Table & TableDir
         	{
     			MTable table = MTable.get(Env.getCtx(), tableName);
-    			isShortListAvailable = (table.getColumnIndex("IsShortList") >= 0);
+    			isShortListAvailable = table.columnExistsInDB("IsShortList");
         		if (isShortListAvailable)
         		{
         			onlyShortListItems=true;
@@ -268,6 +344,9 @@ ContextMenuListener, IZoomableEditor
         	getComponent().setPlaceholder(gridField.getPlaceholder());
     }
 
+    /**
+     * Create {@link #tableCacheListener} instance
+     */
 	private void createCacheListener() {
 		if (lookup != null) {
 			String columnName = lookup.getColumnName();
@@ -308,6 +387,7 @@ ContextMenuListener, IZoomableEditor
         return retVal;
     }
 
+    @Override
     public void setValue(Object value)
     {
     	if (onselecting) {
@@ -406,6 +486,9 @@ ContextMenuListener, IZoomableEditor
 		getComponent().setButtonVisible(readWrite);
 	}
 
+	/**
+	 * Refresh lookup list
+	 */
 	private void refreshList()
     {
     	if (getComponent().getItemCount() > 0)
@@ -424,7 +507,7 @@ ContextMenuListener, IZoomableEditor
 	                if (obj instanceof KeyNamePair)
 	                {
 	                    KeyNamePair lookupKNPair = (KeyNamePair) obj;
-	                    getComponent().appendItem(lookupKNPair.getName(), lookupKNPair.getKey());
+	                    getComponent().appendItem(lookupKNPair.getName().length()==0 ? " " : lookupKNPair.getName(), lookupKNPair.getKey());
 	                    if (!found && oldValue != null && oldValue instanceof Integer &&
 	                    	lookupKNPair.getKey() == (Integer)oldValue)
 	                    {
@@ -434,7 +517,7 @@ ContextMenuListener, IZoomableEditor
 	                else if (obj instanceof ValueNamePair)
 	                {
 	                    ValueNamePair lookupKNPair = (ValueNamePair) obj;
-	                    getComponent().appendItem(lookupKNPair.getName(), lookupKNPair.getValue());
+	                    getComponent().appendItem(lookupKNPair.getName().length()==0 ? " " : lookupKNPair.getName(), lookupKNPair.getValue());
 	                    if (!found && oldValue != null && lookupKNPair.getValue().equals(oldValue.toString()))
 		                {
 	                    	found = true;
@@ -443,14 +526,14 @@ ContextMenuListener, IZoomableEditor
 	                else if (obj instanceof MLocator)
 	                {
 	                	MLocator lookupKNPair = (MLocator) obj;
-	                    getComponent().appendItem(lookupKNPair.getValue(), lookupKNPair.getM_Locator_ID());
+	                    getComponent().appendItem(lookupKNPair.getValue().length()==0 ? " " : lookupKNPair.getValue(), lookupKNPair.getM_Locator_ID());
 	                    if (!found && oldValue != null && lookupKNPair.getM_Locator_ID() == (Integer) oldValue)
 		                {
 	                    	found = true;
 	                	}
 	            	}
 	        	}	        	        
-	            if (!found && oldValue != null)
+	            if (!found && oldValue != null && isRetainSelectedValueAfterRefresh())
 	            {
 	            	NamePair pair = lookup.getDirect(oldValue, false, true);
 	            	if (pair != null) {
@@ -513,6 +596,7 @@ ContextMenuListener, IZoomableEditor
     	getComponent().setValue(oldValue);
     }
     
+	@Override
     public void onEvent(Event event)
     {
     	if (Events.ON_SELECT.equalsIgnoreCase(event.getName()))
@@ -533,7 +617,7 @@ ContextMenuListener, IZoomableEditor
 		        			gridField.setLookupEditorSettingValue(false);
 		        	}
 		        }
-		        if (newValue != null)
+		        if (newValue != null && !MSysConfig.getBooleanValue(MSysConfig.ZK_AUTO_SAVE_CHANGES, false, Env.getAD_Client_ID(Env.getCtx())))
 		        	focusNext();
     		} finally {
     			onselecting = false;
@@ -550,7 +634,7 @@ ContextMenuListener, IZoomableEditor
     		else 
     		{
     			//on select not fire for empty label item
-    			if (item.getLabel().equals(""))
+    			if (Util.isEmpty(item.getLabel(),true))
     			{
     				Object newValue = getValue();
     				if (isValueChange(newValue)) {
@@ -567,8 +651,6 @@ ContextMenuListener, IZoomableEditor
     				}
     			}
     		}
-    	} else if (event.getName().equals(Events.ON_CHANGING)) {
-    		onChanging((InputEvent) event);
     	} else if (event.getName().equals("onPostSelect")) {
     		if (getComponent().isOpen()) {
 	    		getComponent().select();
@@ -578,45 +660,38 @@ ContextMenuListener, IZoomableEditor
     	} 
     }
 
-    private void onChanging(InputEvent event) {
-		String v = event.getValue();
-		if (!Util.isEmpty(v)) {
-			v = v.toLowerCase();
-			int count = getComponent().getItemCount();
-			for(int i = 0; i < count; i++) {
-				Comboitem item = getComponent().getItemAtIndex(i);
-				if(item.getLabel() != null && item.getLabel().toLowerCase().startsWith(v)) {
-					Clients.scrollIntoView(item);
-					break;
-				}
-			}
-		} else if (getComponent().getItemCount() > 0) {
-			Comboitem item = getComponent().getItemAtIndex(0);
-			Clients.scrollIntoView(item);
-		}
-	}
-
+	/**
+	 * @param newValue
+	 * @return true if newValue is different from {@link #oldValue}
+	 */
 	private boolean isValueChange(Object newValue) {
 		return (oldValue == null && newValue != null) || (oldValue != null && newValue == null) 
 			|| ((oldValue != null && newValue != null) && !oldValue.equals(newValue));
 	}
     
+	@Override
     public String[] getEvents()
     {
         return LISTENER_EVENTS;
     }
 
+	@Override
     public void contentsChanged(ListDataEvent e)
     {
         refreshList();
     }
 
+	@Override
     public void intervalAdded(ListDataEvent e)
     {}
 
+	@Override
     public void intervalRemoved(ListDataEvent e)
     {}
     
+	/**
+	 * Refresh lookup list
+	 */
     public void actionRefresh()
     {    	
 		if (lookup != null)
@@ -642,15 +717,65 @@ ContextMenuListener, IZoomableEditor
     /* (non-Javadoc)
 	 * @see org.adempiere.webui.editor.IZoomableEditor#actionZoom()
 	 */
+    @Override
     public void actionZoom()
 	{
    		AEnv.actionZoom(lookup, getValue());
 	}
     
+    /**
+     * @return Lookup
+     */
     public Lookup getLookup()
     {
     	return lookup;
     }
+    
+    /**
+     * Open drill assistant dialog
+     */
+    protected void actionDrill() {
+    	if(getGridField() == null || getGridField().getGridTab() == null)
+    		return;
+    	if(m_tableName == null)
+    		setTableAndKeyColumn();
+    	if(m_keyColumnName == null)
+    		m_keyColumnName = getGridField().getColumnName();
+    	if(!m_keyColumnName.endsWith("_ID"))
+    		return;
+		MQuery query = new MQuery(m_tableName);
+		query.addRestriction(m_keyColumnName, MQuery.EQUAL, oldValue);
+		int windowNo = getGridField().getGridTab().getWindowNo();
+		DrillData data = new DrillData(query, m_keyColumnName, oldValue, null, null);
+		
+		AEnv.actionDrill(data, windowNo);
+	}
+    
+    /**
+	 * Set {@link #m_tableName} and {@link #m_keyColumnName}.
+	 */
+	private void setTableAndKeyColumn() {
+		if (lookup != null && lookup instanceof MLookup) {
+			// foreign table defined in lookup
+			m_keyColumnName = ((MLookup)lookup).getColumnName();
+			if (m_keyColumnName.contains(".")) {
+				m_tableName = m_keyColumnName.substring(0, m_keyColumnName.indexOf("."));
+				m_keyColumnName = m_keyColumnName.substring(m_keyColumnName.indexOf(".")+1);
+			} else {
+				m_tableName = m_keyColumnName.substring(0, m_keyColumnName.length()-3);
+			}
+		} else if (getGridField() != null && getGridField().getGridTab() != null && getGridField().getAD_Column_ID() > 0) {
+			// field - this editor comes from a window, when it comes from process parameter it doesn't have a gridtab
+			MColumn column = MColumn.get(Env.getCtx(), getGridField().getAD_Column_ID());
+			m_tableName = column.getReferenceTableName();
+			MTable table = MTable.get(Env.getCtx(), m_tableName);
+			m_keyColumnName = table.getKeyColumns()[0];
+		} else {
+			// no field - the search editor is defined programmatically
+			m_keyColumnName = getColumnName();
+			m_tableName = m_keyColumnName.substring(0, m_keyColumnName.length()-3);
+		}
+	}
     
 	/**
 	 *	Action - Special Quick Entry Screen
@@ -662,7 +787,7 @@ ContextMenuListener, IZoomableEditor
 			return;
 
 		int tabNo = gridField != null && gridField.getGridTab() != null ? gridField.getGridTab().getTabNo() : 0;
-		final WQuickEntry vqe = new WQuickEntry(lookup.getWindowNo(), tabNo, lookup.getZoom());
+		final AbstractWQuickEntry vqe = Extensions.getQuickEntry(lookup.getWindowNo(), tabNo, lookup.getZoom());
 		int Record_ID = 0;
 
 		Object value = getValue();
@@ -671,7 +796,7 @@ ContextMenuListener, IZoomableEditor
 		{
 			if (value instanceof Integer)
 				Record_ID = ((Integer)value).intValue();
-			else if (value != null && "".compareTo(value.toString())!= 0)
+			else if (!Util.isEmpty(value.toString(),true))
 				Record_ID = Integer.parseInt(value.toString());
 		}
 
@@ -702,6 +827,9 @@ ContextMenuListener, IZoomableEditor
 		AEnv.showWindow(vqe);		
 	}	//	actionQuickEntry
 
+	/**
+	 * Open {@link WLocationDialog}
+	 */
 	protected void actionLocation() {
 		int BPLocation_ID = 0;
 		Object value = getValue();
@@ -722,6 +850,7 @@ ContextMenuListener, IZoomableEditor
 
 	} // actionLocation
 
+	@Override
 	public void onMenu(ContextMenuEvent evt) 
 	{
 		if (WEditorPopupMenu.REQUERY_EVENT.equals(evt.getContextEvent()))
@@ -772,15 +901,11 @@ ContextMenuListener, IZoomableEditor
 				getLabel().setText(">" + champ + "<");
 			}
 		}
-		// IDEMPIERE 90
-	}
-	
-	public  void propertyChange(PropertyChangeEvent evt)
-	{
-		if ("FieldValue".equals(evt.getPropertyName()))
+		else if (WEditorPopupMenu.DRILL_EVENT.equals(evt.getContextEvent()))
 		{
-			setValue(evt.getNewValue());
+			actionDrill();
 		}
+		// IDEMPIERE 90
 	}
 	
 	@Override
@@ -805,7 +930,7 @@ ContextMenuListener, IZoomableEditor
 	@Override
 	public String getDisplayTextForGridView(Object value) {
 		String s = super.getDisplayTextForGridView(value);
-		if (ClientInfo.isMobile( )&& MSysConfig.getBooleanValue(MSysConfig.ZK_GRID_MOBILE_LINE_BREAK_AS_IDENTIFIER_SEPARATOR, true)) {
+		if (s != null && ClientInfo.isMobile( ) && MSysConfig.getBooleanValue(MSysConfig.ZK_GRID_MOBILE_LINE_BREAK_AS_IDENTIFIER_SEPARATOR, true)) {
 			String separator = MSysConfig.getValue(MSysConfig.IDENTIFIER_SEPARATOR, null, Env.getAD_Client_ID(Env.getCtx()));
 			if (!Util.isEmpty(separator, true) && s.indexOf(separator) >= 0) {
 				s = s.replace(separator, "\n");
@@ -814,6 +939,9 @@ ContextMenuListener, IZoomableEditor
 		return s;
 	}
 
+	/**
+	 * Custom {@link Combobox} class 
+	 */
 	private static class EditorCombobox extends Combobox implements ITableDirEditor {
 		/**
 		 * generated serial id
@@ -822,8 +950,7 @@ ContextMenuListener, IZoomableEditor
 		private WTableDirEditor editor;
 		private DesktopCleanup listener = null;
 
-		protected EditorCombobox() {
-			
+		protected EditorCombobox() {			
 		}
 		
 		@Override
@@ -831,6 +958,9 @@ ContextMenuListener, IZoomableEditor
 			super.setPage(page);			
 		}
 
+		/**
+		 * Create CCache listener
+		 */
 		@Override
 		public void onPageAttached(Page newpage, Page oldpage) {
 			super.onPageAttached(newpage, oldpage);
@@ -857,7 +987,7 @@ ContextMenuListener, IZoomableEditor
 		}
 
 		/**
-		 * 
+		 * Clean up CCache listener
 		 */
 		public void cleanup() {
 			if (editor.tableCacheListener != null) {
@@ -872,6 +1002,9 @@ ContextMenuListener, IZoomableEditor
 		}		
 	}
 	
+	/**
+	 * Custom {@link AutoComplete} class 
+	 */
 	private static class EditorAutoComplete extends AutoComplete implements ITableDirEditor {	
 		/**
 		 * generated serial id
@@ -881,7 +1014,6 @@ ContextMenuListener, IZoomableEditor
 		private DesktopCleanup listener = null;
 
 		protected EditorAutoComplete() {
-			
 		}
 		
 		@Override
@@ -889,6 +1021,9 @@ ContextMenuListener, IZoomableEditor
 			super.setPage(page);			
 		}
 
+		/**
+		 * Create CCache listener instance
+		 */
 		@Override
 		public void onPageAttached(Page newpage, Page oldpage) {
 			super.onPageAttached(newpage, oldpage);
@@ -915,7 +1050,7 @@ ContextMenuListener, IZoomableEditor
 		}
 
 		/**
-		 * 
+		 * Clean up CCache listener
 		 */
 		public void cleanup() {
 			if (editor.tableCacheListener != null) {
@@ -933,7 +1068,7 @@ ContextMenuListener, IZoomableEditor
 		public void setValue(String value) 
 		{
 			setText(value);
-			if (Util.isEmpty(value)) {
+			if (Util.isEmpty(value,true)) {
 				refresh("");
 			}
 		}
@@ -941,27 +1076,36 @@ ContextMenuListener, IZoomableEditor
 		
 	}
 	
+	/**
+	 * CCache listener to auto refresh lookup list 
+	 */
 	private static class CCacheListener extends CCache<String, Object> {
 		/**
 		 * generated serial
 		 */
-		private static final long serialVersionUID = 3543247404379028327L;
+		private static final long serialVersionUID = 7813673017009600392L;
 		private WTableDirEditor editor;
 		
 		protected CCacheListener(String tableName, WTableDirEditor editor) {
-			super(tableName, tableName+"|CCacheListener", 0, 0, true);
+			super(tableName, tableName+"|CCacheListener", 0, 0, false);
 			this.editor = editor;
 		}
 
 		@Override
 		public int reset() {			
-			if (editor.getComponent().getDesktop() != null && editor.isReadWrite()) {
-				refreshLookupList();
-			}
+			refreshLookupList();
 			return 0;					
 		}
 
+		@Override
+		public int reset(int recordId) {
+			refreshLookupList();
+			return 0;
+		}
+
 		private void refreshLookupList() {
+			if (editor.getComponent().getDesktop() == null || !editor.isReadWrite())
+				return;
 			Desktop desktop = editor.getComponent().getDesktop();
 			boolean alive = false;
 			if (desktop.isAlive() && desktop.getSession() != null) {
@@ -985,9 +1129,22 @@ ContextMenuListener, IZoomableEditor
 				
 		@Override
 		public void newRecord(int record_ID) {
-			if (editor.getComponent().getDesktop() != null && editor.isReadWrite()) {
-				refreshLookupList();
-			}
+			refreshLookupList();
 		}
+	}
+
+	/**
+	 * @return true if current selected value is always retain after refresh of list
+	 */
+	public boolean isRetainSelectedValueAfterRefresh() {
+		return retainSelectedValueAfterRefresh;
+	}
+
+	/**
+	 * set whether current selected value is always retain after refresh of list
+	 * @param retainSelectedValueAfterRefresh
+	 */
+	public void setRetainSelectedValueAfterRefresh(boolean retainSelectedValueAfterRefresh) {
+		this.retainSelectedValueAfterRefresh = retainSelectedValueAfterRefresh;
 	}
 }

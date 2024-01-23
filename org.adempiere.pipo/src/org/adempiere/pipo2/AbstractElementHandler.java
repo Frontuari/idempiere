@@ -22,6 +22,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -29,11 +31,11 @@ import java.util.logging.Level;
 
 import javax.xml.transform.sax.TransformerHandler;
 
+import org.adempiere.pipo2.exception.DatabaseAccessException;
 import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
-import org.compiere.model.X_AD_EntityType;
 import org.compiere.model.X_AD_Package_Imp_Backup;
 import org.compiere.model.X_AD_Package_Imp_Detail;
 import org.compiere.util.CLogger;
@@ -42,11 +44,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-
-import java.sql.ResultSet;
-import java.sql.PreparedStatement;
-
-import org.adempiere.pipo2.exception.DatabaseAccessException;
 
 /**
  *
@@ -71,7 +68,7 @@ public abstract class AbstractElementHandler implements ElementHandler {
 		impDetail.setType(type);
 		impDetail.setName("");
 		impDetail.setAction("");
-		impDetail.setRecord_ID(1);
+		impDetail.setRecord_ID(0);
 		impDetail.setTableName(tableName);
 		impDetail.setAD_Table_ID(tableId);
 		impDetail.saveEx(getTrxName(ctx));
@@ -93,13 +90,84 @@ public abstract class AbstractElementHandler implements ElementHandler {
      */
     public void logImportDetail (PIPOContext ctx, X_AD_Package_Imp_Detail detail, int success, String objectName, int objectID,
     		String action) throws SAXException{
-		String result = success == 1 ? "Success" : "Failure";
+    	logImportDetail (ctx, detail, success, objectName, objectID, null, action, null, null);
+    }
+
+	/**
+     *	Write results to log and records in history table
+     *
+     *		@param ctx
+     *      @param success
+     *      @param detail
+     *      @param objectName
+     *      @param objectID
+     *      @param objectUU
+     *      @param action
+     * 		@throws SAXException
+     *
+     */
+    public void logImportDetail (PIPOContext ctx, X_AD_Package_Imp_Detail detail, int success, String objectName, int objectID, String objectUU,
+    		String action) throws SAXException{
+    	logImportDetail (ctx, detail, success, objectName, objectID, objectUU, action, null, null);
+    }
+
+	/**
+     *	Write results to log and records in history table
+     *
+     *		@param ctx
+     *      @param success
+     *      @param detail
+     *      @param objectName
+     *      @param objectID
+     *      @param action
+     *      @param execCode
+     *      @param result
+     * 		@throws SAXException
+     *
+     */
+    public void logImportDetail (PIPOContext ctx, X_AD_Package_Imp_Detail detail, int success, String objectName, int objectID,
+    		String action, String execCode, String result) throws SAXException{
+    	logImportDetail (ctx, detail, success, objectName, objectID, null, action, execCode, result);
+    }
+
+	/**
+     *	Write results to log and records in history table
+     *
+     *		@param ctx
+     *      @param success
+     *      @param detail
+     *      @param objectName
+     *      @param objectID
+     *      @param objectUU
+     *      @param action
+     *      @param execCode
+     *      @param result
+     * 		@throws SAXException
+     *
+     */
+    public void logImportDetail (PIPOContext ctx, X_AD_Package_Imp_Detail detail, int success, String objectName, int objectID, String objectUU,
+    		String action, String execCode, String result) throws SAXException{
+		String msgSuccess = success == 1 ? "Success" : "Failure";
+
+		// try to figure out the UUID when empty
+		if (Util.isEmpty(objectUU) && objectID > 0 && detail.getAD_Table_ID() > 0) {
+			MTable table = MTable.get(ctx.ctx, detail.getAD_Table_ID(), getTrxName(ctx));
+			PO po = table.getPO(objectID, getTrxName(ctx));
+			if (po != null)
+				objectUU = po.get_UUID();
+		}
 
 		detail.setName(objectName);
 		detail.setAction(action);
-		detail.setSuccess(result);
+		detail.setSuccess(msgSuccess);
+		if (execCode != null)
+			detail.setExecCode(execCode);
+		if (result != null)
+			detail.setResult(result);
 		if (objectID >= 0)
 			detail.setRecord_ID(objectID);
+		if (!Util.isEmpty(objectUU))
+			detail.setRecord_UU(objectUU);
 		ctx.packIn.addImportDetail(detail);
 		StringBuilder msg = new StringBuilder(action).append(" ");
 		if (detail.getTableName() != null)
@@ -113,17 +181,15 @@ public abstract class AbstractElementHandler implements ElementHandler {
 
     /**
      *	Make backup copy of record.
-     *
-     *      @param tablename
-     *
-     *
-     *
-     */
-
+	 * @param ctx
+	 * @param AD_Package_Imp_Detail_ID
+	 * @param tableName
+	 * @param from
+	 */
 	public void backupRecord(PIPOContext ctx, int AD_Package_Imp_Detail_ID, String tableName,PO from){
 
     	// Create new record
-		MTable mTable = MTable.get(ctx.ctx, tableName);
+		MTable mTable = MTable.get(ctx.ctx, tableName, getTrxName(ctx));
     	int tableID = mTable.getAD_Table_ID();    			
 		POInfo poInfo = POInfo.getPOInfo(ctx.ctx, tableID);
 
@@ -172,9 +238,8 @@ public abstract class AbstractElementHandler implements ElementHandler {
 
 	/**
      *	Open input file for processing
-     *
-     * 	@param String file with path
-     *
+     * @param filePath file with path
+     * @return
      */
     public FileInputStream OpenInputfile (String filePath) {
 
@@ -193,9 +258,8 @@ public abstract class AbstractElementHandler implements ElementHandler {
 
     /**
      *	Open output file for processing
-     *
-     * 	@param String file with path
-     *
+     * @param filePath file with path
+     * @return
      */
     public OutputStream OpenOutputfile (String filePath) {
 
@@ -214,9 +278,9 @@ public abstract class AbstractElementHandler implements ElementHandler {
 
     /**
      *	Copyfile
-     *
-     * 	@param String file with path
-     *
+     * @param source
+     * @param target
+     * @return
      */
     public int copyFile (InputStream source,OutputStream target) {
 
@@ -292,7 +356,11 @@ public abstract class AbstractElementHandler implements ElementHandler {
      * @return boolean
      */
     protected boolean isProcessElement(Properties ctx, String entityType) {
-    	if ("D".equals(entityType) || "C".equals(entityType)) {
+		if (PO.ENTITYTYPE_Dictionary.equals(entityType)
+				|| "EE01".equals(entityType)
+				|| "EE02".equals(entityType)
+				|| "EE04".equals(entityType)
+				|| "EE05".equals(entityType)) {
     		return "Y".equalsIgnoreCase(getUpdateMode(ctx));
     	} else {
     		return true;
@@ -363,8 +431,7 @@ public abstract class AbstractElementHandler implements ElementHandler {
     /**
      * Returns option - Is export-import of AD translations is needed
      * @param ctx
-     * @param entityType
-     * @return boolean
+     * @return
      */
     protected boolean isHandleTranslations(Properties ctx) {
 
@@ -392,9 +459,10 @@ public abstract class AbstractElementHandler implements ElementHandler {
      * @param expectedName
      * @return Parent element record id
      */
-    protected int getParentId(Element element, String expectedName) {
+    protected Object getParentId(Element element, String expectedName) {
     	if (element.parent != null && element.parent.getElementValue().equals(expectedName) &&
-    			element.parent.recordId > 0)
+    			(   (element.parent.recordId instanceof Integer && (Integer)element.parent.recordId > 0)
+    			 || (element.parent.recordId instanceof String && !Util.isEmpty((String)element.parent.recordId))))
     		return element.parent.recordId;
     	else
     		return 0;
@@ -528,7 +596,11 @@ public abstract class AbstractElementHandler implements ElementHandler {
 		}
 		if (!ctx.packOut.isExportDictionaryEntity() && element.get_ColumnIndex("EntityType") >= 0) {
 			Object entityType = element.get_Value("EntityType");
-			if (X_AD_EntityType.ENTITYTYPE_Dictionary.equals(entityType)) {
+			if (PO.ENTITYTYPE_Dictionary.equals(entityType)
+				|| "EE01".equals(entityType)
+				|| "EE02".equals(entityType)
+				|| "EE04".equals(entityType)
+				|| "EE05".equals(entityType)) {
 				return false;
 			}
 		}

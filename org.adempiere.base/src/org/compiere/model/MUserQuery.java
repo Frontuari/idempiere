@@ -19,6 +19,8 @@ package org.compiere.model;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -38,7 +40,7 @@ public class MUserQuery extends X_AD_UserQuery
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 488522350853249825L;
+	private static final long serialVersionUID = -7615897105314639570L;
 
 	/**
 	 * 	Get all active queries of client for Tab
@@ -52,6 +54,14 @@ public class MUserQuery extends X_AD_UserQuery
 		list.addAll(getAllUsersQueries(ctx, AD_Tab_ID));
 		list.addAll(getClientQueries(ctx, AD_Tab_ID));
 		list.addAll(getRoleQueries(ctx, AD_Tab_ID));
+
+		Collections.sort(list, new Comparator<MUserQuery>() {
+			@Override
+			public int compare(MUserQuery uq1, MUserQuery uq2) {
+				return uq1.getName().compareTo(uq2.getName());
+			}
+		});
+
 		MUserQuery[] retValue = new MUserQuery[list.size()];
 		list.toArray(retValue);
 		return retValue;
@@ -274,6 +284,16 @@ public class MUserQuery extends X_AD_UserQuery
 	/**	Logger	*/
 	private static CLogger s_log = CLogger.getCLogger (MUserQuery.class);
 	
+    /**
+    * UUID based Constructor
+    * @param ctx  Context
+    * @param AD_UserQuery_UU  UUID key
+    * @param trxName Transaction
+    */
+    public MUserQuery(Properties ctx, String AD_UserQuery_UU, String trxName) {
+        super(ctx, AD_UserQuery_UU, trxName);
+    }
+
 	/**************************************************************************
 	 * 	Standard Constructor
 	 *	@param ctx context
@@ -311,7 +331,7 @@ public class MUserQuery extends X_AD_UserQuery
 	}
 	
 	/**
-	 * Returns true if the current user can save the query privately
+	 * Returns true if the current user can save the query privately and is not a SQL Query
 	 * @return
 	 */
 	public boolean userCanSave() {
@@ -320,12 +340,12 @@ public class MUserQuery extends X_AD_UserQuery
 				get_Value(COLUMNNAME_AD_User_ID) == null) //Cannot save privately (user-specific) an already existing global query
 			return false;
 
-		return true;
+		return !getCode().startsWith("@SQL=");
 	}
 	
 	/**
 	 * Returns true if the current users has permission
-	 * to share or modify the query globally
+	 * to share or modify the query globally and is not a SQL Query
 	 * @return
 	 */
 	public boolean userCanShare() {
@@ -333,21 +353,7 @@ public class MUserQuery extends X_AD_UserQuery
         		getAD_Client_ID() != Env.getAD_Client_ID(Env.getCtx())) //Cannot modify a query from another client (e.g. System) 
 			return false;
 
-		return true;
+		return !getCode().startsWith("@SQL=");
 	}
-
-	/** Set User/Contact.
-        @param AD_User_ID
-        User within the system - Internal or Business Partner Contact
-        Overridden to allow saving System record (zero ID)
-	 */
-	@Override
-	public void setAD_User_ID (int AD_User_ID)
-	{
-		if (AD_User_ID == 0) 
-			set_ValueNoCheck (COLUMNNAME_AD_User_ID, AD_User_ID);
-		else 
-			super.setAD_User_ID(AD_User_ID);
-	} //setAD_User_ID
 
 }	//	MUserQuery

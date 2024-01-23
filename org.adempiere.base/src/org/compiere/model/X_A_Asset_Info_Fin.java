@@ -25,21 +25,55 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for A_Asset_Info_Fin
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="A_Asset_Info_Fin")
+public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_A_Asset_Info_Fin (Properties ctx, int A_Asset_Info_Fin_ID, String trxName)
     {
       super (ctx, A_Asset_Info_Fin_ID, trxName);
       /** if (A_Asset_Info_Fin_ID == 0)
+        {
+			setA_Asset_ID (0);
+			setA_Asset_Info_Fin_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Asset_Info_Fin (Properties ctx, int A_Asset_Info_Fin_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, A_Asset_Info_Fin_ID, trxName, virtualColumns);
+      /** if (A_Asset_Info_Fin_ID == 0)
+        {
+			setA_Asset_ID (0);
+			setA_Asset_Info_Fin_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Asset_Info_Fin (Properties ctx, String A_Asset_Info_Fin_UU, String trxName)
+    {
+      super (ctx, A_Asset_Info_Fin_UU, trxName);
+      /** if (A_Asset_Info_Fin_UU == null)
+        {
+			setA_Asset_ID (0);
+			setA_Asset_Info_Fin_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_A_Asset_Info_Fin (Properties ctx, String A_Asset_Info_Fin_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, A_Asset_Info_Fin_UU, trxName, virtualColumns);
+      /** if (A_Asset_Info_Fin_UU == null)
         {
 			setA_Asset_ID (0);
 			setA_Asset_Info_Fin_ID (0);
@@ -53,7 +87,7 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -75,26 +109,26 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
     }
 
 	public org.compiere.model.I_A_Asset getA_Asset() throws RuntimeException
-    {
-		return (org.compiere.model.I_A_Asset)MTable.get(getCtx(), org.compiere.model.I_A_Asset.Table_Name)
-			.getPO(getA_Asset_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_A_Asset)MTable.get(getCtx(), org.compiere.model.I_A_Asset.Table_ID)
+			.getPO(getA_Asset_ID(), get_TrxName());
+	}
 
 	/** Set Asset.
-		@param A_Asset_ID 
-		Asset used internally or by customers
-	  */
+		@param A_Asset_ID Asset used internally or by customers
+	*/
 	public void setA_Asset_ID (int A_Asset_ID)
 	{
-		if (A_Asset_ID < 1) 
+		if (A_Asset_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_A_Asset_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_A_Asset_ID, Integer.valueOf(A_Asset_ID));
 	}
 
 	/** Get Asset.
 		@return Asset used internally or by customers
 	  */
-	public int getA_Asset_ID () 
+	public int getA_Asset_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_A_Asset_ID);
 		if (ii == null)
@@ -103,18 +137,19 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	}
 
 	/** Set Asset Info Financial ID.
-		@param A_Asset_Info_Fin_ID Asset Info Financial ID	  */
+		@param A_Asset_Info_Fin_ID Asset Info Financial ID
+	*/
 	public void setA_Asset_Info_Fin_ID (int A_Asset_Info_Fin_ID)
 	{
-		if (A_Asset_Info_Fin_ID < 1) 
+		if (A_Asset_Info_Fin_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_A_Asset_Info_Fin_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_A_Asset_Info_Fin_ID, Integer.valueOf(A_Asset_Info_Fin_ID));
 	}
 
 	/** Get Asset Info Financial ID.
 		@return Asset Info Financial ID	  */
-	public int getA_Asset_Info_Fin_ID () 
+	public int getA_Asset_Info_Fin_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_A_Asset_Info_Fin_ID);
 		if (ii == null)
@@ -125,13 +160,14 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), String.valueOf(getA_Asset_Info_Fin_ID()));
     }
 
 	/** Set A_Asset_Info_Fin_UU.
-		@param A_Asset_Info_Fin_UU A_Asset_Info_Fin_UU	  */
+		@param A_Asset_Info_Fin_UU A_Asset_Info_Fin_UU
+	*/
 	public void setA_Asset_Info_Fin_UU (String A_Asset_Info_Fin_UU)
 	{
 		set_Value (COLUMNNAME_A_Asset_Info_Fin_UU, A_Asset_Info_Fin_UU);
@@ -139,13 +175,14 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get A_Asset_Info_Fin_UU.
 		@return A_Asset_Info_Fin_UU	  */
-	public String getA_Asset_Info_Fin_UU () 
+	public String getA_Asset_Info_Fin_UU()
 	{
 		return (String)get_Value(COLUMNNAME_A_Asset_Info_Fin_UU);
 	}
 
 	/** Set Contract Date.
-		@param A_Contract_Date Contract Date	  */
+		@param A_Contract_Date Contract Date
+	*/
 	public void setA_Contract_Date (Timestamp A_Contract_Date)
 	{
 		set_Value (COLUMNNAME_A_Contract_Date, A_Contract_Date);
@@ -153,7 +190,7 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Contract Date.
 		@return Contract Date	  */
-	public Timestamp getA_Contract_Date () 
+	public Timestamp getA_Contract_Date()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_A_Contract_Date);
 	}
@@ -169,7 +206,8 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	/** Yearly on or before contract date = YER */
 	public static final String A_DUE_ON_YearlyOnOrBeforeContractDate = "YER";
 	/** Set Asset Due On.
-		@param A_Due_On Asset Due On	  */
+		@param A_Due_On Asset Due On
+	*/
 	public void setA_Due_On (String A_Due_On)
 	{
 
@@ -178,13 +216,14 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Asset Due On.
 		@return Asset Due On	  */
-	public String getA_Due_On () 
+	public String getA_Due_On()
 	{
 		return (String)get_Value(COLUMNNAME_A_Due_On);
 	}
 
 	/** Set Asset Expired Date.
-		@param A_Expired_Date Asset Expired Date	  */
+		@param A_Expired_Date Asset Expired Date
+	*/
 	public void setA_Expired_Date (Timestamp A_Expired_Date)
 	{
 		set_Value (COLUMNNAME_A_Expired_Date, A_Expired_Date);
@@ -192,7 +231,7 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Asset Expired Date.
 		@return Asset Expired Date	  */
-	public Timestamp getA_Expired_Date () 
+	public Timestamp getA_Expired_Date()
 	{
 		return (Timestamp)get_Value(COLUMNNAME_A_Expired_Date);
 	}
@@ -208,7 +247,8 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	/** Rented = RE */
 	public static final String A_FINANCE_METH_Rented = "RE";
 	/** Set Asset Finance Method.
-		@param A_Finance_Meth Asset Finance Method	  */
+		@param A_Finance_Meth Asset Finance Method
+	*/
 	public void setA_Finance_Meth (String A_Finance_Meth)
 	{
 
@@ -217,13 +257,14 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Asset Finance Method.
 		@return Asset Finance Method	  */
-	public String getA_Finance_Meth () 
+	public String getA_Finance_Meth()
 	{
 		return (String)get_Value(COLUMNNAME_A_Finance_Meth);
 	}
 
 	/** Set Asset Monthly Payment.
-		@param A_Monthly_Payment Asset Monthly Payment	  */
+		@param A_Monthly_Payment Asset Monthly Payment
+	*/
 	public void setA_Monthly_Payment (BigDecimal A_Monthly_Payment)
 	{
 		set_Value (COLUMNNAME_A_Monthly_Payment, A_Monthly_Payment);
@@ -231,7 +272,7 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Asset Monthly Payment.
 		@return Asset Monthly Payment	  */
-	public BigDecimal getA_Monthly_Payment () 
+	public BigDecimal getA_Monthly_Payment()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_A_Monthly_Payment);
 		if (bd == null)
@@ -240,7 +281,8 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	}
 
 	/** Set Purchase Option.
-		@param A_Purchase_Option Purchase Option	  */
+		@param A_Purchase_Option Purchase Option
+	*/
 	public void setA_Purchase_Option (boolean A_Purchase_Option)
 	{
 		set_Value (COLUMNNAME_A_Purchase_Option, Boolean.valueOf(A_Purchase_Option));
@@ -248,20 +290,21 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Purchase Option.
 		@return Purchase Option	  */
-	public boolean isA_Purchase_Option () 
+	public boolean isA_Purchase_Option()
 	{
 		Object oo = get_Value(COLUMNNAME_A_Purchase_Option);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Purchase Option Credit.
-		@param A_Purchase_Option_Credit Purchase Option Credit	  */
+		@param A_Purchase_Option_Credit Purchase Option Credit
+	*/
 	public void setA_Purchase_Option_Credit (int A_Purchase_Option_Credit)
 	{
 		set_Value (COLUMNNAME_A_Purchase_Option_Credit, Integer.valueOf(A_Purchase_Option_Credit));
@@ -269,7 +312,7 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Purchase Option Credit.
 		@return Purchase Option Credit	  */
-	public int getA_Purchase_Option_Credit () 
+	public int getA_Purchase_Option_Credit()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_A_Purchase_Option_Credit);
 		if (ii == null)
@@ -278,7 +321,8 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	}
 
 	/** Set Purchase Option Credit %.
-		@param A_Purchase_Option_Credit_Per Purchase Option Credit %	  */
+		@param A_Purchase_Option_Credit_Per Purchase Option Credit %
+	*/
 	public void setA_Purchase_Option_Credit_Per (BigDecimal A_Purchase_Option_Credit_Per)
 	{
 		set_Value (COLUMNNAME_A_Purchase_Option_Credit_Per, A_Purchase_Option_Credit_Per);
@@ -286,7 +330,7 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Purchase Option Credit %.
 		@return Purchase Option Credit %	  */
-	public BigDecimal getA_Purchase_Option_Credit_Per () 
+	public BigDecimal getA_Purchase_Option_Credit_Per()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_A_Purchase_Option_Credit_Per);
 		if (bd == null)
@@ -295,7 +339,8 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	}
 
 	/** Set Purchase Price.
-		@param A_Purchase_Price Purchase Price	  */
+		@param A_Purchase_Price Purchase Price
+	*/
 	public void setA_Purchase_Price (BigDecimal A_Purchase_Price)
 	{
 		set_Value (COLUMNNAME_A_Purchase_Price, A_Purchase_Price);
@@ -303,7 +348,7 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 
 	/** Get Purchase Price.
 		@return Purchase Price	  */
-	public BigDecimal getA_Purchase_Price () 
+	public BigDecimal getA_Purchase_Price()
 	{
 		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_A_Purchase_Price);
 		if (bd == null)
@@ -312,26 +357,26 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	}
 
 	public org.compiere.model.I_C_BPartner getC_BPartner() throws RuntimeException
-    {
-		return (org.compiere.model.I_C_BPartner)MTable.get(getCtx(), org.compiere.model.I_C_BPartner.Table_Name)
-			.getPO(getC_BPartner_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_C_BPartner)MTable.get(getCtx(), org.compiere.model.I_C_BPartner.Table_ID)
+			.getPO(getC_BPartner_ID(), get_TrxName());
+	}
 
-	/** Set Business Partner .
-		@param C_BPartner_ID 
-		Identifies a Business Partner
-	  */
+	/** Set Business Partner.
+		@param C_BPartner_ID Identifies a Business Partner
+	*/
 	public void setC_BPartner_ID (int C_BPartner_ID)
 	{
-		if (C_BPartner_ID < 1) 
+		if (C_BPartner_ID < 1)
 			set_Value (COLUMNNAME_C_BPartner_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_C_BPartner_ID, Integer.valueOf(C_BPartner_ID));
 	}
 
-	/** Get Business Partner .
+	/** Get Business Partner.
 		@return Identifies a Business Partner
 	  */
-	public int getC_BPartner_ID () 
+	public int getC_BPartner_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_BPartner_ID);
 		if (ii == null)
@@ -340,9 +385,8 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	}
 
 	/** Set Processed.
-		@param Processed 
-		The document has been processed
-	  */
+		@param Processed The document has been processed
+	*/
 	public void setProcessed (boolean Processed)
 	{
 		set_ValueNoCheck (COLUMNNAME_Processed, Boolean.valueOf(Processed));
@@ -351,22 +395,21 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	/** Get Processed.
 		@return The document has been processed
 	  */
-	public boolean isProcessed () 
+	public boolean isProcessed()
 	{
 		Object oo = get_Value(COLUMNNAME_Processed);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Text Message.
-		@param TextMsg 
-		Text Message
-	  */
+		@param TextMsg Text Message
+	*/
 	public void setTextMsg (String TextMsg)
 	{
 		set_Value (COLUMNNAME_TextMsg, TextMsg);
@@ -375,7 +418,7 @@ public class X_A_Asset_Info_Fin extends PO implements I_A_Asset_Info_Fin, I_Pers
 	/** Get Text Message.
 		@return Text Message
 	  */
-	public String getTextMsg () 
+	public String getTextMsg()
 	{
 		return (String)get_Value(COLUMNNAME_TextMsg);
 	}

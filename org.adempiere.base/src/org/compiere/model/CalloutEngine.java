@@ -18,7 +18,6 @@ package org.compiere.model;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -28,7 +27,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 
 /**
- *	Callout Engine.
+ *	Callout Engine. Default implementation of {@link Callout} interface using Java reflection.
  *	
  *  @author Jorg Janke
  *  @version $Id: CalloutEngine.java,v 1.3 2006/07/30 00:51:05 jjanke Exp $
@@ -53,12 +52,14 @@ public class CalloutEngine implements Callout
 	protected CLogger		log = CLogger.getCLogger(getClass());
 	private GridTab m_mTab;
 	private GridField m_mField;
+	protected String[] additionalArgs;
+	public static final String ARG_SEPARATOR = ",";
 
 	/**
 	 *	Start Callout.
 	 *  <p>
-	 *	Callout's are used for cross field validation and setting values in other fields
-	 *	when returning a non empty (error message) string, an exception is raised
+	 *	Callout's are used for field validation, cross field validation and setting values in other fields.
+	 *	When returning a non empty (error message) string, an exception is raised.
 	 *  <p>
 	 *	When invoked, the Tab model has the new value!
 	 *
@@ -71,6 +72,7 @@ public class CalloutEngine implements Callout
 	 *  @param oldValue The old value
 	 *  @return Error message or ""
 	 */
+	@Override
 	public String start (Properties ctx, String methodName, int WindowNo,
 		GridTab mTab, GridField mField, Object value, Object oldValue)
 	{
@@ -131,14 +133,24 @@ public class CalloutEngine implements Callout
 	
 	/**
 	 *	Conversion Rules.
-	 *	Convert a String
+	 *	Use by ImpFormatRow to convert an input value.
 	 *
-	 *	@param methodName   method name
+	 *	@param methodAndArgs   method name and additional arguments (in brackets, separated by commas)
 	 *  @param value    the value
 	 *	@return converted String or Null if no method found
 	 */
-	public String convert (String methodName, String value)
+	public String convert (String methodAndArgs, String value)
 	{
+		String methodName;
+		//find '(' and ')'
+		if(methodAndArgs.contains("(") && methodAndArgs.substring(methodAndArgs.indexOf("(")).contains(")")) {
+			methodName = methodAndArgs.substring(0, methodAndArgs.indexOf('('));
+			additionalArgs = methodAndArgs.substring(methodAndArgs.indexOf("(")+1, methodAndArgs.indexOf(")"))
+					.split(ARG_SEPARATOR); //Everything between the brackets, separated by commas, is considered additional arguments
+		} else {
+			methodName = methodAndArgs;
+		}
+		
 		if (methodName == null || methodName.length() == 0)
 			throw new IllegalArgumentException ("No Method Name");
 		//
@@ -185,13 +197,9 @@ public class CalloutEngine implements Callout
 		return null;
 	}	//	getMethod
 
-	/*************************************************************************/
-	
-	//private static boolean s_calloutActive = false;
-	
 	/**
 	 * 	Is the current callout being called in the middle of 
-     *  another callout doing her works.
+     *  another callout doing her works.<br/>
      *  Callout can use GridTab.getActiveCalloutInstance() method
      *  to find out callout for which field is running.
 	 *	@return true if active
@@ -263,16 +271,10 @@ public class CalloutEngine implements Callout
 
 		String docBase = null;
 		if (doctypeID <= 0) {
-			if (MBankStatement.Table_Name.equals(mTab.getTableName()))
-				docBase = Doc.DOCTYPE_BankStatement;
-			else if (MBankStatementLine.Table_Name.equals(mTab.getTableName()))
-				docBase = Doc.DOCTYPE_BankStatement;
-			else if (MInventory.Table_Name.equals(mTab.getTableName()))
+			if (MInventory.Table_Name.equals(mTab.getTableName()))
 				docBase = Doc.DOCTYPE_MatInventory;
 			else if (MMovement.Table_Name.equals(mTab.getTableName()))
 				docBase = Doc.DOCTYPE_MatMovement;
-			else if (MProduction.Table_Name.equals(mTab.getTableName()))
-				docBase = Doc.DOCTYPE_MatProduction;
 			else if (MRequisition.Table_Name.equals(mTab.getTableName()))
 				docBase = Doc.DOCTYPE_PurchaseRequisition;
 		}
@@ -304,7 +306,7 @@ public class CalloutEngine implements Callout
 		BigDecimal rate2 = Env.ZERO;
 
 		if (rate1.signum() != 0.0)	//	no divide by zero
-			rate2 = Env.ONE.divide(rate1, 12, RoundingMode.HALF_UP);
+			rate2 = MUOMConversion.getOppositeRate(rate1);
 		//
 		if (mField.getColumnName().equals("MultiplyRate"))
 			mTab.setValue("DivideRate", rate2);

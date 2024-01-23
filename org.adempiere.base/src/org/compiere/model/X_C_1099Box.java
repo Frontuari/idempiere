@@ -22,21 +22,61 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for C_1099Box
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="C_1099Box")
+public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_C_1099Box (Properties ctx, int C_1099Box_ID, String trxName)
     {
       super (ctx, C_1099Box_ID, trxName);
       /** if (C_1099Box_ID == 0)
+        {
+			setBucket (0);
+			setC_1099Box_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_1099Box (Properties ctx, int C_1099Box_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_1099Box_ID, trxName, virtualColumns);
+      /** if (C_1099Box_ID == 0)
+        {
+			setBucket (0);
+			setC_1099Box_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_1099Box (Properties ctx, String C_1099Box_UU, String trxName)
+    {
+      super (ctx, C_1099Box_UU, trxName);
+      /** if (C_1099Box_UU == null)
+        {
+			setBucket (0);
+			setC_1099Box_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_C_1099Box (Properties ctx, String C_1099Box_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, C_1099Box_UU, trxName, virtualColumns);
+      /** if (C_1099Box_UU == null)
         {
 			setBucket (0);
 			setC_1099Box_ID (0);
@@ -52,7 +92,7 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 3 - Client - Org
       */
     protected int get_AccessLevel()
     {
@@ -74,7 +114,8 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
     }
 
 	/** Set Bucket.
-		@param Bucket Bucket	  */
+		@param Bucket Bucket
+	*/
 	public void setBucket (int Bucket)
 	{
 		set_Value (COLUMNNAME_Bucket, Integer.valueOf(Bucket));
@@ -82,7 +123,7 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 
 	/** Get Bucket.
 		@return Bucket	  */
-	public int getBucket () 
+	public int getBucket()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Bucket);
 		if (ii == null)
@@ -91,18 +132,19 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 	}
 
 	/** Set 1099 Box.
-		@param C_1099Box_ID 1099 Box	  */
+		@param C_1099Box_ID 1099 Box
+	*/
 	public void setC_1099Box_ID (int C_1099Box_ID)
 	{
-		if (C_1099Box_ID < 1) 
+		if (C_1099Box_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_C_1099Box_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_C_1099Box_ID, Integer.valueOf(C_1099Box_ID));
 	}
 
 	/** Get 1099 Box.
 		@return 1099 Box	  */
-	public int getC_1099Box_ID () 
+	public int getC_1099Box_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_C_1099Box_ID);
 		if (ii == null)
@@ -111,7 +153,8 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 	}
 
 	/** Set C_1099Box_UU.
-		@param C_1099Box_UU C_1099Box_UU	  */
+		@param C_1099Box_UU C_1099Box_UU
+	*/
 	public void setC_1099Box_UU (String C_1099Box_UU)
 	{
 		set_Value (COLUMNNAME_C_1099Box_UU, C_1099Box_UU);
@@ -119,15 +162,14 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 
 	/** Get C_1099Box_UU.
 		@return C_1099Box_UU	  */
-	public String getC_1099Box_UU () 
+	public String getC_1099Box_UU()
 	{
 		return (String)get_Value(COLUMNNAME_C_1099Box_UU);
 	}
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -136,15 +178,14 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Comment/Help.
-		@param Help 
-		Comment or Hint
-	  */
+		@param Help Comment or Hint
+	*/
 	public void setHelp (String Help)
 	{
 		set_Value (COLUMNNAME_Help, Help);
@@ -153,15 +194,14 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 	/** Get Comment/Help.
 		@return Comment or Hint
 	  */
-	public String getHelp () 
+	public String getHelp()
 	{
 		return (String)get_Value(COLUMNNAME_Help);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -170,7 +210,7 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -178,15 +218,14 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
+		@param Value Search key for the record in the format required - must be unique
+	*/
 	public void setValue (String Value)
 	{
 		set_Value (COLUMNNAME_Value, Value);
@@ -195,7 +234,7 @@ public class X_C_1099Box extends PO implements I_C_1099Box, I_Persistent
 	/** Get Search Key.
 		@return Search key for the record in the format required - must be unique
 	  */
-	public String getValue () 
+	public String getValue()
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}

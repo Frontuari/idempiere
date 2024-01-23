@@ -22,21 +22,67 @@ import java.util.Properties;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Model for M_ShipperPickupTypesCfg
- *  @author iDempiere (generated) 
- *  @version Release 8.1 - $Id$ */
-public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTypesCfg, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="M_ShipperPickupTypesCfg")
+public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTypesCfg, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20201103L;
+	private static final long serialVersionUID = 20231222L;
 
     /** Standard Constructor */
     public X_M_ShipperPickupTypesCfg (Properties ctx, int M_ShipperPickupTypesCfg_ID, String trxName)
     {
       super (ctx, M_ShipperPickupTypesCfg_ID, trxName);
       /** if (M_ShipperPickupTypesCfg_ID == 0)
+        {
+			setIsDefault (false);
+// N
+			setM_ShipperCfg_ID (0);
+			setM_ShipperPickupTypesCfg_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_ShipperPickupTypesCfg (Properties ctx, int M_ShipperPickupTypesCfg_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_ShipperPickupTypesCfg_ID, trxName, virtualColumns);
+      /** if (M_ShipperPickupTypesCfg_ID == 0)
+        {
+			setIsDefault (false);
+// N
+			setM_ShipperCfg_ID (0);
+			setM_ShipperPickupTypesCfg_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_ShipperPickupTypesCfg (Properties ctx, String M_ShipperPickupTypesCfg_UU, String trxName)
+    {
+      super (ctx, M_ShipperPickupTypesCfg_UU, trxName);
+      /** if (M_ShipperPickupTypesCfg_UU == null)
+        {
+			setIsDefault (false);
+// N
+			setM_ShipperCfg_ID (0);
+			setM_ShipperPickupTypesCfg_ID (0);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_M_ShipperPickupTypesCfg (Properties ctx, String M_ShipperPickupTypesCfg_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, M_ShipperPickupTypesCfg_UU, trxName, virtualColumns);
+      /** if (M_ShipperPickupTypesCfg_UU == null)
         {
 			setIsDefault (false);
 // N
@@ -54,7 +100,7 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -76,9 +122,8 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
     }
 
 	/** Set Description.
-		@param Description 
-		Optional short description of the record
-	  */
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -87,15 +132,14 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
 	/** Set Default.
-		@param IsDefault 
-		Default value
-	  */
+		@param IsDefault Default value
+	*/
 	public void setIsDefault (boolean IsDefault)
 	{
 		set_Value (COLUMNNAME_IsDefault, Boolean.valueOf(IsDefault));
@@ -104,36 +148,38 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
 	/** Get Default.
 		@return Default value
 	  */
-	public boolean isDefault () 
+	public boolean isDefault()
 	{
 		Object oo = get_Value(COLUMNNAME_IsDefault);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	public org.compiere.model.I_M_ShipperCfg getM_ShipperCfg() throws RuntimeException
-    {
-		return (org.compiere.model.I_M_ShipperCfg)MTable.get(getCtx(), org.compiere.model.I_M_ShipperCfg.Table_Name)
-			.getPO(getM_ShipperCfg_ID(), get_TrxName());	}
+	{
+		return (org.compiere.model.I_M_ShipperCfg)MTable.get(getCtx(), org.compiere.model.I_M_ShipperCfg.Table_ID)
+			.getPO(getM_ShipperCfg_ID(), get_TrxName());
+	}
 
 	/** Set Shipper Configuration.
-		@param M_ShipperCfg_ID Shipper Configuration	  */
+		@param M_ShipperCfg_ID Shipper Configuration
+	*/
 	public void setM_ShipperCfg_ID (int M_ShipperCfg_ID)
 	{
-		if (M_ShipperCfg_ID < 1) 
+		if (M_ShipperCfg_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_ShipperCfg_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_ShipperCfg_ID, Integer.valueOf(M_ShipperCfg_ID));
 	}
 
 	/** Get Shipper Configuration.
 		@return Shipper Configuration	  */
-	public int getM_ShipperCfg_ID () 
+	public int getM_ShipperCfg_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_ShipperCfg_ID);
 		if (ii == null)
@@ -142,18 +188,19 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
 	}
 
 	/** Set Shipper Pickup Types Configuration.
-		@param M_ShipperPickupTypesCfg_ID Shipper Pickup Types Configuration	  */
+		@param M_ShipperPickupTypesCfg_ID Shipper Pickup Types Configuration
+	*/
 	public void setM_ShipperPickupTypesCfg_ID (int M_ShipperPickupTypesCfg_ID)
 	{
-		if (M_ShipperPickupTypesCfg_ID < 1) 
+		if (M_ShipperPickupTypesCfg_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_M_ShipperPickupTypesCfg_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_M_ShipperPickupTypesCfg_ID, Integer.valueOf(M_ShipperPickupTypesCfg_ID));
 	}
 
 	/** Get Shipper Pickup Types Configuration.
 		@return Shipper Pickup Types Configuration	  */
-	public int getM_ShipperPickupTypesCfg_ID () 
+	public int getM_ShipperPickupTypesCfg_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_M_ShipperPickupTypesCfg_ID);
 		if (ii == null)
@@ -162,7 +209,8 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
 	}
 
 	/** Set M_ShipperPickupTypesCfg_UU.
-		@param M_ShipperPickupTypesCfg_UU M_ShipperPickupTypesCfg_UU	  */
+		@param M_ShipperPickupTypesCfg_UU M_ShipperPickupTypesCfg_UU
+	*/
 	public void setM_ShipperPickupTypesCfg_UU (String M_ShipperPickupTypesCfg_UU)
 	{
 		set_Value (COLUMNNAME_M_ShipperPickupTypesCfg_UU, M_ShipperPickupTypesCfg_UU);
@@ -170,15 +218,14 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
 
 	/** Get M_ShipperPickupTypesCfg_UU.
 		@return M_ShipperPickupTypesCfg_UU	  */
-	public String getM_ShipperPickupTypesCfg_UU () 
+	public String getM_ShipperPickupTypesCfg_UU()
 	{
 		return (String)get_Value(COLUMNNAME_M_ShipperPickupTypesCfg_UU);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -187,7 +234,7 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
@@ -195,15 +242,14 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
     /** Get Record ID/ColumnName
         @return ID/ColumnName pair
       */
-    public KeyNamePair getKeyNamePair() 
+    public KeyNamePair getKeyNamePair()
     {
         return new KeyNamePair(get_ID(), getName());
     }
 
 	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
+		@param Value Search key for the record in the format required - must be unique
+	*/
 	public void setValue (String Value)
 	{
 		set_Value (COLUMNNAME_Value, Value);
@@ -212,7 +258,7 @@ public class X_M_ShipperPickupTypesCfg extends PO implements I_M_ShipperPickupTy
 	/** Get Search Key.
 		@return Search key for the record in the format required - must be unique
 	  */
-	public String getValue () 
+	public String getValue()
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}

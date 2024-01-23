@@ -22,7 +22,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for S_TimeExpenseLine
  *  @author iDempiere (generated) 
- *  @version Release 8.1
+ *  @version Release 11
  */
 public interface I_S_TimeExpenseLine 
 {
@@ -44,8 +44,8 @@ public interface I_S_TimeExpenseLine
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -53,12 +53,12 @@ public interface I_S_TimeExpenseLine
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -80,12 +80,12 @@ public interface I_S_TimeExpenseLine
     /** Column name C_BPartner_ID */
     public static final String COLUMNNAME_C_BPartner_ID = "C_BPartner_ID";
 
-	/** Set Business Partner .
+	/** Set Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public void setC_BPartner_ID (int C_BPartner_ID);
 
-	/** Get Business Partner .
+	/** Get Business Partner.
 	  * Identifies a Business Partner
 	  */
 	public int getC_BPartner_ID();
@@ -345,6 +345,19 @@ public interface I_S_TimeExpenseLine
 	  */
 	public int getLine();
 
+    /** Column name LineNetAmt */
+    public static final String COLUMNNAME_LineNetAmt = "LineNetAmt";
+
+	/** Set Line Amount.
+	  * Line Extended Amount (Quantity * Actual Price) without Freight and Charges
+	  */
+	public void setLineNetAmt (BigDecimal LineNetAmt);
+
+	/** Get Line Amount.
+	  * Line Extended Amount (Quantity * Actual Price) without Freight and Charges
+	  */
+	public BigDecimal getLineNetAmt();
+
     /** Column name M_Product_ID */
     public static final String COLUMNNAME_M_Product_ID = "M_Product_ID";
 
@@ -377,12 +390,14 @@ public interface I_S_TimeExpenseLine
     public static final String COLUMNNAME_PriceInvoiced = "PriceInvoiced";
 
 	/** Set Price Invoiced.
-	  * The priced invoiced to the customer (in the currency of the customer's AR price list) - 0 for default price
+	  * The priced invoiced to the customer (in the currency of the customer&#039;
+s AR price list) - 0 for default price
 	  */
 	public void setPriceInvoiced (BigDecimal PriceInvoiced);
 
 	/** Get Price Invoiced.
-	  * The priced invoiced to the customer (in the currency of the customer's AR price list) - 0 for default price
+	  * The priced invoiced to the customer (in the currency of the customer&#039;
+s AR price list) - 0 for default price
 	  */
 	public BigDecimal getPriceInvoiced();
 
@@ -390,12 +405,14 @@ public interface I_S_TimeExpenseLine
     public static final String COLUMNNAME_PriceReimbursed = "PriceReimbursed";
 
 	/** Set Price Reimbursed.
-	  * The reimbursed price (in currency of the employee's AP price list)
+	  * The reimbursed price (in currency of the employee&#039;
+s AP price list)
 	  */
 	public void setPriceReimbursed (BigDecimal PriceReimbursed);
 
 	/** Get Price Reimbursed.
-	  * The reimbursed price (in currency of the employee's AP price list)
+	  * The reimbursed price (in currency of the employee&#039;
+s AP price list)
 	  */
 	public BigDecimal getPriceReimbursed();
 

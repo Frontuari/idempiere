@@ -18,6 +18,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -37,6 +38,8 @@ import org.compiere.print.MPrintFormatItem;
 import org.compiere.print.MPrintPaper;
 import org.compiere.print.PrintData;
 import org.compiere.print.PrintDataElement;
+import org.compiere.print.layout.InstanceAttributeColumn;
+import org.compiere.print.layout.InstanceAttributeData;
 import org.compiere.print.layout.PrintDataEvaluatee;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Evaluator;
@@ -49,8 +52,7 @@ import org.compiere.util.Util;
  * 			<li>BF [ 1939010 ] Excel Export ERROR - java.sql.Date - integrated Mario Grigioni's fix
  * 			<li>BF [ 1974309 ] Exporting a report to XLS is not setting page format
  */
-public class PrintDataExcelExporter
-extends AbstractExcelExporter
+public class PrintDataExcelExporter extends AbstractExcelExporter
 {
 	//constant for form rendering
 	private static final int COLUMN_WIDTH_DIVISOR = 64;
@@ -70,14 +72,31 @@ extends AbstractExcelExporter
 	private int m_previousFormCol = -1;
 	private String m_previousAreaType = null;
 	
+	/**
+	 * @param printData
+	 * @param printFormat
+	 */
 	public PrintDataExcelExporter(PrintData printData, MPrintFormat printFormat) {
 		this(printData, printFormat, null, null);
 	}
 	
+	/**
+	 * @param printData
+	 * @param printFormat
+	 * @param childPrintFormatDetails
+	 * @param colSuppressRepeats
+	 */
 	public PrintDataExcelExporter(PrintData printData, MPrintFormat printFormat, Map<MPrintFormatItem, PrintData> childPrintFormatDetails, Boolean[] colSuppressRepeats) {
 		this(printData, printFormat, childPrintFormatDetails, colSuppressRepeats, null);
 	}
 	
+	/**
+	 * @param printData
+	 * @param printFormat
+	 * @param childPrintFormatDetails
+	 * @param colSuppressRepeats
+	 * @param query
+	 */
 	public PrintDataExcelExporter(PrintData printData, MPrintFormat printFormat, Map<MPrintFormatItem, PrintData> childPrintFormatDetails, Boolean[] colSuppressRepeats, MQuery query) {
 		super();
 		this.m_printData = printData;
@@ -92,24 +111,40 @@ extends AbstractExcelExporter
 		return columns.size();
 	}
 
+	/**
+	 * @param row
+	 * @param col
+	 * @return PrintDataElement for row and col or null
+	 */
 	private PrintDataElement getPDE(int row, int col) {
 		if (m_printData.getRowIndex() != row)
 			m_printData.setRowIndex(row);
 		//
-		MPrintFormatItem item = (MPrintFormatItem) columns.get(col);
-		Object obj = null;
-
-		if (item.isTypeField() || item.isTypePrintFormat() && item.isImageField()) {
-			int AD_Column_ID = item.getAD_Column_ID();
-			if (AD_Column_ID > 0)
-				obj = m_printData.getNode(Integer.valueOf(AD_Column_ID));
-		}
-
-		if (obj != null && obj instanceof PrintDataElement) {
-			return (PrintDataElement)obj;
+		Object colObj = columns.get(col);
+		if (colObj instanceof InstanceAttributeColumn) {
+			InstanceAttributeColumn ia = (InstanceAttributeColumn) colObj;
+			return ia.getPrintDataElement(row);
+		} else if (colObj instanceof MPrintFormatItem) {
+			MPrintFormatItem item = (MPrintFormatItem) colObj;
+			Object obj = null;
+	
+			if (item.isTypeField() || item.isTypePrintFormat() && item.isImageField()) {
+				obj = m_printData.getNodeByPrintFormatItemId(item.getAD_PrintFormatItem_ID());
+			}
+	
+			/** DEVCOFFEE: script column **/
+			if (item.isTypeScript())
+			{
+				obj = m_printData.getNodeByPrintFormatItemId(item.getAD_PrintFormatItem_ID());
+			}
+	
+			if (obj != null && obj instanceof PrintDataElement) {
+				return (PrintDataElement)obj;
+			}
 		}
 		return null;
 	}
+	
 	@Override
 	public int getDisplayType(int row, int col) {
 		PrintDataElement pde = getPDE(row, col);
@@ -191,6 +226,9 @@ extends AbstractExcelExporter
 		if (colObj instanceof MPrintFormatItem) {
 			MPrintFormatItem item = (MPrintFormatItem) colObj;
 			return item.getPrintName(getLanguage());
+		} else if (colObj instanceof InstanceAttributeColumn) {
+			InstanceAttributeColumn ia = (InstanceAttributeColumn) colObj;
+			return ia.getName();
 		} else {
 			return "";
 		}
@@ -220,6 +258,7 @@ extends AbstractExcelExporter
 		m_printData.setRowIndex(row);
 	}
 
+	@Override
 	protected int getCurrentRow() {
 		return m_printData.getRowIndex();
 	}
@@ -255,12 +294,6 @@ extends AbstractExcelExporter
 		else if (MediaSizeName.NA_NUMBER_10_ENVELOPE.equals(mediaSizeName)) {
 			paperSize = HSSFPrintSetup.ENVELOPE_10_PAPERSIZE;
 		}
-//		else if (MediaSizeName..equals(mediaSizeName)) {
-//			paperSize = HSSFPrintSetup.ENVELOPE_DL_PAPERSIZE;
-//		}
-//		else if (MediaSizeName..equals(mediaSizeName)) {
-//			paperSize = HSSFPrintSetup.ENVELOPE_CS_PAPERSIZE;
-//		}
 		else if (MediaSizeName.MONARCH_ENVELOPE.equals(mediaSizeName)) {
 			paperSize = HSSFPrintSetup.ENVELOPE_MONARCH_PAPERSIZE;
 		}
@@ -302,15 +335,43 @@ extends AbstractExcelExporter
 	@Override
 	protected void export(OutputStream out) throws Exception {
 		columns = new ArrayList<>();
+		List<InstanceAttributeData> asiElements = new ArrayList<>();
+		int columnCount = 0;
 		for (int col = 0; col < m_printFormat.getItemCount(); col++)
 		{
 			MPrintFormatItem item = m_printFormat.getItem(col);
 			if (item.isPrinted())
 			{
-				columns.add(item);
+				if (item.isTypeField() && item.isPrintInstanceAttributes())
+				{
+					InstanceAttributeData asiElement = new InstanceAttributeData(item, columnCount);
+					asiElement.readAttributesData(m_printData);
+					asiElements.add(asiElement);						
+					continue;
+				}
+				else 
+				{
+					columns.add(item);
+					columnCount++;
+				}
 			}
 		}
-
+		if (asiElements.size() > 0)
+		{
+			int columnCreated = 0;
+			for(InstanceAttributeData data : asiElements)
+			{
+				List<InstanceAttributeColumn> instanceColumns = data.getColumns();
+				int index = data.getColumnIndex() + columnCreated;
+				for(InstanceAttributeColumn c : instanceColumns)
+				{
+					columns.add(index, c);
+					index++;
+					columnCreated++;
+				}
+			}
+		}
+		
 		super.export(out);
 	}
 	
@@ -540,7 +601,9 @@ extends AbstractExcelExporter
 		if (m_printData.getRowIndex() != row)
 			m_printData.setRowIndex(row);
 
-		MPrintFormatItem item = m_printFormat.getItem(col);
+		Object colobj = columns.get(col);
+		MPrintFormatItem item = colobj instanceof InstanceAttributeColumn ? ((InstanceAttributeColumn)colobj).getPrintFormatItem()
+				: (MPrintFormatItem)colobj;
 		if (Util.isEmpty(item.getDisplayLogic()))
 			return true;
 

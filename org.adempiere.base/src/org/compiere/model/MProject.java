@@ -24,6 +24,7 @@ import java.util.logging.Level;
 
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 /**
  * 	Project Model
@@ -34,17 +35,17 @@ import org.compiere.util.Env;
 public class MProject extends X_C_Project
 {
 	/**
-	 * 
+	 * generated serial id
 	 */
 	private static final long serialVersionUID = 8631795136761641303L;
 
 	/**
-	 * 	Create new Project by copying
+	 * 	Create new project by copying from another project
 	 * 	@param ctx context
-	 *	@param C_Project_ID project
+	 *	@param C_Project_ID project to copy from
 	 * 	@param dateDoc date of the document date
 	 *	@param trxName transaction
-	 *	@return Project
+	 *	@return new Project instance
 	 */
 	public static MProject copyFrom (Properties ctx, int C_Project_ID, Timestamp dateDoc, String trxName)
 	{
@@ -76,9 +77,20 @@ public class MProject extends X_C_Project
 
 		return to;
 	}	//	copyFrom
-
 	
-	/**************************************************************************
+    /**
+     * UUID based Constructor
+     * @param ctx  Context
+     * @param C_Project_UU  UUID key
+     * @param trxName Transaction
+     */
+    public MProject(Properties ctx, String C_Project_UU, String trxName) {
+        super(ctx, C_Project_UU, trxName);
+		if (Util.isEmpty(C_Project_UU))
+			setInitialDefaults();
+    }
+
+	/**
 	 * 	Standard Constructor
 	 *	@param ctx context
 	 *	@param C_Project_ID id
@@ -88,27 +100,28 @@ public class MProject extends X_C_Project
 	{
 		super (ctx, C_Project_ID, trxName);
 		if (C_Project_ID == 0)
-		{
-		//	setC_Project_ID(0);
-		//	setValue (null);
-		//	setC_Currency_ID (0);
-			setCommittedAmt (Env.ZERO);
-			setCommittedQty (Env.ZERO);
-			setInvoicedAmt (Env.ZERO);
-			setInvoicedQty (Env.ZERO);
-			setPlannedAmt (Env.ZERO);
-			setPlannedMarginAmt (Env.ZERO);
-			setPlannedQty (Env.ZERO);
-			setProjectBalanceAmt (Env.ZERO);
-		//	setProjectCategory(PROJECTCATEGORY_General);
-			setProjInvoiceRule(PROJINVOICERULE_None);
-			setProjectLineLevel(PROJECTLINELEVEL_Project);
-			setIsCommitCeiling (false);
-			setIsCommitment (false);
-			setIsSummary (false);
-			setProcessed (false);
-		}
+			setInitialDefaults();
 	}	//	MProject
+
+	/**
+	 * Set the initial defaults for a new record
+	 */
+	private void setInitialDefaults() {
+		setCommittedAmt (Env.ZERO);
+		setCommittedQty (Env.ZERO);
+		setInvoicedAmt (Env.ZERO);
+		setInvoicedQty (Env.ZERO);
+		setPlannedAmt (Env.ZERO);
+		setPlannedMarginAmt (Env.ZERO);
+		setPlannedQty (Env.ZERO);
+		setProjectBalanceAmt (Env.ZERO);
+		setProjInvoiceRule(PROJINVOICERULE_None);
+		setProjectLineLevel(PROJECTLINELEVEL_Project);
+		setIsCommitCeiling (false);
+		setIsCommitment (false);
+		setIsSummary (false);
+		setProcessed (false);
+	}
 
 	/**
 	 * 	Load Constructor
@@ -129,6 +142,7 @@ public class MProject extends X_C_Project
 	 *	@return C_ProjectType_ID id
 	 *  @deprecated
 	 */
+	@Deprecated
 	public int getC_ProjectType_ID_Int()
 	{
 		return getC_ProjectType_ID();		
@@ -138,6 +152,7 @@ public class MProject extends X_C_Project
 	 *	String Representation
 	 * 	@return info
 	 */
+	@Override
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder ("MProject[").append(get_ID())
@@ -148,7 +163,7 @@ public class MProject extends X_C_Project
 
 	/**
 	 * 	Get Price List from Price List Version
-	 *	@return price list or 0
+	 *	@return M_PriceList_ID or 0
 	 */
 	public int getM_PriceList_ID()
 	{
@@ -172,8 +187,7 @@ public class MProject extends X_C_Project
 		m_M_PriceList_ID = 0;	//	reset
 	}	//	setM_PriceList_Version_ID
 
-
-	/**************************************************************************
+	/**
 	 * 	Get Project Lines
 	 *	@return Array of lines
 	 */
@@ -183,7 +197,7 @@ public class MProject extends X_C_Project
 		final String whereClause = "C_Project_ID=?";
 		List <MProjectLine> list = new Query(getCtx(), I_C_ProjectLine.Table_Name, whereClause, get_TrxName())
 			.setParameters(getC_Project_ID())
-			.setOrderBy("Line")
+			.setOrderBy("Line,C_ProjectLine_ID")
 			.list();
 		//
 		MProjectLine[] retValue = new MProjectLine[list.size()];
@@ -191,9 +205,10 @@ public class MProject extends X_C_Project
 		return retValue;
 	}	//	getLines
 
-	/**************************************************************************
-	 * 	Get Project Lines from a Phase
-	 *	@return Array of lines from a Phase
+	/**
+	 * 	Get Project Lines of a Phase
+	 *  @param phase C_ProjectPhase_ID
+	 *	@return Array of lines of a Phase
 	 */
 	public MProjectLine[] getPhaseLines(int phase)
 	{
@@ -209,8 +224,8 @@ public class MProject extends X_C_Project
 	}	//	getPhaseLines
 
 	/**
-	 * 	Get Project Issues
-	 *	@return Array of issues
+	 * 	Get Project Issue records
+	 *	@return Array of project issue
 	 */
 	public MProjectIssue[] getIssues()
 	{
@@ -227,8 +242,8 @@ public class MProject extends X_C_Project
 	}	//	getIssues
 
 	/**
-	 * 	Get Project Phases
-	 *	@return Array of phases
+	 * 	Get Project Phase records
+	 *	@return Array of project phase
 	 */
 	public MProjectPhase[] getPhases()
 	{
@@ -243,12 +258,11 @@ public class MProject extends X_C_Project
 		list.toArray(retValue);
 		return retValue;
 	}	//	getPhases
-
 	
-	/**************************************************************************
+	/**
 	 * 	Copy Lines/Phase/Task from other Project
 	 *	@param project project
-	 *	@return number of total lines copied
+	 *	@return number of lines copied
 	 */
 	public int copyDetailsFrom (MProject project)
 	{
@@ -260,9 +274,9 @@ public class MProject extends X_C_Project
 	}	//	copyDetailsFrom
 
 	/**
-	 * 	Copy Lines From other Project
+	 * 	Copy Project Lines From other Project
 	 *	@param project project
-	 *	@return number of lines copied
+	 *	@return number of project lines copied
 	 */
 	public int copyLinesFrom (MProject project)
 	{
@@ -295,8 +309,8 @@ public class MProject extends X_C_Project
 
 	/**
 	 * 	Copy Phases/Tasks from other Project
-	 *	@param fromProject project
-	 *	@return number of items copied
+	 *	@param fromProject project to copy from
+	 *	@return number of phase/task line copied
 	 */
 	public int copyPhasesFrom (MProject fromProject)
 	{
@@ -348,10 +362,9 @@ public class MProject extends X_C_Project
 		return count + taskCount + lineCount;
 	}	//	copyPhasesFrom
 
-
 	/**
-	 *	Set Project Type and Category.
-	 * 	If Service Project copy Projet Type Phase/Tasks
+	 *	Set Project Type and Category.<br/>
+	 * 	If project type is Service Project (PROJECTCATEGORY_ServiceChargeProject), copy project Phase/Tasks from project type.
 	 *	@param type project type
 	 */
 	public void setProjectType (MProjectType type)
@@ -365,9 +378,9 @@ public class MProject extends X_C_Project
 	}	//	setProjectType
 
 	/**
-	 *	Copy Phases from Type
+	 *	Copy Phases from Project Type
 	 *	@param type Project Type
-	 *	@return count
+	 *	@return number of line copy
 	 */
 	public int copyPhasesFrom (MProjectType type)
 	{
@@ -396,6 +409,7 @@ public class MProject extends X_C_Project
 	 *	@param newRecord new
 	 *	@return true
 	 */
+	@Override
 	protected boolean beforeSave (boolean newRecord)
 	{
 		if (getAD_User_ID() == -1)	//	Summary Project in Dimensions
@@ -418,6 +432,7 @@ public class MProject extends X_C_Project
 	 *	@param success success
 	 *	@return success
 	 */
+	@Override
 	protected boolean afterSave (boolean newRecord, boolean success)
 	{
 		if (!success)
@@ -443,6 +458,7 @@ public class MProject extends X_C_Project
 	 *	@param success
 	 *	@return deleted
 	 */
+	@Override
 	protected boolean afterDelete (boolean success)
 	{
 		if (success)
@@ -451,9 +467,9 @@ public class MProject extends X_C_Project
 	}	//	afterDelete
 	
 	/**
-	 * 	Return the Invoices Generated for this Project
-	 *	@return invoices
-	 *	@author monhate
+	 * 	Get Invoices Generated for this Project
+	 *	@return array of invoice
+	 *	author monhate
 	 */	
 	public MInvoice[] getMInvoices(){
 		StringBuilder sb = new StringBuilder();

@@ -37,6 +37,7 @@ import org.compiere.util.Trx;
  *  @author Jorg Janke
  *  @version $Id: FinReport.java,v 1.2 2006/07/30 00:51:05 jjanke Exp $
  */
+@org.adempiere.base.annotation.Process
 public class FinReportJasper extends FinReport
 {
 
@@ -69,7 +70,7 @@ public class FinReportJasper extends FinReport
 		m_report = new MReport (getCtx(), getRecord_ID(), get_TrxName());
 
 		MProcess proc = new MProcess(getCtx(), m_report.getJasperProcess_ID(), get_TrxName());
-	    MPInstance instance = new MPInstance(proc, getRecord_ID());
+	    MPInstance instance = new MPInstance(getCtx(), proc.getAD_Process_ID(), MReport.Table_ID, getRecord_ID(), getRecord_UU());
 	    instance.saveEx();
 	    ProcessInfo poInfo = new ProcessInfo(proc.getName(), proc.getAD_Process_ID());
 	    poInfo.setParameter(pars);
@@ -107,7 +108,7 @@ public class FinReportJasper extends FinReport
 	    
 	    // TODO - allow java class preprocess if the classname <> ProcessUtil.JASPER_STARTER_CLASS
 
-	    ProcessUtil.startJavaProcess(getCtx(), poInfo, trx);
+	    ProcessUtil.startJavaProcess(getCtx(), poInfo, trx, false);
 	    
 	    return finReportMsg;
 	}	//	doIt
