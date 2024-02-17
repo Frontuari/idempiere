@@ -1,0 +1,62 @@
+On branch release-10-ftu
+Your branch is up to date with 'origin/release-10-ftu'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   git_status_change.txt
+	modified:   org.adempiere.base-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.base.callout/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.base.process/.project
+	modified:   org.adempiere.base.process/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.base/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.eclipse.equinox.http.servlet/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.install/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.payment.processor-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.payment.processor/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.pipo-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.pipo.handlers/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.pipo/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.plugin.utils/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.replication-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.replication.server-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.replication.server/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.replication/.project
+	modified:   org.adempiere.replication/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.report.jasper-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.report.jasper.library/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.report.jasper/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.server-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.server/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.ui.zk-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.ui.zk/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.adempiere.ui/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.apache.ecs/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.compiere.db.oracle.provider/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.compiere.db.postgresql.provider/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.compiere.db.provider-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.eclipse.platform-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.equinox.p2.director-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.felix.webconsole-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.felix.webconsole/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.hazelcast.service-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.hazelcast.service/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.javadoc/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.jetty.osgi.boot.fragment/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.keikai/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.p2.targetplatform/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.p2.targetplatform/org.idempiere.p2.targetplatform.target
+	modified:   org.idempiere.p2.targetplatform/org.idempiere.p2.targetplatform.tpd
+	modified:   org.idempiere.p2/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.printformat.editor/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.test-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.test/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.webservices-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.webservices.client-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.webservices/.classpath
+	modified:   org.idempiere.webservices/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.zk-feature/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.zk.billboard.chart/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.zk.billboard/.settings/org.eclipse.m2e.core.prefs
+	modified:   org.idempiere.zk.extra/.classpath
+	modified:   org.idempiere.zk.extra/.settings/org.eclipse.m2e.core.prefs
+
