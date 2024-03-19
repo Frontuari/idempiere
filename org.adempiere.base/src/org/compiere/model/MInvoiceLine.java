@@ -549,7 +549,15 @@ public class MInvoiceLine extends X_C_InvoiceLine
 	public void setLineNetAmt ()
 	{
 		//	Calculations & Rounding
-		BigDecimal bd = getPriceEntered().multiply(getQtyEntered());
+		//	Modified by Jorge Colmenarez, 2024-02-27 17:11
+		//	Support for calculate lineNetAmt from (QtyInvoice * PriceActual) or (QtyEntered * PriceEntered) 
+		boolean IsNetAmtFromQtyInvoiced = MSysConfig.getBooleanValue("CalculateLineNetAmtFromQtyInvoiced", false, getAD_Client_ID(),getAD_Org_ID());
+		BigDecimal bd = BigDecimal.ZERO;
+		if(!IsNetAmtFromQtyInvoiced)
+			bd = getPriceEntered().multiply(getQtyEntered());
+		else
+			bd = getPriceActual().multiply(getQtyInvoiced());
+		//	End Jorge Colmenarez
 		int precision = getPrecision();
 		if (bd.scale() > precision)
 			bd = bd.setScale(precision, RoundingMode.HALF_UP);

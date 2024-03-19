@@ -809,7 +809,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + delimiter);
 		}
-		
+    
 		return true;
 	}	//	createCSV
 
@@ -836,7 +836,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 		new XMLReportRenderer().renderReport(this, config);
 		return true;
 	}	//	createXML
-	
+  
 	/**
 	 * 	Create PDF file.
 	 * 	(created in temporary storage)
@@ -1018,7 +1018,8 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 
 		try
 		{
-			if (file == null) {
+
+			if (file == null){
 				file = FileUtil.createTempFile ("ReportEngine", ".pdf");
 			} else {
 				if (file.exists()) {
@@ -1047,6 +1048,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 				}
 				pi.setIsBatch(true);
 				pi.setPDFFileName(fileName);
+				pi.setTransientObject(m_printFormat);
 				ServerProcessCtl.process(pi, (m_trxName == null ? null : Trx.get(m_trxName, false)));
 			} else {
 				PDFReportRendererConfiguration config = new PDFReportRendererConfiguration().setOutputFile(file);
@@ -1838,7 +1840,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 			instance.setReportType(type);
 		}
 	}
-	
+
 	private ProcessInfo m_pi = null;
 	
 	/**
@@ -1854,7 +1856,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 	public ProcessInfo getProcessInfo() {
 		return m_pi;
 	}
-	
+
 	/**
 	 * Evaluate display logic of a print format item
 	 * @param printData data for display logic evaluation
@@ -1865,7 +1867,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 	{
 		if(Util.isEmpty(item.getDisplayLogic()))
 			return true;
-		
+
 		return Evaluator.evaluateLogic(new PrintDataEvaluatee(null, printData), item.getDisplayLogic());
 	}
 }	//	ReportEngine
