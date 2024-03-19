@@ -809,7 +809,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + delimiter);
 		}
-
+    
 		return true;
 	}	//	createCSV
 
@@ -836,7 +836,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 		new XMLReportRenderer().renderReport(this, config);
 		return true;
 	}	//	createXML
-
+  
 	/**
 	 * 	Create PDF file.
 	 * 	(created in temporary storage)
@@ -1018,6 +1018,7 @@ queued-job-count = 0  (class javax.print.attribute.standard.QueuedJobCount)
 
 		try
 		{
+
 			if (file == null){
 				file = FileUtil.createTempFile ("ReportEngine", ".pdf");
 			} else {

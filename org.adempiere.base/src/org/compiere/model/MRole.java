@@ -856,7 +856,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 		{
 			pstmt = DB.prepareStatement(sql, get_TrxName());
 			pstmt.setInt(1, getAD_User_ID());
-			pstmt.setInt(2, Env.getAD_Client_ID(getCtx()));
+			pstmt.setInt(2, getAD_Client_ID());
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
@@ -888,7 +888,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 		{
 			pstmt = DB.prepareStatement(sql, get_TrxName());
 			pstmt.setInt(1, getAD_Role_ID());
-			pstmt.setInt(2, Env.getAD_Client_ID(getCtx()));
+			pstmt.setInt(2, getAD_Client_ID());
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
@@ -2540,6 +2540,14 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 				sb.append(keyColumnName).append(lockedIDs).append(") ");
 			}
 		}
+
+		for (MTableValRule tvr : MTableValRule.get(p_ctx, AD_Table_ID, Env.getAD_Client_ID(p_ctx), Env.getAD_Role_ID(p_ctx), Env.getAD_User_ID(p_ctx))) {
+			if (sb.length() > 0)
+				sb.append(" AND ");
+			String wherevr = Env.parseContext(p_ctx, 0, tvr.getCode(), false);
+			sb.append(" (").append(wherevr).append(") ");
+		}
+
 		//
 		return sb.toString();
 	}	//	getRecordWhere

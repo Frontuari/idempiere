@@ -234,10 +234,8 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 	protected Map<MAuthorizationAccount, IUploadService> uploadServicesMap = new HashMap<>();
 	/** Row count label */
 	private Label rowCount;
-
 	private final Map<ExportFormat, String> exportMap = new LinkedHashMap<>();
 	private final Map<String, IReportViewerRenderer> rendererMap = new TreeMap<>();
-	
 	private Center center;
 
 	private FindWindow find;
@@ -816,7 +814,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		try {
 			mediaVersion++;
 			String url = Utils.getDynamicMediaURI(this, mediaVersion, media.getName(), media.getFormat());	
-			String pdfJsUrl = "pdf.js/web/viewer.html?file="+url;
+			String pdfJsUrl = AEnv.toPdfJsUrl(url);
 			HttpServletRequest request = (HttpServletRequest) Executions.getCurrent().getNativeRequest();
 			if (url.startsWith(request.getContextPath() + "/"))
 				url = url.substring((request.getContextPath() + "/").length());
@@ -1470,7 +1468,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 	 */
 	private void cmd_refresh() {
 		int AD_Process_ID = m_reportEngine.getPrintInfo() != null ? m_reportEngine.getPrintInfo().getAD_Process_ID() : 0;
-		if(AD_Process_ID <= 0)
+		if(AD_Process_ID <= 0 || m_reportEngine.getPrintInfo().getRecord_ID() > 0)
 			this.cmd_report();
 		else
 			this.cmd_reRun(MProcess.SHOWHELP_RunSilently_TakeDefaults);
