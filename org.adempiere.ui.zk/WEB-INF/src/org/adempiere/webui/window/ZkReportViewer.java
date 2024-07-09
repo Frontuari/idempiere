@@ -234,10 +234,8 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 	protected Map<MAuthorizationAccount, IUploadService> uploadServicesMap = new HashMap<>();
 	/** Row count label */
 	private Label rowCount;
-	
 	private final Map<ExportFormat, String> exportMap = new LinkedHashMap<>();
 	private final Map<String, IReportViewerRenderer> rendererMap = new TreeMap<>();
-
 	private Center center;
 
 	private FindWindow find;
