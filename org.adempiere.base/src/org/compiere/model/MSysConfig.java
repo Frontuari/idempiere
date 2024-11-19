@@ -46,7 +46,7 @@ public class MSysConfig extends X_AD_SysConfig
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 5739824752288579881L;
+	private static final long serialVersionUID = 8636352432923806208L;
 
 	/** Constant for Predefine System Configuration Names (in alphabetical order) */
 	
@@ -66,6 +66,7 @@ public class MSysConfig extends X_AD_SysConfig
     public static final String APPLICATION_IMPLEMENTATION_VENDOR = "APPLICATION_IMPLEMENTATION_VENDOR";
     public static final String APPLICATION_IMPLEMENTATION_VENDOR_SHOWN = "APPLICATION_IMPLEMENTATION_VENDOR_SHOWN";
     public static final String APPLICATION_JVM_VERSION_SHOWN = "APPLICATION_JVM_VERSION_SHOWN";
+    public static final String APPLICATION_LOGIN_LEFT_PANEL_SHOWN = "APPLICATION_LOGIN_LEFT_PANEL_SHOWN";
     public static final String APPLICATION_MAIN_VERSION = "APPLICATION_MAIN_VERSION";
     public static final String APPLICATION_MAIN_VERSION_SHOWN = "APPLICATION_MAIN_VERSION_SHOWN";
     public static final String APPLICATION_OS_INFO_SHOWN = "APPLICATION_OS_INFO_SHOWN";
@@ -152,7 +153,9 @@ public class MSysConfig extends X_AD_SysConfig
     public static final String MAIL_SEND_BCC_TO_ADDRESS = "MAIL_SEND_BCC_TO_ADDRESS";
     public static final String MAIL_SEND_BCC_TO_FROM = "MAIL_SEND_BCC_TO_FROM";
     public static final String MAIL_SEND_CREDENTIALS = "MAIL_SEND_CREDENTIALS";
+	public static final String MAIL_SMTP_CONNECTIONTIMEOUT = "MAIL_SMTP_CONNECTIONTIMEOUT";
     public static final String MAIL_SMTP_TIMEOUT = "MAIL_SMTP_TIMEOUT";
+	public static final String MAIL_SMTP_WRITETIMEOUT = "MAIL_SMTP_WRITETIMEOUT";
     public static final String MAX_ACTIVITIES_IN_LIST = "MAX_ACTIVITIES_IN_LIST";
     public static final String MAX_RESULTS_PER_SEARCH_IN_DOCUMENT_CONTROLLER = "MAX_RESULTS_PER_SEARCH_IN_DOCUMENT_CONTROLLER";
     public static final String MAX_ROWS_IN_TABLE_COMBOLIST = "MAX_ROWS_IN_TABLE_COMBOLIST";
@@ -918,6 +921,14 @@ public class MSysConfig extends X_AD_SysConfig
 			// the reset cache is being called on PO when a record is changed or deleted, but not on new
 			// NOTE also that reset the specific ID doesn't work because the MSysConfig cache holds a
 			//   String type, and CCache.reset(int) just call reset when the key is not an Integer
+			Adempiere.getThreadPoolExecutor().submit(() -> CacheMgt.get().reset(Table_Name));
+		}
+		return success;
+	}
+
+	@Override
+	protected boolean afterDelete(boolean success) {
+		if (success && ! getName().endsWith("_NOCACHE")) {
 			Adempiere.getThreadPoolExecutor().submit(() -> CacheMgt.get().reset(Table_Name));
 		}
 		return success;
