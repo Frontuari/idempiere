@@ -33,6 +33,7 @@ import org.compiere.model.MCurrency;
 import org.compiere.model.MFactAcct;
 import org.compiere.model.MMovement;
 import org.compiere.model.MRevenueRecognitionPlan;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MUOM;
 import org.compiere.model.X_C_AcctSchema_Element;
 import org.compiere.model.X_Fact_Acct;
@@ -56,6 +57,9 @@ import org.compiere.util.Env;
  *	Teo Sarca
  *			<li>FR [ 2819081 ] FactLine.getDocLine should be public
  *				https://sourceforge.net/p/adempiere/feature-requests/764/
+ *  Jorge Colmenarez - Frontuari 
+ *			<li>Fix Bug: Difference Accounting with Document when DateDoc < DateAcct and Rate Conversion it's Difference, 
+ *				then change conversion parameter DateAcct by DateTrx.
  *  
  */
 public final class FactLine extends X_Fact_Acct
@@ -730,6 +734,12 @@ public final class FactLine extends X_Fact_Acct
 
 		if (( m_doc instanceof Doc_BankStatement || m_doc instanceof Doc_AllocationHdr ) && m_docLine != null)
 			convDate = m_docLine.getDateConv();
+		//	Modified by Jorge Colmenarez, 2021-01-26 11:19 
+		//	Calculate Conversion with DateTrx for multicurrency differences on Administrative Documents with Accounting Documents when DateDoc minor to DateAcct and Rate it's difference.
+		boolean useDateTrx = MSysConfig.getBooleanValue("ConvertionAccountingWithDateTrx", false, getAD_Client_ID(), getAD_Org_ID());
+		if(useDateTrx)
+			convDate = getDateTrx();
+		//	End Jorge Colmenarez
 
 		BigDecimal currencyRate = null;
 		if (m_docLine != null && m_docLine.getCurrencyRate() != null && m_docLine.getCurrencyRate().signum() > 0) 
