@@ -320,7 +320,13 @@ public class MPeriod extends X_C_Period implements ImmutablePOSupport
 		} else if (   tableID == MAllocationHdr.Table_ID
 				|| tableID == MMatchInv.Table_ID
 				|| tableID == MMatchPO.Table_ID) {
-			idxdate = po.get_ColumnIndex("DateTrx");
+			//	Modified By Jorge Colmenarez, 2024-11-25 07:47
+			//	Add SysConfig conditional for selecting with that date check if period is open
+			if(MSysConfig.getBooleanValue("ALLOCATIONANDMATCHINVPO_VALIDPERIODWITHDATETRX", true, Env.getAD_Client_ID(ctx), Env.getAD_Client_ID(ctx)))
+				idxdate = po.get_ColumnIndex("DateTrx");
+			else
+				idxdate = po.get_ColumnIndex("DateAcct");
+			//	End Jorge Colmenarez
 		} else {
 			idxdate = po.get_ColumnIndex("DateAcct");
 		}
