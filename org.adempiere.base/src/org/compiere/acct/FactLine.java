@@ -732,15 +732,14 @@ public final class FactLine extends X_Fact_Acct
 		}
 
 		Timestamp convDate = getDateAcct();
+		if (( m_doc instanceof Doc_BankStatement || m_doc instanceof Doc_AllocationHdr ) && m_docLine != null)
+			convDate = m_docLine.getDateConv();
 		//	Modified by Jorge Colmenarez, 2021-01-26 11:19 
 		//	Calculate Conversion with DateTrx for multicurrency differences on Administrative Documents with Accounting Documents when DateDoc minor to DateAcct and Rate it's difference.
 		boolean useDateTrx = MSysConfig.getBooleanValue("ConvertionAccountingWithDateTrx", false, getAD_Client_ID(), getAD_Org_ID());
 		if(useDateTrx)
 			convDate = getDateTrx();
 		//	End Jorge Colmenarez
-
-		if (( m_doc instanceof Doc_BankStatement || m_doc instanceof Doc_AllocationHdr ) && m_docLine != null)
-			convDate = m_docLine.getDateConv();
 
 		BigDecimal currencyRate = null;
 		if (m_docLine != null && m_docLine.getCurrencyRate() != null && m_docLine.getCurrencyRate().signum() > 0) 

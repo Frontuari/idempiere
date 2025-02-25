@@ -334,8 +334,8 @@ public class MDepreciationWorkfile extends X_A_Depreciation_Workfile
 		
 		final String whereClause = COLUMNNAME_A_Asset_ID+"=?"
 									+" AND "+COLUMNNAME_PostingType+"=? AND " +  COLUMNNAME_C_AcctSchema_ID + "=?" ;
-
 		int acctSchemaId =  C_AcctSchema_ID==0 ? MClient.get(ctx).getAcctSchema().get_ID() : C_AcctSchema_ID;
+		System.out.println("Revisar = "+A_Asset_ID+" SchemaID ="+acctSchemaId);
 		MDepreciationWorkfile wk = new Query(ctx, MDepreciationWorkfile.Table_Name, whereClause, trxName)
 				.setParameters(new Object[]{A_Asset_ID, postingType,acctSchemaId})
 				.firstOnly();
