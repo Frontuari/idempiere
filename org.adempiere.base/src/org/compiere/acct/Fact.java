@@ -1027,27 +1027,22 @@ public final class Fact
         // Iterar sobre cada grupo
         for (Map.Entry<BigDecimal, List<OrgBalance>> entry : grupos.entrySet()) {
             List<OrgBalance> grupo = entry.getValue();
-            // Si el grupo tiene un solo registro, lo conservamos
-            if (grupo.size() == 1) {
-                resultado.addAll(grupo);
-            } else {
-                // Si hay varios, verificamos si todos tienen el mismo parent
-                int parent = grupo.get(0).getParent();
-                boolean mismosPadres = true;
-                for (OrgBalance ob : grupo) {
-                    if (ob.getParent() != parent) {
-                    	grupo.get(0).setBPartnerID(ob.getBPartnerOrg());
-                    	grupo.get(1).setBPartnerID(grupo.get(0).getBPartnerOrg());
-                        mismosPadres = false;
-                        break;
-                    }
+            // Si hay varios, verificamos si todos tienen el mismo parent
+            int parent = grupo.get(0).getParent();
+            boolean mismosPadres = true;
+            for (OrgBalance ob : grupo) {
+                if (ob.getParent() != parent) {
+                	grupo.get(0).setBPartnerID(ob.getBPartnerOrg());
+                	grupo.get(1).setBPartnerID(grupo.get(0).getBPartnerOrg());
+                    mismosPadres = false;
+                    break;
                 }
-                // Si NO todos tienen el mismo parent, conservamos los registros
-                if (!mismosPadres) {
-                    resultado.addAll(grupo);
-                }
-                // Caso contrario (todos tienen el mismo padre): se excluyen del resultado.
             }
+            // Si NO todos tienen el mismo parent, conservamos los registros
+            if (!mismosPadres) {
+                resultado.addAll(grupo);
+            }
+            // Caso contrario (todos tienen el mismo padre): se excluyen del resultado.
         }
         return resultado;
     }
