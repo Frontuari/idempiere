@@ -1045,11 +1045,12 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
 		List<InfoColumnVO> gridDisplayedIC = new ArrayList<>();				
 		gridDisplayedIC.add(null); // First column does not have any matching info column		
 		
-		boolean haveNotProcess = !haveProcess; // A field is editabile only if is not readonly and theres a process
-				
-		int i = 0;
+		boolean haveNotProcess = !haveProcess; // A field is editable only if is not read-only and there is a process
+
+		int i = -1;
 		for(InfoColumnVO infoColumn : infoColumns) 
-		{						
+		{
+			i++;
 			if (infoColumn.isDisplayed(infoContext, p_WindowNo)) 
 			{
 				ColumnInfo columnInfo = null;
@@ -1096,8 +1097,7 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
 						isIDColumnKeyOfView = true;
 					indexKeyOfView = list.size() - 1;
 				}
-			}		
-			i++;
+			}
 		}
 		
 		if (keyColumnOfView == null){
@@ -2020,6 +2020,8 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
         editors2.add(editor2);
         if (infoColumn.isQueryAfterChange()) {
         	queryAfterChangeEditors.add(editor);
+        	if (editor2 != null)
+        		queryAfterChangeEditors.add(editor2);
         }
         
         editor.showMenu();
@@ -3265,7 +3267,8 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
 	    exportButton.setEnabled(false);       
 	    exportButton.addEventListener(Events.ON_CLICK, new XlsxExportAction());
 	
-	    confirmPanel.addComponentsLeft(exportButton);
+	    if (MRole.getDefault().isCanExport())
+	    	confirmPanel.addComponentsLeft(exportButton);
 	}
 
 	/**
@@ -3275,8 +3278,8 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
 	{
 		if(exportButton == null)
 			return;
-		
-		exportButton.setEnabled(contentPanel.getRowCount() > 0);		
+
+		exportButton.setEnabled(contentPanel.getRowCount() > 0 && MRole.getDefault().isCanExport());
 	}
 
 	/**
