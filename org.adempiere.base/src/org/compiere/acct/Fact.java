@@ -1023,10 +1023,11 @@ public final class Fact
         }
 
         List<OrgBalance> resultado = new ArrayList<>();
-
+        int groupQty = 0;
         // Iterar sobre cada grupo
         for (Map.Entry<BigDecimal, List<OrgBalance>> entry : grupos.entrySet()) {
             List<OrgBalance> grupo = entry.getValue();
+            groupQty = grupo.size();
             // Si hay varios, verificamos si todos tienen el mismo parent
             int parent = grupo.get(0).getParent();
             boolean mismosPadres = true;
@@ -1038,8 +1039,8 @@ public final class Fact
                     break;
                 }
             }
-            // Si NO todos tienen el mismo parent, conservamos los registros
-            if (!mismosPadres) {
+            // Si NO todos tienen el mismo parent o hay un solo grupo, conservamos los registros
+            if (!mismosPadres || groupQty == 1) {
                 resultado.addAll(grupo);
             }
             // Caso contrario (todos tienen el mismo padre): se excluyen del resultado.
