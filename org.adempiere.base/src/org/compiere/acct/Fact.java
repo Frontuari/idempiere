@@ -43,6 +43,10 @@ import org.compiere.util.Env;
  *  @version 	$Id: Fact.java,v 1.2 2006/07/30 00:53:33 jjanke Exp $
  *  
  *  BF [ 2789949 ] Multicurrency in matching posting
+ *  
+ *  Contributor(s):
+ *  Jorge Colmenarez - Frontuari 
+ *			<li>NF: Support for correct dueFrom and dueTo Intercompany transaction.
  */
 public final class Fact
 {
@@ -1126,10 +1130,12 @@ public final class Fact
         }
 
         List<OrgBalance> result = new ArrayList<>();
-
+        
+        int groupQty = 0;
         // Iterate on each group
         for (Map.Entry<BigDecimal, List<OrgBalance>> entry : groups.entrySet()) {
             List<OrgBalance> group = entry.getValue();
+            groupQty = group.size();
             // If there are several, we check if all of them have the same parent
             int parent = group.get(0).getParent();
             boolean sameParents = true;
@@ -1142,7 +1148,7 @@ public final class Fact
                 }
             }
             // If they do NOT all have the same parent, we keep the records.
-            if (!sameParents) {
+            if (!sameParents || groupQty == 1) {
                 result.addAll(group);
             }
             // Otherwise (all have the same parent): they are excluded from the result.

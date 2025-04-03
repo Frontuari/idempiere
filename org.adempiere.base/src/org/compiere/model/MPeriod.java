@@ -352,7 +352,7 @@ public class MPeriod extends X_C_Period implements ImmutablePOSupport
 				|| tableID == MMatchPO.Table_ID) {
 			//	Modified By Jorge Colmenarez, 2024-11-25 07:47
 			//	Add SysConfig conditional for selecting with that date check if period is open
-			if(MSysConfig.getBooleanValue("ALLOCATIONANDMATCHINVPO_VALIDPERIODWITHDATETRX", true, Env.getAD_Client_ID(ctx), Env.getAD_Client_ID(ctx)))
+			if(MSysConfig.getBooleanValue("ALLOCATIONANDMATCHINVPO_VALIDPERIODWITHDATETRX", true, Env.getAD_Client_ID(ctx), Env.getAD_Org_ID(ctx)))
 				idxdate = po.get_ColumnIndex("DateTrx");
 			else
 				idxdate = po.get_ColumnIndex("DateAcct");
