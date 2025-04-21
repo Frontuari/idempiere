@@ -32,6 +32,7 @@ import org.adempiere.exceptions.TaxNotFoundException;
 import org.compiere.util.CLogMgt;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 
 /**
  *	Static methods for the looking up of tax id (C_Tax_ID)
@@ -756,7 +757,12 @@ public class Tax
 
 		MTax[] taxes = MTax.getAll (ctx);
 		MLocation lFrom = new MLocation (ctx, billFromC_Location_ID, trxName); 
-		MLocation lTo = new MLocation (ctx, billToC_Location_ID, trxName); 
+ 		//MLocation lTo = new MLocation (ctx, billToC_Location_ID, trxName); 
+ 		//	Modified by Jorge Colmenarez, 2025-02-24 15:18
+  		//	Support for usage Ship Location by get Taxes
+  		int ToLocationID = (MSysConfig.getBooleanValue("USAGE_SHIP_BPLOCATION_BY_TAXES", false, Env.getAD_Client_ID(ctx), Env.getAD_Org_ID(ctx)) ? shipToC_Location_ID : billToC_Location_ID);
+  		MLocation lTo = new MLocation (ctx, ToLocationID, trxName);
+  		//	End Jorge Colmenarez
 		if (log.isLoggable(Level.FINER)){
 			log.finer("From=" + lFrom);
 			log.finer("To=" + lTo);

@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -31,6 +32,7 @@ import org.compiere.model.MDistributionLine;
 import org.compiere.model.MElementValue;
 import org.compiere.model.MFactAcct;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 /**
@@ -41,6 +43,10 @@ import org.compiere.util.Env;
  *  @version 	$Id: Fact.java,v 1.2 2006/07/30 00:53:33 jjanke Exp $
  *  
  *  BF [ 2789949 ] Multicurrency in matching posting
+ *  
+ *  Contributor(s):
+ *  Jorge Colmenarez - Frontuari 
+ *			<li>NF: Support for correct dueFrom and dueTo Intercompany transaction.
  */
 public final class Fact
 {
@@ -358,6 +364,9 @@ public final class Fact
 		if (segmentType.equals(MAcctSchemaElement.ELEMENTTYPE_Organization))
 		{
 			HashMap<Integer,BigDecimal> map = new HashMap<Integer,BigDecimal>();
+			//	Added by Jorge Colmenarez, 2025-02-24 13:06
+			HashMap<Integer,Balance> newMap = new HashMap<Integer,Balance>();
+			//	End Jorge Colmenarez
 			//  Add up values by organization
 			for (int i = 0; i < m_lines.size(); i++)
 			{
@@ -368,23 +377,57 @@ public final class Fact
 				if (oldBal != null)
 					bal = bal.add(oldBal);
 				map.put(key, bal);
-			}
-			
-			//  check if there are not balance entries involving multiple organizations
-			Map<Integer, BigDecimal> notBalance = new HashMap<>();			
-			for(Map.Entry<Integer, BigDecimal> entry : map.entrySet())
-			{
-				BigDecimal bal = entry.getValue();
-				if (bal.signum() != 0)
+				//	Added by Jorge Colmenarez, 2025-02-24 13:06
+				Balance oldBalance = (Balance)newMap.get(key);
+				if (oldBalance == null)
 				{
-					notBalance.put(entry.getKey(), entry.getValue());
+					oldBalance = new Balance (line.getAmtSourceDr(), line.getAmtSourceCr());
+					newMap.put(key, oldBalance);
+				}
+				else
+					oldBalance.add(line.getAmtSourceDr(), line.getAmtSourceCr());
+				//	End Jorge Colmenarez
+			}
+			//	Added by Jorge Colmenarez, 2025-02-24 13:06
+			//	Create Array List OrgBalance
+			List<OrgBalance> orgToDistributive = new ArrayList<>();
+			Iterator<Integer> keys = newMap.keySet().iterator();
+			while (keys.hasNext())
+			{
+				Integer key = keys.next();
+				Balance difference = newMap.get(key);
+				orgToDistributive.add(new OrgBalance(key, difference));
+			}
+			List<OrgBalance> distributives = distribute(orgToDistributive.iterator());
+			List<OrgBalance> filtered = fillbyParentAndAmt(distributives);
+			if(filtered.size()>0) {
+				//  check if there are not balance entries involving multiple organizations
+				Map<Integer, BigDecimal> notBalance = new HashMap<>();			
+				/**
+				 * Commented by Jorge Colmenarez, 2025-02-24 13:06
+				 * for(Map.Entry<Integer, BigDecimal> entry : map.entrySet())
+				{
+					BigDecimal bal = entry.getValue();
+					if (bal.signum() != 0)
+					{
+						notBalance.put(entry.getKey(), entry.getValue());
+					}
+				}*/
+				for (OrgBalance ob : filtered)
+				{
+					BigDecimal bal = ob.balance.getBalance();
+					if (bal.signum() != 0)
+					{
+						notBalance.put(ob.org, ob.balance.getBalance());
+					}
+				}
+				
+				if (notBalance.size() > 1)
+				{
+					return false;
 				}
 			}
-			
-			if (notBalance.size() > 1)
-			{
-				return false;
-			}
+			//	End Jorge Colmenarez
 			
 			if (log.isLoggable(Level.FINER)) log.finer("(" + segmentType + ") - " + toString());
 			return true;
@@ -445,53 +488,80 @@ public final class Fact
 
 			//  Create entry for non-zero element
 			Iterator<Integer> keys = map.keySet().iterator();
+			//	Added by Jorge Colmenarez, 2025-02-24 09:25
+			//	Create Array List OrgBalance
+			List<OrgBalance> orgToDistributive = new ArrayList<>();
 			while (keys.hasNext())
 			{
 				Integer key = keys.next();
 				Balance difference = map.get(key);
-				if (log.isLoggable(Level.INFO)) log.info (elementType + "=" + key + ", " + difference);
-				//
-				if (!difference.isZeroBalance())
-				{
-					//  Create Balancing Entry
-					FactLine line = new FactLine (m_doc.getCtx(), m_doc.get_Table_ID(), 
-						m_doc.get_ID(), 0, m_trxName);
-					line.setDocumentInfo(m_doc, null);
-					line.setPostingType(m_postingType);
-					//  Amount & Account
-					if (difference.getBalance().signum() < 0)
-					{
-						if (difference.isReversal())
-						{
-							line.setAccount(m_acctSchema, m_acctSchema.getDueTo_Acct(elementType));
-							line.setAmtSource(m_doc.getC_Currency_ID(), Env.ZERO, difference.getPostBalance());
-						}
-						else
-						{
-							line.setAccount(m_acctSchema, m_acctSchema.getDueFrom_Acct(elementType));
-							line.setAmtSource(m_doc.getC_Currency_ID(), difference.getPostBalance(), Env.ZERO);
-						}
-					}
-					else
-					{
-						if (difference.isReversal())
-						{
-							line.setAccount(m_acctSchema, m_acctSchema.getDueFrom_Acct(elementType));
-							line.setAmtSource(m_doc.getC_Currency_ID(), difference.getPostBalance(), Env.ZERO);
-						}
-						else
-						{
-							line.setAccount(m_acctSchema, m_acctSchema.getDueTo_Acct(elementType));
-							line.setAmtSource(m_doc.getC_Currency_ID(), Env.ZERO, difference.getPostBalance());
-						}
-					}
-					line.convert();
-					line.setAD_Org_ID(key.intValue());
-					//
-					m_lines.add(line);
-					if (log.isLoggable(Level.FINE)) log.fine("(" + elementType + ") - " + line);
-				}
+				orgToDistributive.add(new OrgBalance(key, difference));
 			}
+			List<OrgBalance> distributives = distribute(orgToDistributive.iterator());
+			List<OrgBalance> filtered = fillbyParentAndAmt(distributives);
+			if(filtered.size()>0) {
+				for (OrgBalance ob : filtered) {
+					Integer key = ob.org;
+					Balance difference = ob.balance;
+					/**
+					 * Commented by Jorge Colmenarez, 2025-02-24 09:25
+					 * while (keys.hasNext())
+					{
+						Integer key = keys.next();
+						Balance difference = map.get(key);*/
+					if (log.isLoggable(Level.INFO)) log.info (elementType + "=" + key + ", " + difference);
+					//
+					if (!difference.isZeroBalance())
+					{
+						//  Create Balancing Entry
+						FactLine line = new FactLine (m_doc.getCtx(), m_doc.get_Table_ID(), 
+							m_doc.get_ID(), 0, m_trxName);
+						line.setDocumentInfo(m_doc, null);
+						line.setPostingType(m_postingType);
+						//  Amount & Account
+						if (difference.getBalance().signum() < 0)
+						{
+							//	Modified by Jorge Colmenarez, 2025-02-24 14:30
+							//if (difference.isReversal())
+							if (m_doc.getPO().get_ValueAsInt("Reversal_ID")>0)
+							{
+								line.setAccount(m_acctSchema, m_acctSchema.getDueTo_Acct(elementType));
+								line.setAmtSource(m_doc.getC_Currency_ID(), Env.ZERO, difference.getPostBalance());
+							}
+							else
+							{
+								line.setAccount(m_acctSchema, m_acctSchema.getDueFrom_Acct(elementType));
+								line.setAmtSource(m_doc.getC_Currency_ID(), difference.getPostBalance(), Env.ZERO);
+							}
+						}
+						else
+						{
+							//	Modified by Jorge Colmenarez, 2025-02-24 14:30
+							//if (difference.isReversal())
+							if (m_doc.getPO().get_ValueAsInt("Reversal_ID")>0)
+							{
+								line.setAccount(m_acctSchema, m_acctSchema.getDueFrom_Acct(elementType));
+								line.setAmtSource(m_doc.getC_Currency_ID(), difference.getPostBalance(), Env.ZERO);
+							}
+							else
+							{
+								line.setAccount(m_acctSchema, m_acctSchema.getDueTo_Acct(elementType));
+								line.setAmtSource(m_doc.getC_Currency_ID(), Env.ZERO, difference.getPostBalance());
+							}
+						}
+						line.convert();
+						line.setAD_Org_ID(key.intValue());
+						//	Added by Jorge Colmenarez, 2025-02-24 13:45
+						//	Set BPartner Company
+						if(ob.getBPartnerID()>0)
+							line.setC_BPartner_ID(ob.getBPartnerID());
+						//	End Jorge Colmenarez
+						//
+						m_lines.add(line);
+						if (log.isLoggable(Level.FINE)) log.fine("(" + elementType + ") - " + line);
+					}
+				}
+			} //	End Jorge Colmenarez
 			map.clear();
 		}
 	}   //  balanceSegment
@@ -975,5 +1045,156 @@ public final class Fact
 		} //	toString
 		
 	}	//	Balance
+	
+	/**
+     * Method that receives an Iterator from OrgBalance and distributes the balance from the
+     * organization that is unique on one side (positive or negative) based on
+     * the amounts of the other group.
+     * @author Jorge Colmenarez, 2025-02-24 13:06 <https://frontuari.net>
+     * @param keys
+     */
+    public static List<OrgBalance> distribute(Iterator<OrgBalance> keys) {
+        List<OrgBalance> positives = new ArrayList<>();
+        List<OrgBalance> negatives = new ArrayList<>();
+        
+        // We separate in two groups according to the sign of the balance
+        while (keys.hasNext()) {
+            OrgBalance ob = keys.next();
+            BigDecimal balance = ob.balance.getBalance();
+            if (balance.signum() > 0) {
+            	positives.add(ob);
+            } else if (balance.signum() < 0) {
+            	negatives.add(ob);
+            }
+        }
+        
+        List<OrgBalance> result = new ArrayList<>();
+        
+        // Case 1: There is only one organization with a negative balance and several positive ones.
+        if (negatives.size() == 1 && positives.size() > 1) {
+            // Positive organizations are left unchanged
+        	result.addAll(positives);
+            // The single negative is taken and divided into as many records as there are positives,
+            // assigning to each a negative amount equal to the balance of each positive.
+            OrgBalance negUnique = negatives.get(0);
+            for (OrgBalance pos : positives) {
+                // The amount to be allocated is the same as the balance of the positive record.
+                BigDecimal amt = pos.balance.getBalance();
+                // A Balance is created with DR=0 and CR = amount, so that getBalance() is -amount.
+                Balance newBalance = new Balance(BigDecimal.ZERO, amt);
+                result.add(new OrgBalance(negUnique.org, newBalance));
+            }
+        }
+        // Case 2: There is only one organization with a positive balance and several negative ones.
+        else if (positives.size() == 1 && negatives.size() > 1) {
+            // Negative organizations are left unchanged
+        	result.addAll(negatives);
+            // The only positive one is taken and divided into as many records as there are negative ones,
+            // assigning to each a positive amount equal to the absolute value of the negative balance.
+            OrgBalance posUnique = positives.get(0);
+            for (OrgBalance neg : negatives) {
+                BigDecimal amt = neg.balance.getBalance().abs();
+                // A Balance is created with DR = amount and CR = 0, so that getBalance() is amount.
+                Balance newBalance = new Balance(amt, BigDecimal.ZERO);
+                result.add(new OrgBalance(posUnique.org, newBalance));
+            }
+        }
+        // Case 3: Either both groups have only one record or both have several records.
+        // In this example the records are returned unmodified (the logic could be extended according to the requirement).
+        else {
+        	result.addAll(positives);
+        	result.addAll(negatives);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Method for filtering the resulting distribution list.
+     * Group by the exact amount (balance.getBalance()) and, for each group,
+     * if all records have the same parent org, they are excluded from the result.
+     * @author Jorge Colmenarez, 2025-02-24 13:06 <https://frontuari.net>
+     * @param distributed
+     */
+    public static List<OrgBalance> fillbyParentAndAmt(List<OrgBalance> distributed) {
+        Map<BigDecimal, List<OrgBalance>> groups = new HashMap<>();
+
+        // Group by exact amount
+        for (OrgBalance ob : distributed) {
+            BigDecimal amt = ob.balance.getBalance().abs();
+            groups.computeIfAbsent(amt, k -> new ArrayList<>()).add(ob);
+        }
+
+        List<OrgBalance> result = new ArrayList<>();
+
+        int groupQty = 0;
+        // Iterate on each group
+        for (Map.Entry<BigDecimal, List<OrgBalance>> entry : groups.entrySet()) {
+            List<OrgBalance> group = entry.getValue();
+            groupQty = group.size();
+            // If there are several, we check if all of them have the same parent
+            int parent = group.get(0).getParent();
+            boolean sameParents = true;
+            for (OrgBalance ob : group) {
+                if (ob.getParent() != parent) {
+                	group.get(0).setBPartnerID(ob.getBPartnerOrg());
+                	group.get(1).setBPartnerID(group.get(0).getBPartnerOrg());
+                	sameParents = false;
+                    break;
+                }
+            }
+            // If they do NOT all have the same parent, we keep the records.
+            if (!sameParents || groupQty == 1) {
+                result.addAll(group);
+            }
+            // Otherwise (all have the same parent): they are excluded from the result.
+        }
+        return result;
+    }
+    
+    // Auxiliary class for grouping the organization and its Balance Sheet
+    public static class OrgBalance {
+        public int org;
+        public Balance balance;
+        public int parentorg;
+        public int bPartnerOrg;
+        public int bPartnerID;
+        
+        public OrgBalance(int org, Balance balance) {
+            this.org = org;
+            this.balance = balance;
+            setParent(org);
+            setBPartnerOrg(org);
+        }
+        
+        private void setParent(int org) {
+        	this.parentorg = DB.getSQLValue(null, "SELECT COALESCE(Parent_Org_ID,0) FROM AD_OrgInfo WHERE AD_Org_ID = ?", org);
+        }
+        
+        public void setBPartnerID(int bpID) {
+        	this.bPartnerID = bpID;
+        }
+        
+        public int getBPartnerID() {
+        	return bPartnerID;
+        }
+        
+        public void setBPartnerOrg(int org) {
+        	this.bPartnerOrg = DB.getSQLValue(null,"SELECT COALESCE(C_BPartner_ID,0) FROM C_BPartner WHERE TaxID = (SELECT TaxID FROM AD_OrgInfo WHERE AD_Org_ID = ?)",org);
+        }
+        
+        public int getBPartnerOrg() {
+        	return bPartnerOrg;
+        }
+        
+        public int getParent() {
+        	return parentorg;
+        }
+        
+        @Override
+        public String toString() {
+            return "OO=" + org + ", Balance=" + balance+" , bpOrg=" + bPartnerOrg+" , bpID="+ bPartnerID;
+        }
+    }
 	
 }   //  Fact
