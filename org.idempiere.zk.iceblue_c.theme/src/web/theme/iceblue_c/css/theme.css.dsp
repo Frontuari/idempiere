@@ -2,6 +2,8 @@
 <%@ taglib uri="http://www.zkoss.org/dsp/web/core" prefix="c" %>
 <%@ taglib uri="http://www.idempiere.org/dsp/web/util" prefix="u" %>
 
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
 html,body {
 	margin: 0;
 	padding: 0;
@@ -125,6 +127,8 @@ table.z-vbox > tbody > tr > td > table {
 <c:include page="fragment/font-icons.css.dsp" />
 
 <c:include page="fragment/keikai.css.dsp" />
+
+<c:include page="fragment/gadget-kpi.css.dsp" />
 
 <c:if test="${u:isThemeHasCustomCSSFragment()}">
     <c:include page="fragment/custom.css.dsp" />
