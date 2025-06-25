@@ -7,15 +7,15 @@ Copyright (C) 2025 Frontuari, C.A.
 <zk>
 <zscript>
     import org.compiere.model.MSysConfig;
-    var msgValue = MSysConfig.getValue(MSysConfig.ZK_HOME_HEADER_VALUE,"iDempiere 12 Kudos LVE");
+    var msgValue = MSysConfig.getValue("ZK_HOME_HEADER_VALUE","iDempiere 12 Kudos LVE");
 </zscript>
 <div style="background-color: #E5E5E5; margin: 5px;">
 	<hbox align="center">
-		<a href="https://frontuari.net" tooltiptext="Powered by Frontuari, C.A." target="_blank"><image src="~./theme/frontuari/images/logo-login-frontuari.png" style="height: 85px;"/></a>
-		<div style="margin-left: 15px; margin-right: 5px;">
-			<label multiline="true" value="${msgValue}"
-				style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; color:#578BB8; font-size:1.3em; font-weight: bold;" />
-		</div>
+		<a href="https://frontuari.net" tooltiptext="Powered by Frontuari, C.A." target="_blank"><image src="~./theme/frontuari/images/logo-login-frontuari.png"/></a>
+		<label multiline="true" value="${msgValue}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; color:#578BB8; font-size:1.5em; font-weight: bold;" />
 	</hbox>
+</div>
+<div style="height: 90px">
+	<space/>
 </div>
 </zk>
