@@ -1040,7 +1040,18 @@ public final class Fact
                 }
             }
             // Si NO todos tienen el mismo parent o hay un solo grupo, conservamos los registros
-            if (!mismosPadres || groupQty == 1) {
+            if(groupQty==1) {
+            	parent = distribuidos.get(0).getParent();
+            	for (OrgBalance ob : distribuidos) {
+            		if(ob.getParent()!=parent) {
+            			distribuidos.get(0).setBPartnerID(ob.getBPartnerOrg());
+            			distribuidos.get(1).setBPartnerID(distribuidos.get(0).getBPartnerOrg());
+                        mismosPadres = false;
+                        break;
+            		}
+            	}
+            }
+            if (!mismosPadres) {
                 resultado.addAll(grupo);
             }
             // Caso contrario (todos tienen el mismo padre): se excluyen del resultado.
