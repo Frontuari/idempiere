@@ -1143,8 +1143,19 @@ public final class Fact
                     break;
                 }
             }
+            if(groupQty==1) {
+            	parent = distributed.get(0).getParent();
+            	for (OrgBalance ob : distributed) {
+            		if(ob.getParent()!=parent) {
+            			distributed.get(0).setBPartnerID(ob.getBPartnerOrg());
+            			distributed.get(1).setBPartnerID(distributed.get(0).getBPartnerOrg());
+                        sameParents = false;
+                        break;
+            		}
+            	}
+            }
             // If they do NOT all have the same parent, we keep the records.
-            if (!sameParents || groupQty == 1) {
+            if (!sameParents) {
                 result.addAll(group);
             }
             // Otherwise (all have the same parent): they are excluded from the result.
