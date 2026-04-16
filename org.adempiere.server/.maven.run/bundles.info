@@ -310,6 +310,7 @@ org.idempiere.zk.datatable,12.0.0.qualifier,file:../../../org.idempiere.zk.datat
 org.idempiere.zk.extra,12.0.0.qualifier,file:../../../org.idempiere.zk.extra/,4,false
 org.idempiere.zk.iceblue_c.theme,12.0.0.qualifier,file:../../../org.idempiere.zk.iceblue_c.theme/,4,false
 org.idempiere.zk.pivot,12.0.0.qualifier,file:../../../org.idempiere.zk.pivot/,4,false
+org.idempiere.seniat.validator,12.0.0.qualifier,file:../../../org.idempiere.seniat.validator/,4,false
 org.junit,4.13.2.v20230809-1000,file:plugins/org.junit_4.13.2.v20230809-1000.jar,4,false
 org.jvnet.mimepull,1.9.14,file:${user.home}/.m2/repository/org/jvnet/mimepull/mimepull/1.9.14/mimepull-1.9.14.jar,4,false
 org.jvnet.staxex.stax-ex,1.8.3,file:${user.home}/.m2/repository/org/jvnet/staxex/stax-ex/1.8.3/stax-ex-1.8.3.jar,4,false

@@ -26,6 +26,7 @@
         <listEntry value="=org.adempiere.install/src"/>
         <listEntry value="=org.adempiere.server/src\/main\/server"/>
         <listEntry value="=org.idempiere.printformat.editor/src"/>
+        <listEntry value="=org.idempiere.seniat.validator/src"/>
         <listEntry value="=org.idempiere.keikai/src"/>
         <listEntry value="=org.adempiere.replication/src"/>
         <listEntry value="=org.adempiere.plugin.utils/src"/>

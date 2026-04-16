@@ -180,9 +180,9 @@ Export-Package: net.bytebuddy,
  org.objenesis.instantiator.util,
  org.objenesis.strategy
 Bundle-ClassPath: .,
- lib/mockito-core.jar,
- lib/mockito-junit-jupiter.jar,
  lib/objenesis.jar,
  lib/byte-buddy.jar,
- lib/byte-buddy-agent.jar
+ lib/byte-buddy-agent.jar,
+ lib/mockito-core.jar,
+ lib/mockito-junit-jupiter.jar
 Service-Component: OSGI-INF/*.xml

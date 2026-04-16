@@ -8,3 +8,4 @@ Bundle-Vendor: iDempiere
 Fragment-Host: org.adempiere.ui.zk;bundle-version="11.0.0"
 Automatic-Module-Name: org.idempiere.zk.iceblue.c.theme
 Bundle-RequiredExecutionEnvironment: JavaSE-17
+Import-Package: org.zkoss.image

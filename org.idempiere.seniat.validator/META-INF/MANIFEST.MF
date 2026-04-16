@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SENIAT Validator
+Bundle-SymbolicName: org.idempiere.seniat.validator
+Bundle-Version: 12.0.0.qualifier
+Bundle-Activator: org.idempiere.seniat.validator.Activator
+Bundle-Vendor: FRONTUARI, C.A. <https://frontuari.net>
+Import-Package: org.osgi.framework;version="1.10.0",
+ org.osgi.service.component;version="1.5.0",
+ org.osgi.service.component.annotations;version="1.5.1",
+ org.osgi.service.event;version="1.4.1"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version>=17))"
+Require-Bundle: org.adempiere.base;bundle-version="12.0.0",
+ org.adempiere.ui.zk;bundle-version="12.0.0",
+ org.adempiere.plugin.utils;bundle-version="12.0.0",
+ zcommon;bundle-version="10.0.1",
+ zel;bundle-version="10.0.1",
+ zhtml;bundle-version="10.0.1",
+ zk;bundle-version="10.0.1",
+ zkbind;bundle-version="10.0.1",
+ zkplus;bundle-version="10.0.1",
+ zul;bundle-version="10.0.1",
+ zweb;bundle-version="10.0.1"
+Automatic-Module-Name: org.idempiere.seniat.validator
+Service-Component: OSGI-INF/org.idempiere.seniat.validator.CalloutFactory.xml,
+ OSGI-INF/org.idempiere.seniat.validator.EventFactory.xml,
+ OSGI-INF/org.idempiere.seniat.validator.ProcessFactory.xml

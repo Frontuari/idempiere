@@ -57,4 +57,8 @@
          id="org.idempiere.zk.pivot"
          version="0.0.0"/>
 
+   <plugin
+         id="org.idempiere.seniat.validator"
+         version="0.0.0"/>
+
 </feature>
