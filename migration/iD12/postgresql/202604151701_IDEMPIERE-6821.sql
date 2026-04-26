@@ -1,6 +1,9 @@
 -- IDEMPIERE-6820 Add multi tenant support to SSO (DAD-209)
 SELECT register_migration_script('202604151701_IDEMPIERE-6821.sql') FROM dual;
 
+-- Set the Search Path to avoid conflict with triggers
+SET search_path TO adempiere, public;
+
 -- Apr 15, 2026, 17:03:00 PM GMT-04:00
 alter table ad_sequence add column islimitcontrolno bpchar(1) DEFAULT 'N'::bpchar NOT NULL
 ;
@@ -61,9 +64,10 @@ INSERT INTO ad_column (ad_column_id,ad_client_id,ad_org_id,isactive,created,upda
 	 (217171,0,0,'Y','2024-12-18 18:07:06.540','2025-01-23 12:49:03.765',100,100,'Quantity Before Notified','Quantity Before Notified',NULL,0,'D','QtyBeforeNotified',122,11,NULL,NULL,22,NULL,'N','N','N','Y',NULL,'N',0,'N','N',NULL,NULL,NULL,NULL,'N',203967,NULL,'Y','N',NULL,NULL,NULL,'N','Y',NULL,'97d7128c-c791-4b3d-b0ca-e97cf144d757','N',0,'N','N',NULL,NULL,'N',NULL,NULL,'N',NULL,NULL,null)
 ;
 
+-- Create Security Schema
 CREATE SCHEMA IF NOT EXISTS security;
 
--- Corregido: PostgreSQL usa IF NOT EXISTS, no OR REPLACE para tablas.
+-- Create TABLE change_log
 CREATE TABLE IF NOT EXISTS security.change_log ( 
     log_id bigserial NOT NULL, 
     log_timestamp timestamptz DEFAULT now() NOT NULL, 
@@ -82,6 +86,7 @@ CREATE TABLE IF NOT EXISTS security.change_log (
     CONSTRAINT change_log_pkey PRIMARY KEY (log_id)
 );
 
+-- Create FUNCTION fn_log_external_changes
 CREATE OR REPLACE FUNCTION security.fn_log_external_changes() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $function$
 DECLARE
     v_app_name TEXT;
@@ -104,23 +109,39 @@ BEGIN
 END;
 $function$;
 
--- Corregido: Eliminación previa para evitar errores de colisión
+-- Drop TRIGGER trg_audit_c_invoice
 DROP TRIGGER IF EXISTS trg_audit_c_invoice ON adempiere.c_invoice;
+
+-- Create TRIGGER trg_audit_c_invoice
 CREATE TRIGGER trg_audit_c_invoice AFTER DELETE OR UPDATE ON adempiere.c_invoice FOR EACH ROW EXECUTE FUNCTION security.fn_log_external_changes();
 
+-- Drop TRIGGER trg_audit_c_invoiceline
 DROP TRIGGER IF EXISTS trg_audit_c_invoiceline ON adempiere.c_invoiceline;
+
+-- Create TRIGGER trg_audit_c_invoiceline
 CREATE TRIGGER trg_audit_c_invoiceline AFTER DELETE OR UPDATE ON adempiere.c_invoiceline FOR EACH ROW EXECUTE FUNCTION security.fn_log_external_changes();
 
+-- Drop TRIGGER trg_audit_c_invoicetax
 DROP TRIGGER IF EXISTS trg_audit_c_invoicetax ON adempiere.c_invoicetax;
+
+-- Create TRIGGER trg_audit_c_invoicetax
 CREATE TRIGGER trg_audit_c_invoicetax AFTER DELETE OR UPDATE ON adempiere.c_invoicetax FOR EACH ROW EXECUTE FUNCTION security.fn_log_external_changes();
 
-create trigger trg_audit_c_invoice after
+-- Drop TRIGGER trg_audit_c_invoice
+DROP TRIGGER IF EXISTS trg_audit_c_invoice ON adempiere.c_invoice;
+
+-- Create TRIGGER trg_audit_c_invoice
+/*create trigger trg_audit_c_invoice after
 delete
     or
 update
     on
     adempiere.c_invoice for each row execute function security.fn_log_external_changes();
 
+-- Drop TRIGGER trg_audit_c_invoiceline
+DROP TRIGGER IF EXISTS trg_audit_c_invoiceline ON adempiere.c_invoiceline;
+
+-- Create TRIGGER trg_audit_c_invoiceline
 create trigger trg_audit_c_invoiceline after
 delete
     or
@@ -128,16 +149,19 @@ update
     on
     adempiere.c_invoiceline for each row execute function security.fn_log_external_changes();
 
+-- Drop TRIGGER trg_audit_c_invoicetax
+DROP TRIGGER IF EXISTS trg_audit_c_invoicetax ON adempiere.c_invoicetax;
+
+-- Create TRIGGER trg_audit_c_invoicetax
 create trigger trg_audit_c_invoicetax after
 delete
     or
 update
     on
-    adempiere.c_invoicetax for each row execute function security.fn_log_external_changes();
+    adempiere.c_invoicetax for each row execute function security.fn_log_external_changes();*/
 
--- adempiere.ftu_rv_changelog source
-
-    CREATE OR REPLACE VIEW adempiere.ftu_rv_changelog
+-- Create VIEW ftu_rv_changelog
+CREATE OR REPLACE VIEW adempiere.ftu_rv_changelog
     AS SELECT l.ad_session_id,
         l.ad_changelog_id,
         t.tablename,
@@ -159,6 +183,7 @@ update
          JOIN ad_org ao ON l.ad_org_id = ao.ad_org_id
       ORDER BY l.ad_session_id, l.ad_changelog_id, t.tablename, l.record_id, c.columnname;
 
+-- Create VIEW ftu_rv_operationslog
 CREATE OR REPLACE VIEW adempiere.ftu_rv_operationslog
 AS WITH direccionfiscal AS (
          SELECT cbl.c_bpartner_location_id,
@@ -247,7 +272,7 @@ UNION ALL
           WHERE afl.value::text = ci.docstatus::text
          LIMIT 1) AS docstatusname,
     currencyrate(100::numeric, 205::numeric, ci.dateinvoiced::timestamp with time zone, 1000000::numeric, ci.ad_client_id, ci.ad_org_id) AS rate,
-    ci.lve_controlnumber,
+    NULL::character varying as lve_controlnumber,
     ci.grandtotal,
     ( SELECT cc.iso_code
            FROM c_currency cc
@@ -288,7 +313,7 @@ UNION ALL
           WHERE afl.value::bpchar = mi.docstatus
          LIMIT 1) AS docstatusname,
     currencyrate(100::numeric, 205::numeric, mi.movementdate::timestamp with time zone, 1000000::numeric, mi.ad_client_id, mi.ad_org_id) AS rate,
-    mi.lve_controlnumber,
+    NULL::character varying as lve_controlnumber,
     0 AS grandtotal,
     ''::bpchar AS iso_code
    FROM m_inout mi
@@ -327,7 +352,7 @@ UNION ALL
           WHERE afl.value::bpchar = mo.docstatus
          LIMIT 1) AS docstatusname,
     currencyrate(100::numeric, 205::numeric, mo.movementdate::timestamp with time zone, 1000000::numeric, mo.ad_client_id, mo.ad_org_id) AS rate,
-    mo.lve_controlnumber,
+    NULL::character varying as lve_controlnumber,
     0 AS grandtotal,
     ''::bpchar AS iso_code
    FROM m_movement mo
@@ -336,6 +361,7 @@ UNION ALL
      JOIN c_doctype cd ON cd.c_doctype_id = mo.c_doctype_id
      LEFT JOIN c_bpartner cb ON cb.c_bpartner_id = mo.c_bpartner_id;
 
+-- Create VIEW ftu_rv_dni
 CREATE OR REPLACE VIEW adempiere.ftu_rv_dni
     AS SELECT h.ad_client_id,
         h.ad_org_id,
@@ -462,12 +488,12 @@ CREATE OR REPLACE VIEW adempiere.ftu_rv_dni
         pasi.isactive AS m_asi_isactive,
         pasi.updated AS m_asi_updated,
         pasi.updatedby AS m_asi_updatedby,
-        cb.ftu_bpartnertype_id,
+        0::numeric as ftu_bpartnertype_id,
         cbl.c_salesregion_id,
         COALESCE(ol.priceactual, 0::numeric) AS priceactual,
         COALESCE(ol.priceactual, 0::numeric) * l.movementqty AS linenetamt,
         ol.c_currency_id,
-        h.lve_controlnumber,
+        '' as lve_controlnumber,
         0::numeric AS ftu_deliveryrute_id,
         (to_char(h.movementdate, 'yy'::text) || to_char(h.movementdate, 'mm'::text)) ||
             CASE
@@ -488,185 +514,9 @@ CREATE OR REPLACE VIEW adempiere.ftu_rv_dni
          LEFT JOIN c_bpartner_location cbl ON cb.c_bpartner_id = cbl.c_bpartner_id
          LEFT JOIN m_attributesetinstance pasi ON l.m_attributesetinstance_id = pasi.m_attributesetinstance_id
          LEFT JOIN c_doctype dt ON h.c_doctype_id = dt.c_doctype_id
-      WHERE ol.qtydelivered > ol.qtyinvoiced AND co.issotrx = 'Y'::bpchar AND dt.isaffectedbook = 'Y'::bpchar;
+      WHERE ol.qtydelivered > ol.qtyinvoiced AND co.issotrx = 'Y'::bpchar /*AND dt.isaffectedbook = 'Y'::bpchar*/;
 
-CREATE OR REPLACE VIEW adempiere.ftu_rv_operationslog
-AS WITH direccionfiscal AS (
-         SELECT cbl.c_bpartner_location_id,
-            (((((btrim(cl.address1::text) || COALESCE(' '::text || btrim(cl.address2::text), ''::text)) || COALESCE(' '::text || btrim(cl.address3::text), ''::text)) || COALESCE(' '::text || btrim(cl.address4::text), ''::text)) || COALESCE(', '::text || btrim(cl.city::text), ''::text)) || COALESCE(', '::text || btrim(cr.name::text), ''::text)) || COALESCE('. '::text || btrim(cl.postal::text), '.'::text) AS direccionfiscal
-           FROM c_bpartner_location cbl
-             LEFT JOIN c_location cl ON cbl.c_location_id = cl.c_location_id
-             LEFT JOIN c_region cr ON cl.c_region_id = cr.c_region_id
-             LEFT JOIN c_country cc2 ON cl.c_country_id = cc2.c_country_id
-        ), docuser AS (
-         SELECT au2.ad_user_id,
-            au2.name,
-            au2.description,
-            cb2.taxid,
-            cb2.name
-           FROM ad_user au2
-             LEFT JOIN c_bpartner cb2 ON cb2.c_bpartner_id = au2.c_bpartner_id
-        )
- SELECT co.ad_client_id,
-    co.ad_org_id,
-    ac.name AS adclientname,
-    ao.name AS orgname,
-    co.documentno,
-    co.c_doctypetarget_id AS c_doctype_id,
-    cd.name AS documenttype,
-    co.created,
-    ( SELECT du.description
-           FROM docuser du(ad_user_id, name, description, taxid, name_1)
-          WHERE du.ad_user_id = co.createdby) AS createdby_name,
-    co.updated,
-    ( SELECT du.description
-           FROM docuser du(ad_user_id, name, description, taxid, name_1)
-          WHERE du.ad_user_id = co.updatedby) AS updatedby_name,
-    co.dateacct,
-    co.dateordered AS date_doc,
-    cb.c_bpartner_id,
-    cb.taxid,
-    cb.name AS bpartner,
-    ( SELECT df.direccionfiscal
-           FROM direccionfiscal df
-          WHERE co.c_bpartner_location_id = df.c_bpartner_location_id) AS bpartnerlocation,
-    co.docstatus,
-    ( SELECT atlf.name
-           FROM ad_ref_list afl
-             JOIN ad_ref_list_trl atlf ON atlf.ad_ref_list_id = afl.ad_ref_list_id
-          WHERE afl.value::bpchar = co.docstatus
-         LIMIT 1) AS docstatusname,
-    currencyrate(100::numeric, 205::numeric, co.dateordered::timestamp with time zone, 1000000::numeric, co.ad_client_id, co.ad_org_id) AS rate,
-    NULL::character varying AS lve_controlnumber,
-    co.grandtotal,
-    ( SELECT cc.iso_code
-           FROM c_currency cc
-          WHERE cc.c_currency_id = co.c_currency_id) AS iso_code
-   FROM c_order co
-     JOIN ad_client ac ON ac.ad_client_id = co.ad_client_id
-     JOIN ad_org ao ON ao.ad_org_id = co.ad_org_id
-     JOIN c_doctype cd ON cd.c_doctype_id = co.c_doctypetarget_id
-     JOIN c_bpartner cb ON cb.c_bpartner_id = co.c_bpartner_id
-UNION ALL
- SELECT ci.ad_client_id,
-    ci.ad_org_id,
-    ac.name AS adclientname,
-    ao.name AS orgname,
-    ci.documentno,
-    ci.c_doctypetarget_id AS c_doctype_id,
-    cd.name AS documenttype,
-    ci.created,
-    ( SELECT du.description
-           FROM docuser du(ad_user_id, name, description, taxid, name_1)
-          WHERE du.ad_user_id = ci.createdby) AS createdby_name,
-    ci.updated,
-    ( SELECT du.description
-           FROM docuser du(ad_user_id, name, description, taxid, name_1)
-          WHERE du.ad_user_id = ci.updatedby) AS updatedby_name,
-    ci.dateacct,
-    ci.dateinvoiced AS date_doc,
-    cb.c_bpartner_id,
-    cb.taxid,
-    cb.name AS bpartner,
-    ( SELECT df.direccionfiscal
-           FROM direccionfiscal df
-          WHERE ci.c_bpartner_location_id = df.c_bpartner_location_id) AS bpartnerlocation,
-    ci.docstatus,
-    ( SELECT atlf.name
-           FROM ad_ref_list afl
-             JOIN ad_ref_list_trl atlf ON atlf.ad_ref_list_id = afl.ad_ref_list_id
-          WHERE afl.value::text = ci.docstatus::text
-         LIMIT 1) AS docstatusname,
-    currencyrate(100::numeric, 205::numeric, ci.dateinvoiced::timestamp with time zone, 1000000::numeric, ci.ad_client_id, ci.ad_org_id) AS rate,
-    ci.lve_controlnumber,
-    ci.grandtotal,
-    ( SELECT cc.iso_code
-           FROM c_currency cc
-          WHERE cc.c_currency_id = ci.c_currency_id) AS iso_code
-   FROM c_invoice ci
-     JOIN ad_client ac ON ac.ad_client_id = ci.ad_client_id
-     JOIN ad_org ao ON ao.ad_org_id = ci.ad_org_id
-     JOIN c_doctype cd ON cd.c_doctype_id = ci.c_doctypetarget_id
-     JOIN c_bpartner cb ON cb.c_bpartner_id = ci.c_bpartner_id
-UNION ALL
- SELECT mi.ad_client_id,
-    mi.ad_org_id,
-    ac.name AS adclientname,
-    ao.name AS orgname,
-    mi.documentno,
-    mi.c_doctype_id,
-    cd.name AS documenttype,
-    mi.created,
-    ( SELECT du.description
-           FROM docuser du(ad_user_id, name, description, taxid, name_1)
-          WHERE du.ad_user_id = mi.createdby) AS createdby_name,
-    mi.updated,
-    ( SELECT du.description
-           FROM docuser du(ad_user_id, name, description, taxid, name_1)
-          WHERE du.ad_user_id = mi.updatedby) AS updatedby_name,
-    mi.dateacct,
-    mi.movementdate AS date_doc,
-    cb.c_bpartner_id,
-    cb.taxid,
-    cb.name AS bpartner,
-    ( SELECT df.direccionfiscal
-           FROM direccionfiscal df
-          WHERE mi.c_bpartner_location_id = df.c_bpartner_location_id) AS bpartnerlocation,
-    mi.docstatus,
-    ( SELECT atlf.name
-           FROM ad_ref_list afl
-             JOIN ad_ref_list_trl atlf ON atlf.ad_ref_list_id = afl.ad_ref_list_id
-          WHERE afl.value::bpchar = mi.docstatus
-         LIMIT 1) AS docstatusname,
-    currencyrate(100::numeric, 205::numeric, mi.movementdate::timestamp with time zone, 1000000::numeric, mi.ad_client_id, mi.ad_org_id) AS rate,
-    mi.lve_controlnumber,
-    0 AS grandtotal,
-    ''::bpchar AS iso_code
-   FROM m_inout mi
-     JOIN ad_client ac ON ac.ad_client_id = mi.ad_client_id
-     JOIN ad_org ao ON ao.ad_org_id = mi.ad_org_id
-     JOIN c_doctype cd ON cd.c_doctype_id = mi.c_doctype_id
-     JOIN c_bpartner cb ON cb.c_bpartner_id = mi.c_bpartner_id
-UNION ALL
- SELECT mo.ad_client_id,
-    mo.ad_org_id,
-    ac.name AS adclientname,
-    ao.name AS orgname,
-    mo.documentno,
-    mo.c_doctype_id,
-    cd.name AS documenttype,
-    mo.created,
-    ( SELECT du.description
-           FROM docuser du(ad_user_id, name, description, taxid, name_1)
-          WHERE du.ad_user_id = mo.createdby) AS createdby_name,
-    mo.updated,
-    ( SELECT du.description
-           FROM docuser du(ad_user_id, name, description, taxid, name_1)
-          WHERE du.ad_user_id = mo.updatedby) AS updatedby_name,
-    mo.movementdate AS dateacct,
-    mo.movementdate AS date_doc,
-    cb.c_bpartner_id,
-    cb.taxid,
-    cb.name AS bpartner,
-    ( SELECT df.direccionfiscal
-           FROM direccionfiscal df
-          WHERE mo.c_bpartner_location_id = df.c_bpartner_location_id) AS bpartnerlocation,
-    mo.docstatus,
-    ( SELECT atlf.name
-           FROM ad_ref_list afl
-             JOIN ad_ref_list_trl atlf ON atlf.ad_ref_list_id = afl.ad_ref_list_id
-          WHERE afl.value::bpchar = mo.docstatus
-         LIMIT 1) AS docstatusname,
-    currencyrate(100::numeric, 205::numeric, mo.movementdate::timestamp with time zone, 1000000::numeric, mo.ad_client_id, mo.ad_org_id) AS rate,
-    mo.lve_controlnumber,
-    0 AS grandtotal,
-    ''::bpchar AS iso_code
-   FROM m_movement mo
-     JOIN ad_client ac ON ac.ad_client_id = mo.ad_client_id
-     JOIN ad_org ao ON ao.ad_org_id = mo.ad_org_id
-     JOIN c_doctype cd ON cd.c_doctype_id = mo.c_doctype_id
-     LEFT JOIN c_bpartner cb ON cb.c_bpartner_id = mo.c_bpartner_id;
-
+-- Create VIEW v_ad_session_report
 CREATE OR REPLACE VIEW adempiere.v_ad_session_report
 AS SELECT s.ad_session_id,
     s.ad_session_uu,
@@ -695,6 +545,7 @@ AS SELECT s.ad_session_id,
      LEFT JOIN ad_role r ON s.ad_role_id = r.ad_role_id
      LEFT JOIN ad_org org ON s.ad_org_id = org.ad_org_id;
 
+-- Create VIEW vw_ad_user_basic_security
 CREATE OR REPLACE VIEW adempiere.vw_ad_user_basic_security
 AS SELECT ad_client_id,
     ad_org_id,
@@ -707,8 +558,9 @@ AS SELECT ad_client_id,
     datepasswordchanged,
     islocked
    FROM ad_user
-  WHERE isactive = 'Y'::bpchar
+  WHERE isactive = 'Y'::bpchar;
 
+-- Create VIEW ftu_rv_dbchangelog
 CREATE OR REPLACE VIEW adempiere.ftu_rv_dbchangelog
 AS SELECT log_id AS ftu_rv_dbchangelog_id,
     log_timestamp AS datetrx,
