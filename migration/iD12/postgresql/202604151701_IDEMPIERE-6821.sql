@@ -586,3 +586,65 @@ AS SELECT log_id AS ftu_rv_dbchangelog_id,
     new_data ->> 'docstatus'::text AS new_docstatus,
     new_data ->> 'dateinvoiced'::text AS new_dateinvoiced
    FROM security.change_log;
+
+-- Increase character limit for the main Message table
+ALTER TABLE adempiere.AD_Message ALTER COLUMN MsgText TYPE varchar(20000);
+
+-- Increase character limit for the Message Translation table
+ALTER TABLE adempiere.AD_Message_Trl ALTER COLUMN MsgText TYPE varchar(20000);
+
+-- Create VIEW ftu_rv_currencyexchange
+CREATE OR REPLACE VIEW adempiere.ftu_rv_currencyexchange
+AS SELECT 'USD'::text AS currency_usd,
+    round(( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 100::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= CURRENT_DATE
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1), 4) AS usd_todayrate,
+    round(( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 100::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= (CURRENT_DATE - '1 day'::interval)
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1), 4) AS usd_yesterdayrate,
+    round(((( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 100::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= CURRENT_DATE
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1)) - (( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 100::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= (CURRENT_DATE - '1 day'::interval)
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1))) / (( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 100::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= (CURRENT_DATE - '1 day'::interval)
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1)) * 100::numeric, 4) AS usd_percentagechange,
+    'EUR'::text AS currency_eur,
+    round(( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 102::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= CURRENT_DATE
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1), 4) AS eur_todayrate,
+    round(( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 102::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= (CURRENT_DATE - '1 day'::interval)
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1), 4) AS eur_yesterdayrate,
+    round(((( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 102::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= CURRENT_DATE
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1)) - (( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 102::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= (CURRENT_DATE - '1 day'::interval)
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1))) / (( SELECT c_conversion_rate.multiplyrate
+           FROM c_conversion_rate
+          WHERE c_conversion_rate.c_currency_id = 102::numeric AND c_conversion_rate.c_currency_id_to = 205::numeric AND c_conversion_rate.validfrom <= (CURRENT_DATE - '1 day'::interval)
+          ORDER BY c_conversion_rate.validfrom DESC
+         LIMIT 1)) * 100::numeric, 4) AS eur_percentagechange;
+
+
+
+
+
