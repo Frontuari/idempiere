@@ -644,7 +644,13 @@ AS SELECT 'USD'::text AS currency_usd,
           ORDER BY c_conversion_rate.validfrom DESC
          LIMIT 1)) * 100::numeric, 4) AS eur_percentagechange;
 
+-- Update UU of the Document Type column
+UPDATE AD_Column 
+SET AD_Column_UU = '217166bc-86c8-4f03-93c6-7e8fa47c65c2' 
+WHERE ColumnName = 'C_DocType_ID' 
+  AND AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName = 'M_Production');
 
-
-
-
+-- Update UU of the Document Type AD_Field_UU
+UPDATE AD_Field 
+SET AD_Field_UU = '4d0e019b-3864-44da-a566-bf5f2c746c4f' 
+WHERE AD_Field_ID = 207634;
