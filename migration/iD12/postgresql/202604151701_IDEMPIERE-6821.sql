@@ -109,56 +109,18 @@ BEGIN
 END;
 $function$;
 
--- Drop TRIGGER trg_audit_c_invoice
-DROP TRIGGER IF EXISTS trg_audit_c_invoice ON adempiere.c_invoice;
 
 -- Create TRIGGER trg_audit_c_invoice
 CREATE TRIGGER trg_audit_c_invoice AFTER DELETE OR UPDATE ON adempiere.c_invoice FOR EACH ROW EXECUTE FUNCTION security.fn_log_external_changes();
 
--- Drop TRIGGER trg_audit_c_invoiceline
-DROP TRIGGER IF EXISTS trg_audit_c_invoiceline ON adempiere.c_invoiceline;
 
 -- Create TRIGGER trg_audit_c_invoiceline
 CREATE TRIGGER trg_audit_c_invoiceline AFTER DELETE OR UPDATE ON adempiere.c_invoiceline FOR EACH ROW EXECUTE FUNCTION security.fn_log_external_changes();
 
--- Drop TRIGGER trg_audit_c_invoicetax
-DROP TRIGGER IF EXISTS trg_audit_c_invoicetax ON adempiere.c_invoicetax;
 
 -- Create TRIGGER trg_audit_c_invoicetax
 CREATE TRIGGER trg_audit_c_invoicetax AFTER DELETE OR UPDATE ON adempiere.c_invoicetax FOR EACH ROW EXECUTE FUNCTION security.fn_log_external_changes();
 
--- Drop TRIGGER trg_audit_c_invoice
-DROP TRIGGER IF EXISTS trg_audit_c_invoice ON adempiere.c_invoice;
-
--- Create TRIGGER trg_audit_c_invoice
-/*create trigger trg_audit_c_invoice after
-delete
-    or
-update
-    on
-    adempiere.c_invoice for each row execute function security.fn_log_external_changes();
-
--- Drop TRIGGER trg_audit_c_invoiceline
-DROP TRIGGER IF EXISTS trg_audit_c_invoiceline ON adempiere.c_invoiceline;
-
--- Create TRIGGER trg_audit_c_invoiceline
-create trigger trg_audit_c_invoiceline after
-delete
-    or
-update
-    on
-    adempiere.c_invoiceline for each row execute function security.fn_log_external_changes();
-
--- Drop TRIGGER trg_audit_c_invoicetax
-DROP TRIGGER IF EXISTS trg_audit_c_invoicetax ON adempiere.c_invoicetax;
-
--- Create TRIGGER trg_audit_c_invoicetax
-create trigger trg_audit_c_invoicetax after
-delete
-    or
-update
-    on
-    adempiere.c_invoicetax for each row execute function security.fn_log_external_changes();*/
 
 -- Create VIEW ftu_rv_changelog
 CREATE OR REPLACE VIEW adempiere.ftu_rv_changelog
