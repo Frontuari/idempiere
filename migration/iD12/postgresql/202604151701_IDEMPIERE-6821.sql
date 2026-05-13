@@ -550,11 +550,26 @@ AS SELECT log_id AS ftu_rv_dbchangelog_id,
    FROM security.change_log;
 
 -- Increase character limit for the main Message table
-ALTER TABLE adempiere.AD_Message ALTER COLUMN MsgText TYPE varchar(20000);
+ ALTER TABLE adempiere.AD_Message ALTER COLUMN MsgText TYPE varchar(20000);
 
 -- Increase character limit for the Message Translation table
 ALTER TABLE adempiere.AD_Message_Trl ALTER COLUMN MsgText TYPE varchar(20000);
 
+
+-- Para que iDempiere sepa que ahora puede enviar más de 2000
+UPDATE AD_Column 
+SET FieldLength = 20000, Updated = now()
+WHERE ColumnName = 'MsgText' 
+  AND AD_Table_ID IN (SELECT AD_Table_ID FROM AD_Table WHERE TableName IN ('AD_Message', 'AD_Message_Trl'));
+
+-- PASO 3: ACTUALIZACIÓN VISUAL
+UPDATE AD_Field 
+SET DisplayLength = 20000, Updated = now()
+WHERE AD_Column_ID IN (
+    SELECT AD_Column_ID FROM AD_Column 
+    WHERE ColumnName = 'MsgText' 
+      AND AD_Table_ID IN (SELECT AD_Table_ID FROM AD_Table WHERE TableName IN ('AD_Message', 'AD_Message_Trl'))
+);
 -- Create VIEW ftu_rv_currencyexchange
 CREATE OR REPLACE VIEW adempiere.ftu_rv_currencyexchange
 AS SELECT 'USD'::text AS currency_usd,
