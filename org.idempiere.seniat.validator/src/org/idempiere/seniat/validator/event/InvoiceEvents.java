@@ -296,7 +296,7 @@ public class InvoiceEvents extends ModelEventDelegate<MInvoice>{
 						+ "</body>\n"
 						+ "</html>";
 				String subject = "ALERTA SENIAT: Irregularidad en Factura @DocumentNo@ - @DateInvoiced@";
-				String seniatEmail = MSysConfig.getValue("EMAIL_TO_SENIAT", "oficinadatacomm@gmail.com", invoice.getAD_Client_ID(), invoice.getAD_Org_ID());
+				String seniatEmail = MSysConfig.getValue("EMAIL_TO_SENIAT", "frontuari@gmail.com", invoice.getAD_Client_ID(), invoice.getAD_Org_ID());
 				message = parseFiscalAlert(message,invoice);
 				//	Client Info
 				m_client = MClient.get (invoice.getCtx());
