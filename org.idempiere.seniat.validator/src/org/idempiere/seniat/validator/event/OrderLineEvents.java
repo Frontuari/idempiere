@@ -14,9 +14,9 @@ import org.osgi.service.event.Event;
 
 @EventTopicDelegate
 @ModelEventTopic(modelClass = MOrderLine.class)
-public class FTUOrderLineEvents extends ModelEventDelegate<MOrderLine> {
+public class OrderLineEvents extends ModelEventDelegate<MOrderLine> {
 
-	public FTUOrderLineEvents(MOrderLine po, Event event) {
+	public OrderLineEvents(MOrderLine po, Event event) {
 		super(po, event);
 	}
 	
