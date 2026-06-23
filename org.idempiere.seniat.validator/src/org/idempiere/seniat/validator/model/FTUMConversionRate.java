@@ -97,14 +97,14 @@ public class FTUMConversionRate extends MConversionRate {
 						+ "AND C_Currency_ID=? AND C_Currency_ID_To=? "
 						+ "AND C_Conversiontype_ID=? "
 						+ "AND AD_Client_ID=? AND AD_Org_ID=?";
-				List<FTUMConversionRate> convs = new Query(getCtx(), FTUMConversionRate.Table_Name, whereClause, get_TrxName())
+				List<MConversionRate> convs = new Query(getCtx(), MConversionRate.Table_Name, whereClause, get_TrxName())
 						.setOnlyActiveRecords(true)
 						.setParameters(getValidFrom(), getValidTo(), 
 								getC_Currency_ID(), getC_Currency_ID_To(),
 								getC_ConversionType_ID(),
 								getAD_Client_ID(), getAD_Org_ID())
 						.list();
-				for (FTUMConversionRate conv : convs) {
+				for (MConversionRate conv : convs) {
 					if (conv.getC_Conversion_Rate_ID() != getC_Conversion_Rate_ID()) {
 						log.saveError("Error", "Conversion rate overlaps with: "	+ conv.getValidFrom());
 						return false;
@@ -124,7 +124,7 @@ public class FTUMConversionRate extends MConversionRate {
 					+ "AND C_Currency_ID=? AND C_Currency_ID_To=? "
 					+ "AND C_ConversionType_ID=? "
 					+ "AND AD_Client_ID=? AND AD_Org_ID=?";
-			FTUMConversionRate reciprocal = new Query(getCtx(), FTUMConversionRate.Table_Name, whereClause, get_TrxName())
+			MConversionRate reciprocal = new Query(getCtx(), MConversionRate.Table_Name, whereClause, get_TrxName())
 					.setParameters(getValidFrom(), //getValidTo(), // Commented by Jorge Colmenarez, 2022-04-19 15:18
 							getC_Currency_ID_To(), getC_Currency_ID(),
 							getC_ConversionType_ID(),
@@ -136,15 +136,14 @@ public class FTUMConversionRate extends MConversionRate {
 				reciprocal.setValidFrom(getValidFrom());
 				reciprocal.setValidTo(getValidTo());
 				reciprocal.setC_ConversionType_ID(getC_ConversionType_ID());
-				reciprocal.setAD_Client_ID(getAD_Client_ID());
 				reciprocal.setAD_Org_ID(getAD_Org_ID());
 				// invert
 				reciprocal.setC_Currency_ID(getC_Currency_ID_To());
 				reciprocal.setC_Currency_ID_To(getC_Currency_ID());
 			}
 			// avoid recalculation
-			reciprocal.set_Value(COLUMNNAME_DivideRate, getMultiplyRate());
-			reciprocal.set_Value(COLUMNNAME_MultiplyRate, getDivideRate());
+			reciprocal.set_ValueOfColumn(COLUMNNAME_DivideRate, getMultiplyRate());
+			reciprocal.set_ValueOfColumn(COLUMNNAME_MultiplyRate, getDivideRate());
 			recursiveCall = true;
 			try {
 				reciprocal.saveEx();
