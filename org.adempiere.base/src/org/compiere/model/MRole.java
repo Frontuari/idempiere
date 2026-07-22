@@ -3014,9 +3014,9 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 					final OrgAccess oa1 = (OrgAccess)o1;
 					final OrgAccess oa2 = (OrgAccess)o2;
 					found = oa1.equals(oa2);
-					if (found && override)
+					if (found)
 					{
-						// stronger permissions first
+						// stronger permissions first (if either is not readOnly, then not readOnly)
 						if (!oa2.readOnly)
 							oa1.readOnly = false;
 					}
@@ -3026,11 +3026,13 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 					final MTableAccess ta1 = (MTableAccess)o1;
 					final MTableAccess ta2 = (MTableAccess)o2;
 					found = ta1.getAD_Table_ID() == ta2.getAD_Table_ID();
-					if (found && override)
+					if (found)
 					{
 						// stronger permissions first
 						if (!ta2.isExclude())
 							ta1.setIsExclude(false);
+						if (!ta2.isReadOnly())
+							ta1.setIsReadOnly(false);
 					}
 				}
 				else if (o1 instanceof MColumnAccess)
@@ -3038,7 +3040,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 					final MColumnAccess ca1 = (MColumnAccess)o1;
 					final MColumnAccess ca2 = (MColumnAccess)o2;
 					found = ca1.getAD_Column_ID() == ca2.getAD_Column_ID();
-					if (found && override)
+					if (found)
 					{
 						// stronger permissions first
 						if (!ca2.isReadOnly())
@@ -3053,7 +3055,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 					final MRecordAccess ra2 = (MRecordAccess)o2;
 					found = ra1.getAD_Table_ID() == ra2.getAD_Table_ID()
 							&& ra1.getRecord_ID() == ra2.getRecord_ID();
-					if (found && override)
+					if (found)
 					{
 						// stronger permissions first
 						if(!ra2.isReadOnly())
@@ -3100,6 +3102,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 		{
 			map.putAll(map1);
 		}
+		if (map2 == null)
+		{
+			return map;
+		}
 		//
 		for (final Entry<Integer, Boolean> e : map2.entrySet())
 		{
@@ -3116,9 +3122,15 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 			}
 			else
 			{
-				if (override)
+				// Solapamiento inteligente: elegir el permiso más permisivo
+				// TRUE (Read-Write) > FALSE (Read-Only)
+				if (b1.booleanValue() || b2.booleanValue())
 				{
-					map.put(key, b2);
+					map.put(key, Boolean.TRUE);
+				}
+				else
+				{
+					map.put(key, Boolean.FALSE);
 				}
 			}
 		}
