@@ -78,35 +78,73 @@ public class FTUCreateRateEUR extends CustomProcess {
 
  // Método para manejar la validación y creación de la tasa de cambio
     private void handleExchangeRate(BigDecimal exchangeRate, java.util.Date spotDate) {
-            // Paso 1: Validar si ya existe una tasa creada para hoy
-            if (isRateCreatedToday(p_C_Currency_ID, p_C_Currency_ID_To)) {
-                log.warning("Ya existe una tasa de conversión creada para el día de hoy.");
-                throw new AdempiereException("Ya existe una tasa de conversión creada para el día de hoy.");
-            }
+        int clientId = p_AD_Client_ID > 0 ? p_AD_Client_ID : getAD_Client_ID();
 
-            // Paso 2: Validar la fecha proporcionada
-            // Si la fecha proporcionada es futura, usamos la tasa de ayer
-            if (spotDate.after(new java.util.Date())) {
-                log.warning("Error: La fecha proporcionada es futura. Se usará la tasa de ayer para crear la tasa de conversión.");
+        java.sql.Timestamp todayTruncated = truncateToMidnight(new java.util.Date());
+        java.sql.Timestamp spotDateTruncated = truncateToMidnight(spotDate);
+
+        // Leer variable de configuración para el comportamiento (default 'N')
+        boolean useFutureRate = MSysConfig.getBooleanValue("FTU_USE_FUTURE_EXCHANGE_RATE", false, clientId);
+
+        // Si la fecha proporcionada por el BCV es futura (> hoy)
+        if (spotDateTruncated.after(todayTruncated)) {
+            if (useFutureRate) {
+                // Comportamiento 2: Art. 25 Ley IVA - Tasa Futura para días feriados/bancarios
+                log.warning("Fecha del BCV es futura: " + spotDateTruncated + ". Usando regla de tasa futura (Art. 25 Ley IVA).");
+
                 java.util.Calendar cal = java.util.Calendar.getInstance();
-                cal.add(java.util.Calendar.DATE, -1); // Restar un día
-                java.util.Date spotDatepost = cal.getTime();
-                spotDate = new Timestamp(System.currentTimeMillis());
-                log.warning("La tasa de conversión para el día de hoy será igual a la de ayer: " + spotDatepost);
-                // Si la fecha es válida, obtenemos la última tasa (si es necesario)
+                cal.setTime(todayTruncated);
+
+                // Si la tasa para hoy ya existe, empezamos a poblar desde mañana; si no existe, desde hoy
+                if (isRateCreatedForDate(p_C_Currency_ID, p_C_Currency_ID_To, todayTruncated)) {
+                    cal.add(java.util.Calendar.DATE, 1);
+                }
+
+                int ratesCreatedCount = 0;
+                StringBuilder sbCreated = new StringBuilder();
+
+                while (!cal.getTime().after(spotDateTruncated)) {
+                    java.util.Date currentDate = cal.getTime();
+                    if (!isRateCreatedForDate(p_C_Currency_ID, p_C_Currency_ID_To, currentDate)) {
+                        createConversionRate(exchangeRate, currentDate);
+                        ratesCreatedCount++;
+                        if (sbCreated.length() > 0) sbCreated.append(", ");
+                        sbCreated.append(new java.text.SimpleDateFormat("yyyy-MM-dd").format(currentDate));
+                    }
+                    cal.add(java.util.Calendar.DATE, 1);
+                }
+
+                if (ratesCreatedCount == 0) {
+                    log.warning("Todas las tasas para el rango hasta " + spotDateTruncated + " ya existían previamente.");
+                    msg = "Las tasas de conversión hasta la fecha " + spotDateTruncated + " ya se encontraban creadas.";
+                } else {
+                    msg = "Tasas de conversión creadas exitosamente para (" + sbCreated.toString() + ") con Tasa: " + exchangeRate;
+                }
+            } else {
+                // Comportamiento 1 (Actual): Usar tasa de ayer para la fecha de hoy
+                log.warning("Fecha del BCV es futura: " + spotDateTruncated + ". Se usará la tasa del día anterior para crear la tasa de hoy.");
+
+                if (isRateCreatedToday(p_C_Currency_ID, p_C_Currency_ID_To)) {
+                    log.warning("Ya existe una tasa de conversión creada para el día de hoy.");
+                    throw new AdempiereException("Ya existe una tasa de conversión creada para el día de hoy.");
+                }
+
                 BigDecimal lastRate = getLastRate(p_C_Currency_ID, p_C_Currency_ID_To);
                 if (lastRate == null || lastRate.compareTo(BigDecimal.ZERO) == 0) {
                     log.warning("No se encontró ninguna tasa de conversión anterior. Es necesario establecer una tasa inicial.");
                     throw new AdempiereException("No se encontró ninguna tasa de conversión anterior. Es necesario establecer una tasa inicial.");
-                }else {
-                	createConversionRate(lastRate, spotDate);
+                } else {
+                    createConversionRate(lastRate, new java.util.Date());
                 }
-            }else {
-                // Paso 3: Crear la nueva tasa usando la tasa de ayer si no existe una para hoy
-                createConversionRate(exchangeRate, spotDate);
             }
-
-
+        } else {
+            // Fecha del BCV es hoy o pasada
+            if (isRateCreatedForDate(p_C_Currency_ID, p_C_Currency_ID_To, spotDateTruncated)) {
+                log.warning("Ya existe una tasa de conversión creada para la fecha: " + spotDateTruncated);
+                throw new AdempiereException("Ya existe una tasa de conversión creada para la fecha: " + spotDateTruncated);
+            }
+            createConversionRate(exchangeRate, spotDate);
+        }
     }
 
     private BigDecimal getLastRate(int curFromId, int curToId) {
@@ -133,24 +171,39 @@ public class FTUCreateRateEUR extends CustomProcess {
         rate.setC_Currency_ID_To(p_C_Currency_ID_To);
         rate.setMultiplyRate(exchangeRate);
         rate.setC_ConversionType_ID(MConversionType.getDefault(clientId));
-        rate.setValidFrom(new java.sql.Timestamp(spotDate.getTime()));
-        rate.setValidTo(new java.sql.Timestamp(spotDate.getTime())); // Misma fecha para ValidTo
+        java.sql.Timestamp tsDate = truncateToMidnight(spotDate);
+        rate.setValidFrom(tsDate);
+        rate.setValidTo(tsDate); // Misma fecha para ValidTo
         rate.saveEx();
-        log.warning("Tasa de conversión creada exitosamente.");
-        addBufferLog(rate.getC_Conversion_Rate_ID(), new Timestamp(System.currentTimeMillis()),null, ""+exchangeRate+spotDate, MConversionRate.Table_ID, rate.getC_Conversion_Rate_ID());
-		//	Message
-		msg = "Tasa de conversión creada exitosamente, Fecha: "+spotDate+" - Tasa:"+exchangeRate;
-
-		return msg;
+        log.warning("Tasa de conversión creada exitosamente para la fecha: " + tsDate);
+        addBufferLog(rate.getC_Conversion_Rate_ID(), new Timestamp(System.currentTimeMillis()), null, "" + exchangeRate + " " + tsDate, MConversionRate.Table_ID, rate.getC_Conversion_Rate_ID());
+        msg = "Tasa de conversión creada exitosamente, Fecha: " + tsDate + " - Tasa: " + exchangeRate;
+        return msg;
     }
 
- // Método para verificar si ya existe una tasa creada hoy
-    private boolean isRateCreatedToday(int curFromId, int curToId) {
+    private boolean isRateCreatedForDate(int curFromId, int curToId, java.util.Date spotDate) {
         int clientId = p_AD_Client_ID > 0 ? p_AD_Client_ID : getAD_Client_ID();
-        String whereClause = "C_Currency_ID = ? AND C_Currency_ID_To = ? AND ValidFrom = CURRENT_DATE AND AD_Client_ID = ?";
+        java.sql.Timestamp tsDate = truncateToMidnight(spotDate);
+        String whereClause = "C_Currency_ID = ? AND C_Currency_ID_To = ? AND ValidFrom = ? AND AD_Client_ID = ?";
         Query query = new Query(getCtx(), FTUMConversionRate.Table_Name, whereClause, get_TrxName())
-                              .setParameters(curFromId, curToId, clientId);
-        return query.match(); // Devuelve true si existe al menos un registro
+                              .setParameters(curFromId, curToId, tsDate, clientId);
+        return query.match();
+    }
+
+    private java.sql.Timestamp truncateToMidnight(java.util.Date date) {
+        if (date == null) return null;
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return new java.sql.Timestamp(cal.getTimeInMillis());
+    }
+
+    // Método para verificar si ya existe una tasa creada hoy
+    private boolean isRateCreatedToday(int curFromId, int curToId) {
+        return isRateCreatedForDate(curFromId, curToId, new java.util.Date());
     }
     
     @Override
