@@ -37,6 +37,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.process.UUIDGenerator;
+import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -278,6 +279,71 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	private static POCopyCache<String,MRole> s_roles = new POCopyCache<String,MRole>(Table_Name, 5);
 	/** Log						*/ 
 	private static CLogger			s_log = CLogger.getCLogger(MRole.class);
+	
+	private static CCache<Integer, List<Integer>> s_activeSubstitutes = null;
+	
+	private static synchronized List<Integer> getActiveSubstitutedUsers(int substituteID)
+	{
+		if (s_activeSubstitutes == null)
+		{
+			s_activeSubstitutes = new CCache<Integer, List<Integer>>("AD_User_Substitute", 20, 0);
+		}
+		List<Integer> list = s_activeSubstitutes.get(substituteID);
+		if (list == null)
+		{
+			list = new ArrayList<Integer>();
+			String sql = "SELECT AD_User_ID FROM AD_User_Substitute WHERE Substitute_ID=? AND IsActive='Y'"
+					+ " AND (ValidFrom IS NULL OR ValidFrom <= trunc(getDate()))"
+					+ " AND (ValidTo IS NULL OR ValidTo >= trunc(getDate()))";
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			try
+			{
+				pstmt = DB.prepareStatement(sql, null);
+				pstmt.setInt(1, substituteID);
+				rs = pstmt.executeQuery();
+				while (rs.next())
+				{
+					list.add(rs.getInt(1));
+				}
+			}
+			catch (Exception e)
+			{
+				s_log.log(Level.SEVERE, sql, e);
+			}
+			finally
+			{
+				DB.close(rs, pstmt);
+			}
+			s_activeSubstitutes.put(substituteID, list);
+		}
+		return list;
+	}
+
+	private List<Integer> m_loadedSubstitutedUserIDs = null;
+	
+	private void checkSubstitutes()
+	{
+		if (this.m_parent != null || isMasterRole())
+			return;
+			
+		int AD_User_ID = getAD_User_ID();
+		if (AD_User_ID < 0)
+			return;
+			
+		List<Integer> currentSubstitutes = getActiveSubstitutedUsers(AD_User_ID);
+		if (m_loadedSubstitutedUserIDs == null)
+		{
+			m_loadedSubstitutedUserIDs = new ArrayList<Integer>(currentSubstitutes);
+			return;
+		}
+		
+		if (!m_loadedSubstitutedUserIDs.equals(currentSubstitutes))
+		{
+			m_loadedSubstitutedUserIDs = new ArrayList<Integer>(currentSubstitutes);
+			loadAccess(true);
+		}
+	}
 	
 	/**	Access SQL Read Write		*/
 	public static final boolean		SQL_RW = true;
@@ -1245,6 +1311,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public boolean isOrgAccess(int AD_Org_ID, boolean rw)
 	{
+		checkSubstitutes();
 		if (isAccessAllOrgs())
 			return true;
 		if (AD_Org_ID == 0 && !rw)		//	can always read common org
@@ -1364,6 +1431,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public boolean isTableAccess (int AD_Table_ID, boolean ro)
 	{
+		checkSubstitutes();
 		if (!isTableAccessLevel (AD_Table_ID, ro))	//	Role Based Access
 			return false;
 		loadTableAccess(false);
@@ -1605,6 +1673,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getWindowAccess (int AD_Window_ID)
 	{
+		checkSubstitutes();
 		if (m_windowAccess == null)
 		{
 			m_windowAccess = new HashMap<Integer,Boolean>(100);
@@ -1696,6 +1765,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getProcessAccess (int AD_Process_ID)
 	{
+		checkSubstitutes();
 		if (m_processAccess == null)
 		{
 			m_processAccess = new HashMap<Integer,Boolean>(50);
@@ -1792,6 +1862,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getTaskAccess (int AD_Task_ID)
 	{
+		checkSubstitutes();
 		if (m_taskAccess == null)
 		{
 			m_taskAccess = new HashMap<Integer,Boolean>(10);
@@ -1883,6 +1954,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getFormAccess (int AD_Form_ID)
 	{
+		checkSubstitutes();
 		if (m_formAccess == null)
 		{
 			m_formAccess = new HashMap<Integer,Boolean>(20);
@@ -1975,6 +2047,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getWorkflowAccess (int AD_Workflow_ID)
 	{
+		checkSubstitutes();
 		if (m_workflowAccess == null)
 		{
 			m_workflowAccess = new HashMap<Integer,Boolean>(20);
@@ -2949,13 +3022,15 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 			//throw new IllegalStateException("AD_User_ID is not set");
 			return;
 		}
+		
+		m_loadedSubstitutedUserIDs = new ArrayList<Integer>(getActiveSubstitutedUsers(AD_User_ID));
 		//
 		final String whereClause = "EXISTS ("
 		+" SELECT 1 FROM AD_User_Roles ur"
 		+" INNER JOIN AD_User_Substitute us ON (us.AD_User_ID=ur.AD_User_ID)"
 		+" WHERE ur.AD_Role_ID=AD_Role.AD_Role_ID AND ur.IsActive='Y' AND us.IsActive='Y'"
-		+" AND (us.ValidFrom IS NULL OR us.ValidFrom <= getDate())"
-		+" AND (us.ValidTo IS NULL OR us.ValidTo >= getDate())"
+		+" AND (us.ValidFrom IS NULL OR us.ValidFrom <= trunc(getDate()))"
+		+" AND (us.ValidTo IS NULL OR us.ValidTo >= trunc(getDate()))"
 		+" AND us.Substitute_ID=?)";
 
 		List<MRole> list = new Query(getCtx(), Table_Name, whereClause, get_TrxName())
@@ -3286,6 +3361,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 * @return null if can't access, TRUE if r/w and FALSE if r/o
 	 */
 	public synchronized Boolean getInfoAccess(int AD_InfoWindow_ID) {
+		checkSubstitutes();
 		if (m_infoAccess == null)
 		{
 			m_infoAccess = new HashMap<Integer,Boolean>(20);
