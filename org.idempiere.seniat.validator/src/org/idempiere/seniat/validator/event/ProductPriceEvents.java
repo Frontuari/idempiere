@@ -11,6 +11,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MPriceListVersion;
 import org.compiere.model.MProductPrice;
+import org.compiere.model.MSysConfig;
 import org.osgi.service.event.Event;
 
 @EventTopicDelegate
@@ -25,6 +26,8 @@ public class ProductPriceEvents extends ModelEventDelegate<MProductPrice> {
 	@BeforeChange
 	public void onBeforeSave() {
 		MProductPrice pp = getModel();
+		
+		boolean seniatValidator = MSysConfig.getBooleanValue("CONFIGURATION_SENIAT", false, pp.getAD_Client_ID());
 		
 		boolean isPLSo = false;
 		if (pp.getM_PriceList_Version_ID() > 0) {
@@ -42,7 +45,7 @@ public class ProductPriceEvents extends ModelEventDelegate<MProductPrice> {
 		BigDecimal priceLimit = pp.getPriceLimit();
 
 		// PriceStd Validation
-		if (priceStd != null) {
+		if (priceStd != null && seniatValidator) {
 			if (priceStd.compareTo(BigDecimal.ZERO) < 0) {
 				throw new AdempiereException("¡El precio estándar no puede ser negativo!");
 			}
@@ -52,7 +55,7 @@ public class ProductPriceEvents extends ModelEventDelegate<MProductPrice> {
 		}
 
 		// PriceList Validation
-		if (priceList != null) {
+		if (priceList != null && seniatValidator) {
 			if (priceList.compareTo(BigDecimal.ZERO) < 0) {
 				throw new AdempiereException("¡El precio de lista no puede ser negativo!");
 			}
@@ -62,7 +65,7 @@ public class ProductPriceEvents extends ModelEventDelegate<MProductPrice> {
 		}
 
 		// PriceLimit Validation
-		if (priceLimit != null) {
+		if (priceLimit != null && seniatValidator) {
 			if (priceLimit.compareTo(BigDecimal.ZERO) < 0) {
 				throw new AdempiereException("¡El precio límite no puede ser negativo!");
 			}

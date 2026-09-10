@@ -6,6 +6,7 @@ import org.adempiere.base.annotation.Callout;
 import org.adempiere.webui.window.Dialog;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MPriceListVersion;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.X_M_ProductPrice;
 
 import org.idempiere.seniat.validator.base.CustomCallout;
@@ -17,6 +18,7 @@ public class FTUProductPriceCallout extends CustomCallout {
 	protected String start() {
 		String colName = getColumnName();
 		boolean isPLSo = false;
+		boolean seniatValidator = MSysConfig.getBooleanValue("CONFIGURATION_SENIAT", false, (Integer)getTab().getValue("AD_Client_ID"));
 		Object plvObj = getTab().getValue("M_PriceList_Version_ID");
 		if (plvObj != null) {
 			int plvID = (Integer) plvObj;
@@ -30,7 +32,7 @@ public class FTUProductPriceCallout extends CustomCallout {
 				}
 			}
 		}
-		if(colName.equals("PriceStd") && getValue()!=null) {
+		if(colName.equals("PriceStd") && getValue()!=null && seniatValidator) {
 			BigDecimal value = (BigDecimal)getValue();
 			BigDecimal oldvalue = (BigDecimal)getOldValue();
 			if(oldvalue == null || value.compareTo(oldvalue) == 0)
@@ -44,7 +46,7 @@ public class FTUProductPriceCallout extends CustomCallout {
 				getTab().setValue("PriceStd", oldvalue);
 			}
 		}
-		if(colName.equals("PriceList") && getValue()!=null) {
+		if(colName.equals("PriceList") && getValue()!=null && seniatValidator) {
 			BigDecimal value = (BigDecimal)getValue();
 			BigDecimal oldvalue = (BigDecimal)getOldValue();
 			if(oldvalue == null || value.compareTo(oldvalue) == 0)
@@ -58,7 +60,7 @@ public class FTUProductPriceCallout extends CustomCallout {
 				getTab().setValue("PriceList", oldvalue);
 			}
 		}
-		if(colName.equals("PriceLimit") && getValue()!=null) {
+		if(colName.equals("PriceLimit") && getValue()!=null && seniatValidator) {
 			BigDecimal value = (BigDecimal)getValue();
 			BigDecimal oldvalue = (BigDecimal)getOldValue();
 			if(oldvalue == null || value.compareTo(oldvalue) == 0)

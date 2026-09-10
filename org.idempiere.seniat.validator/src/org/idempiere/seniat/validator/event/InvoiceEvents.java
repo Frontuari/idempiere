@@ -92,7 +92,7 @@ public class InvoiceEvents extends ModelEventDelegate<MInvoice>{
 		    int invoiceDay = cal.get(Calendar.DAY_OF_MONTH);
 
 		    // Si la factura se está creando en el periodo "Q2" (día 16 o posterior)...
-		    if (MSysConfig.getBooleanValue("CONFIGURATION_SENIAT", true, invoice.getAD_Client_ID()) && invoiceDay > 15) {
+		    if (MSysConfig.getBooleanValue("CONFIGURATION_SENIAT", false, invoice.getAD_Client_ID()) && invoiceDay > 15) {
 		        // ...buscamos solo las entregas pendientes del periodo "Q1" (día 15 o anterior).
 		        // La vista ftu_rv_dni ya filtra por entregas no facturadas.
 		        String sql = "SELECT COUNT(*) FROM ftu_rv_dni WHERE EXTRACT(DAY FROM movementdate) <= 15 AND AD_Org_ID = "+invoice.getAD_Org_ID();
@@ -211,6 +211,7 @@ public class InvoiceEvents extends ModelEventDelegate<MInvoice>{
 	public void onAfterComplete() {
 		MInvoice invoice = getModel();
 		MDocType docType = (MDocType) invoice.getC_DocType();
+		boolean seniatValidator = MSysConfig.getBooleanValue("CONFIGURATION_SENIAT", false, invoice.getAD_Client_ID());
 
 		if(!invoice.isSOTrx() && !(invoice.getDocumentNo().equals(invoice.get_ValueAsString("LVE_POInvoiceNo"))) 
 				&& !invoice.get_ValueAsString("LVE_POInvoiceNo").equalsIgnoreCase(""))
@@ -230,7 +231,7 @@ public class InvoiceEvents extends ModelEventDelegate<MInvoice>{
 			invoice.saveEx(invoice.get_TrxName());
 		}
 		
-		if(MSysConfig.getBooleanValue("CONFIGURATION_SENIAT", true, invoice.getAD_Client_ID()) && invoice.isSOTrx() && invoice.get_ValueAsBoolean("IsFiscalWarningAccepted")) {
+		if(seniatValidator && invoice.isSOTrx() && invoice.get_ValueAsBoolean("IsFiscalWarningAccepted")) {
 			try	{
 				MClient m_client;
 				//
@@ -302,7 +303,6 @@ public class InvoiceEvents extends ModelEventDelegate<MInvoice>{
 				m_client = MClient.get (invoice.getCtx());
 				//
 				EMail email = m_client.createEMail(seniatEmail, subject, message);
-				log.warning("Create Email SENIAT="+email);				
 				if(mailTextID>0) {
 					MMailText m_MailText = new MMailText (invoice.getCtx(),mailTextID, invoice.get_TrxName());
 					m_MailText.setPO(invoice);
@@ -319,7 +319,6 @@ public class InvoiceEvents extends ModelEventDelegate<MInvoice>{
 					}
 				}
 				String msg = email.send();
-				log.warning("Sended SENIAT Msg ="+msg);
 			}catch(Exception e) {
 				log.log(Level.SEVERE, "@ERROR@ @RequestActionEMailNoTo@" + e.getMessage());
 			}

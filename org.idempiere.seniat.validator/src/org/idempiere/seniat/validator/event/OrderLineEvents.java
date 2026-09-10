@@ -10,6 +10,7 @@ import org.adempiere.base.event.annotations.po.BeforeNew;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
+import org.compiere.model.MSysConfig;
 import org.osgi.service.event.Event;
 
 @EventTopicDelegate
@@ -25,9 +26,10 @@ public class OrderLineEvents extends ModelEventDelegate<MOrderLine> {
 	public void onBeforeNC() {
 		MOrderLine ol = getModel();
 		MOrder o = new MOrder(ol.getCtx(), ol.getC_Order_ID(), ol.get_TrxName());
+		boolean seniatValidator = MSysConfig.getBooleanValue("CONFIGURATION_SENIAT", false, o.getAD_Client_ID());
 		// Updated by Marcos Reyes 2025-12-10 14:59
 		// Adjusted the validation to prevent prices from being zero or less
-		if(o.isSOTrx()) {
+		if(o.isSOTrx() && seniatValidator) {
 			if(ol.getPriceEntered().compareTo(BigDecimal.ZERO)<=0 
 					|| ol.getPriceActual().compareTo(BigDecimal.ZERO)<=0)
 				throw new AdempiereException("¡El precio no puede ser menor o igual a cero!");
