@@ -77,7 +77,7 @@ public class FTUCreateRate extends CustomProcess {
         }
     }
 
- // Método para manejar la validación y creación de la tasa de cambio
+    // Método para manejar la validación y creación de la tasa de cambio
     private void handleExchangeRate(BigDecimal exchangeRate, java.util.Date spotDate) {
         int clientId = p_AD_Client_ID > 0 ? p_AD_Client_ID : getAD_Client_ID();
 
@@ -91,7 +91,7 @@ public class FTUCreateRate extends CustomProcess {
         if (spotDateTruncated.after(todayTruncated)) {
             if (useFutureRate) {
                 // Comportamiento 2: Art. 25 Ley IVA - Tasa Futura para días feriados/bancarios
-                log.warning("Fecha del BCV es futura: " + spotDateTruncated + ". Usando regla de tasa futura (Art. 25 Ley IVA).");
+                log.info("Fecha del BCV es futura: " + spotDateTruncated + ". Usando regla de tasa futura (Art. 25 Ley IVA).");
 
                 java.util.Calendar cal = java.util.Calendar.getInstance();
                 cal.setTime(todayTruncated);
@@ -116,23 +116,23 @@ public class FTUCreateRate extends CustomProcess {
                 }
 
                 if (ratesCreatedCount == 0) {
-                    log.warning("Todas las tasas para el rango hasta " + spotDateTruncated + " ya existían previamente.");
+                    log.info("Todas las tasas para el rango hasta " + spotDateTruncated + " ya existían previamente.");
                     msg = "Las tasas de conversión hasta la fecha " + spotDateTruncated + " ya se encontraban creadas.";
                 } else {
                     msg = "Tasas de conversión creadas exitosamente para (" + sbCreated.toString() + ") con Tasa: " + exchangeRate;
                 }
             } else {
                 // Comportamiento 1 (Actual): Usar tasa de ayer para la fecha de hoy
-                log.warning("Fecha del BCV es futura: " + spotDateTruncated + ". Se usará la tasa del día anterior para crear la tasa de hoy.");
+                log.info("Fecha del BCV es futura: " + spotDateTruncated + ". Se usará la tasa del día anterior para crear la tasa de hoy.");
 
                 if (isRateCreatedToday(p_C_Currency_ID, p_C_Currency_ID_To)) {
-                    log.warning("Ya existe una tasa de conversión creada para el día de hoy.");
+                    log.info("Ya existe una tasa de conversión creada para el día de hoy.");
                     throw new AdempiereException("Ya existe una tasa de conversión creada para el día de hoy.");
                 }
 
                 BigDecimal lastRate = getLastRate(p_C_Currency_ID, p_C_Currency_ID_To);
                 if (lastRate == null || lastRate.compareTo(BigDecimal.ZERO) == 0) {
-                    log.warning("No se encontró ninguna tasa de conversión anterior. Es necesario establecer una tasa inicial.");
+                    log.info("No se encontró ninguna tasa de conversión anterior. Es necesario establecer una tasa inicial.");
                     throw new AdempiereException("No se encontró ninguna tasa de conversión anterior. Es necesario establecer una tasa inicial.");
                 } else {
                     createConversionRate(lastRate, new java.util.Date());
@@ -141,7 +141,7 @@ public class FTUCreateRate extends CustomProcess {
         } else {
             // Fecha del BCV es hoy o pasada
             if (isRateCreatedForDate(p_C_Currency_ID, p_C_Currency_ID_To, spotDateTruncated)) {
-                log.warning("Ya existe una tasa de conversión creada para la fecha: " + spotDateTruncated);
+                log.info("Ya existe una tasa de conversión creada para la fecha: " + spotDateTruncated);
                 throw new AdempiereException("Ya existe una tasa de conversión creada para la fecha: " + spotDateTruncated);
             }
             createConversionRate(exchangeRate, spotDate);
@@ -176,7 +176,7 @@ public class FTUCreateRate extends CustomProcess {
         rate.setValidFrom(tsDate);
         rate.setValidTo(tsDate); // Misma fecha para ValidTo
         rate.saveEx();
-        log.warning("Tasa de conversión creada exitosamente para la fecha: " + tsDate);
+        log.info("Tasa de conversión creada exitosamente para la fecha: " + tsDate);
         addBufferLog(rate.getC_Conversion_Rate_ID(), new Timestamp(System.currentTimeMillis()), null, "" + exchangeRate + " " + tsDate, MConversionRate.Table_ID, rate.getC_Conversion_Rate_ID());
         msg = "Tasa de conversión creada exitosamente, Fecha: " + tsDate + " - Tasa: " + exchangeRate;
         return msg;
@@ -209,7 +209,7 @@ public class FTUCreateRate extends CustomProcess {
     
     @Override
     protected String doIt() throws Exception {
-        String url = "https://www.bcv.org.ve/";
+        String url = MSysConfig.getValue("FTU_EXCHANGE_RATE_URL", "https://www.bcv.org.ve/", 0);
 
         // Desactivar la verificación SSL
         disableSSLVerification();
@@ -227,7 +227,7 @@ public class FTUCreateRate extends CustomProcess {
             Element dateElement = doc.select("div.pull-right.dinpro.center span.date-display-single").first();
             if (dateElement != null) {
                 String fecha = dateElement.text().trim();
-                log.warning("Fecha Valor: " + fecha);
+                log.info("Fecha Valor: " + fecha);
 
                 // Convertir la fecha extraída a un formato Date
                 try {
@@ -245,7 +245,7 @@ public class FTUCreateRate extends CustomProcess {
             if (!exchangeRateElements.isEmpty()) {
                 Element exchangeRateElement = exchangeRateElements.first();
                 String exchangeRateText = exchangeRateElement.text().trim();
-                log.warning("Tipo de cambio USD: " + exchangeRateText);
+                log.info("Tipo de cambio USD: " + exchangeRateText);
 
                 // Convertir el texto de la tasa de cambio a BigDecimal
                 try {
@@ -254,21 +254,21 @@ public class FTUCreateRate extends CustomProcess {
                     int clientId = p_AD_Client_ID > 0 ? p_AD_Client_ID : Env.getAD_Client_ID(getCtx());
                     // Obtener la precisión y el método de redondeo desde SysConfig
                     int precision = MSysConfig.getIntValue("FTU_EXCHANGE_RATE_PRECISION", 2, clientId, 0);
-                    log.warning("Precisión obtenida de SysConfig: " + precision);
+                    log.info("Precisión obtenida de SysConfig: " + precision);
                     String roundingModeConfig = MSysConfig.getValue("FTU_EXCHANGE_RATE_ROUNDING_MODE", "HALF_UP", clientId, 0);
-                    log.warning("Método de redondeo obtenido de SysConfig: " + roundingModeConfig);
+                    log.info("Método de redondeo obtenido de SysConfig: " + roundingModeConfig);
                     RoundingMode roundingMode;
                     try {
                         roundingMode = RoundingMode.valueOf(roundingModeConfig);
                     } catch (IllegalArgumentException e) {
-                        log.warning("Método de redondeo no válido en SysConfig. Usando DOWN por defecto.");
+                        log.info("Método de redondeo no válido en SysConfig. Usando DOWN por defecto.");
                         roundingMode = RoundingMode.HALF_UP;
                     }
-                    log.warning("Método de redondeo aplicado: " + roundingMode);
+                    log.info("Método de redondeo aplicado: " + roundingMode);
 
                     // Aplicar la precisión y el método de redondeo
                     exchangeRate = exchangeRate.setScale(precision, roundingMode);
-                    log.warning("Tasa de cambio después de aplicar precisión y redondeo: " + exchangeRate);
+                    log.info("Tasa de cambio después de aplicar precisión y redondeo: " + exchangeRate);
 
                     if (exchangeRate.compareTo(BigDecimal.ZERO) <= 0) {
                         throw new AdempiereUserError("La tasa de cambio no es válida: " + exchangeRateText);
