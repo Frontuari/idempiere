@@ -81,7 +81,10 @@ public class CompleteInvoices extends CustomProcess {
 						log.severe("Excepcion al procesar factura. Forzando rollback. Detalle: " + e.getMessage());
 						trx.rollback();
 					} finally {
-						if (trx.isActive()) {
+						if (trx != null) {
+							if (trx.isActive()) {
+								trx.rollback();
+							}
 							trx.close();
 						}
 					}
