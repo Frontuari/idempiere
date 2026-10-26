@@ -37,6 +37,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.process.UUIDGenerator;
+import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -294,6 +295,78 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	public static final int			SYSTEM_USER_ID = USER_SYSTEM;
 	
 	private static final String ROLE_KEY = "org.compiere.model.DefaultRole";
+	
+	//	Added by Jorge Colmenarez, 2026-10-26 18:21 
+	//	Add Support for usage Substitute User
+	private static CCache<Integer, List<Integer>> s_activeSubstitutes = null;
+	
+	private static synchronized List<Integer> getActiveSubstitutedUsers(int substituteID)
+	{
+		if (s_activeSubstitutes == null)
+		{
+			s_activeSubstitutes = new CCache<Integer, List<Integer>>("AD_User_Substitute", 20, 0);
+		}
+		List<Integer> list = s_activeSubstitutes.get(substituteID);
+		if (list == null)
+		{
+			list = new ArrayList<Integer>();
+			String sql = "SELECT AD_User_ID FROM AD_User_Substitute WHERE Substitute_ID=? AND IsActive='Y'"
+					+ " AND (ValidFrom IS NULL OR ValidFrom <= trunc(getDate()))"
+					+ " AND (ValidTo IS NULL OR ValidTo >= trunc(getDate()))";
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			try
+			{
+				pstmt = DB.prepareStatement(sql, null);
+				pstmt.setInt(1, substituteID);
+				rs = pstmt.executeQuery();
+				while (rs.next())
+				{
+					list.add(rs.getInt(1));
+				}
+			}
+			catch (Exception e)
+			{
+				s_log.log(Level.SEVERE, sql, e);
+			}
+			finally
+			{
+				DB.close(rs, pstmt);
+			}
+			s_activeSubstitutes.put(substituteID, list);
+		}
+		return list;
+	}
+
+	private List<Integer> m_loadedSubstitutedUserIDs = null;
+	
+	/**
+	 * Check into loaded substitute users if has active
+	 */
+	private void checkSubstitutes()
+	{
+		if (this.m_parent != null || isMasterRole())
+			return;
+			
+		int AD_User_ID = getAD_User_ID();
+		if (AD_User_ID < 0)
+			return;
+			
+		List<Integer> currentSubstitutes = getActiveSubstitutedUsers(AD_User_ID);
+		if (m_loadedSubstitutedUserIDs == null)
+		{
+			m_loadedSubstitutedUserIDs = new ArrayList<Integer>(currentSubstitutes);
+			return;
+		}
+		
+		if (!m_loadedSubstitutedUserIDs.equals(currentSubstitutes))
+		{
+			m_loadedSubstitutedUserIDs = new ArrayList<Integer>(currentSubstitutes);
+			loadAccess(true);
+		}
+	}
+	//	End Jorge Colmenarez
+	
 		
     /**
      * UUID based Constructor
@@ -1245,6 +1318,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public boolean isOrgAccess(int AD_Org_ID, boolean rw)
 	{
+		//	Added By Jorge Colmenarez, 2026-10-26 18:26
+		//	Calling check Substitutes method
+		checkSubstitutes();
+		//	End Jorge Colmenarez
 		if (isAccessAllOrgs())
 			return true;
 		if (AD_Org_ID == 0 && !rw)		//	can always read common org
@@ -1368,6 +1445,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public boolean isTableAccess (int AD_Table_ID, boolean ro)
 	{
+		//	Added By Jorge Colmenarez, 2026-10-26 18:26
+		//	Calling check Substitutes method
+		checkSubstitutes();
+		//	End Jorge Colmenarez
 		if (!isTableAccessLevel (AD_Table_ID, ro))	//	Role Based Access
 			return false;
 		loadTableAccess(false);
@@ -1609,6 +1690,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getWindowAccess (int AD_Window_ID)
 	{
+		//	Added By Jorge Colmenarez, 2026-10-26 18:26
+		//	Calling check Substitutes method
+		checkSubstitutes();
+		//	End Jorge Colmenarez
 		if (m_windowAccess == null)
 		{
 			m_windowAccess = new HashMap<Integer,Boolean>(100);
@@ -1700,6 +1785,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getProcessAccess (int AD_Process_ID)
 	{
+		//	Added By Jorge Colmenarez, 2026-10-26 18:26
+		//	Calling check Substitutes method
+		checkSubstitutes();
+		//	End Jorge Colmenarez
 		if (m_processAccess == null)
 		{
 			m_processAccess = new HashMap<Integer,Boolean>(50);
@@ -1796,6 +1885,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getTaskAccess (int AD_Task_ID)
 	{
+		//	Added By Jorge Colmenarez, 2026-10-26 18:26
+		//	Calling check Substitutes method
+		checkSubstitutes();
+		//	End Jorge Colmenarez
 		if (m_taskAccess == null)
 		{
 			m_taskAccess = new HashMap<Integer,Boolean>(10);
@@ -1887,6 +1980,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getFormAccess (int AD_Form_ID)
 	{
+		//	Added By Jorge Colmenarez, 2026-10-26 18:26
+		//	Calling check Substitutes method
+		checkSubstitutes();
+		//	End Jorge Colmenarez
 		if (m_formAccess == null)
 		{
 			m_formAccess = new HashMap<Integer,Boolean>(20);
@@ -1979,6 +2076,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 */
 	public synchronized Boolean getWorkflowAccess (int AD_Workflow_ID)
 	{
+		//	Added By Jorge Colmenarez, 2026-10-26 18:26
+		//	Calling check Substitutes method
+		checkSubstitutes();
+		//	End Jorge Colmenarez
 		if (m_workflowAccess == null)
 		{
 			m_workflowAccess = new HashMap<Integer,Boolean>(20);
@@ -2953,13 +3054,17 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 			//throw new IllegalStateException("AD_User_ID is not set");
 			return;
 		}
+		//	Added by Jorge Colmenarez, 2026-10-26 18:21
+		//	Loaded local variable
+		m_loadedSubstitutedUserIDs = new ArrayList<Integer>(getActiveSubstitutedUsers(AD_User_ID));
+		//	End Jorge Colmenarez
 		//
 		final String whereClause = "EXISTS ("
 		+" SELECT 1 FROM AD_User_Roles ur"
 		+" INNER JOIN AD_User_Substitute us ON (us.AD_User_ID=ur.AD_User_ID)"
 		+" WHERE ur.AD_Role_ID=AD_Role.AD_Role_ID AND ur.IsActive='Y' AND us.IsActive='Y'"
-		+" AND (us.ValidFrom IS NULL OR us.ValidFrom <= getDate())"
-		+" AND (us.ValidTo IS NULL OR us.ValidTo >= getDate())"
+		+" AND (us.ValidFrom IS NULL OR us.ValidFrom <= trunc(getDate())) "
+		+" AND (us.ValidTo IS NULL OR us.ValidTo >= trunc(getDate())) "
 		+" AND us.Substitute_ID=?)";
 
 		List<MRole> list = new Query(getCtx(), Table_Name, whereClause, get_TrxName())
@@ -3018,7 +3123,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 					final OrgAccess oa1 = (OrgAccess)o1;
 					final OrgAccess oa2 = (OrgAccess)o2;
 					found = oa1.equals(oa2);
-					if (found && override)
+					if (found)
 					{
 						// stronger permissions first
 						if (!oa2.readOnly)
@@ -3030,11 +3135,16 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 					final MTableAccess ta1 = (MTableAccess)o1;
 					final MTableAccess ta2 = (MTableAccess)o2;
 					found = ta1.getAD_Table_ID() == ta2.getAD_Table_ID();
-					if (found && override)
+					if (found)
 					{
 						// stronger permissions first
 						if (!ta2.isExclude())
 							ta1.setIsExclude(false);
+						//	Added By Jorge Colmenarez, 2026-10-26 18:45
+						//	Enable ReadOnly
+						if (!ta2.isReadOnly())
+							ta1.setIsReadOnly(false);
+						//	End Jorge Colmenarez
 					}
 				}
 				else if (o1 instanceof MColumnAccess)
@@ -3042,7 +3152,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 					final MColumnAccess ca1 = (MColumnAccess)o1;
 					final MColumnAccess ca2 = (MColumnAccess)o2;
 					found = ca1.getAD_Column_ID() == ca2.getAD_Column_ID();
-					if (found && override)
+					if (found)
 					{
 						// stronger permissions first
 						if (!ca2.isReadOnly())
@@ -3057,7 +3167,7 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 					final MRecordAccess ra2 = (MRecordAccess)o2;
 					found = ra1.getAD_Table_ID() == ra2.getAD_Table_ID()
 							&& ra1.getRecord_ID() == ra2.getRecord_ID();
-					if (found && override)
+					if (found)
 					{
 						// stronger permissions first
 						if(!ra2.isReadOnly())
@@ -3104,6 +3214,13 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 		{
 			map.putAll(map1);
 		}
+		//	Added by Jorge Colmenarez, 2026-10-26 18:41
+		//	Prevent map2 is null
+		if (map2 == null)
+		{
+			return map;
+		}
+		//	End Jorge Colmenarez
 		//
 		for (final Entry<Integer, Boolean> e : map2.entrySet())
 		{
@@ -3120,10 +3237,18 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 			}
 			else
 			{
-				if (override)
+				//	Added by Jorge Colmenarez, 2026-10-26 18:41
+				// Smart Overlap: Choosing the Most Permissive Permission
+				// TRUE (Read-Write) > FALSE (Read-Only)
+				if (b1.booleanValue() || b2.booleanValue())
 				{
-					map.put(key, b2);
+					map.put(key, Boolean.TRUE);
 				}
+				else
+				{
+					map.put(key, Boolean.FALSE);
+				}
+				//	End Jorge Colmenarez
 			}
 		}
 		//
@@ -3278,6 +3403,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 	 * @return null if can't access, TRUE if r/w and FALSE if r/o
 	 */
 	public synchronized Boolean getInfoAccess(int AD_InfoWindow_ID) {
+		//	Added By Jorge Colmenarez, 2026-10-26 18:26
+		//	Calling check Substitutes method
+		checkSubstitutes();
+		//	End Jorge Colmenarez
 		if (m_infoAccess == null)
 		{
 			m_infoAccess = new HashMap<Integer,Boolean>(20);
